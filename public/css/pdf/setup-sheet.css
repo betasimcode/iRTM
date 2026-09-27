@@ -1,0 +1,289 @@
+:root{
+
+    /* ==========================================
+       DOCUMENT
+    ========================================== */
+
+    --page-width:210mm;
+    --page-height:297mm;
+
+    --margin-x:8mm;
+    --margin-y:8mm;
+
+    /* ==========================================
+       GRID
+    ========================================== */
+
+    --col:24.7mm;
+    --row:5.6mm;
+
+    /* ==========================================
+       COLORS
+    ========================================== */
+
+    --border:#444;
+
+    --label-bg:#d9e6f2;
+
+    --value-bg:#ffffff;
+
+    --info-bg:#ececec;
+
+    --empty-bg:#d9e6f2;
+
+    /* ==========================================
+       FONTS
+    ========================================== */
+
+    --label-font:Arial,Helvetica,sans-serif;
+
+    --value-font:"Courier New",monospace;
+
+}
+
+*{
+
+    -webkit-print-color-adjust:exact;
+
+    print-color-adjust:exact;
+
+}
+
+#header,
+#summary,
+#main-aero,
+#tyres,
+#front-chassis,
+#rear-chassis{
+
+    margin-bottom:0;
+
+}
+
+@page{
+
+    size:A4;
+
+    margin:0;
+
+}
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+html,
+body{
+    margin-left: 0px;
+    background:#ffffff;
+
+}
+
+.sheet{
+
+    width:210mm;
+
+    min-height:var(--page-height);
+
+    margin-right: 0px;
+
+    padding:var(--margin-y) var(--margin-x);
+
+    background:#fff;
+
+}
+
+/* ==========================================
+   TABLES
+========================================== */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    table-layout:fixed;
+
+    page-break-inside:avoid;
+
+    table-layout:fixed;
+
+}
+
+td{
+
+    border:.25mm solid var(--border);
+
+    height:var(--row);
+
+    padding:0 1mm;
+
+    vertical-align:middle;
+
+}
+
+/* ==========================================
+   CELL TYPES
+========================================== */
+.empty{
+
+    border:none !important;
+
+    background:transparent;
+
+    /* background:var(--empty-bg); */
+
+}
+
+.logo{
+    text-align:center;
+}
+
+.hlabel{
+
+    background:var(--label-bg) !important;
+
+    font-family:var(--label-font);
+
+    font-size:10pt;
+
+    font-weight:700;
+
+}
+
+.hinfo{
+
+    background:var(--info-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:12pt;
+
+}
+
+.label{
+
+    background:var(--label-bg) !important;
+
+    font-family:var(--label-font);
+
+    font-size:10pt;
+
+    font-weight:700;
+
+    text-align:center;
+
+}
+
+.label-sm{
+
+    background:var(--label-bg) !important;
+
+    font-family:var(--label-font);
+
+    font-size:9pt;
+
+    font-weight:700;
+
+    text-align:center;
+
+}
+
+.labelmin{
+
+    background:var(--label-bg) !important;
+
+    font-family:var(--label-font);
+
+    font-size:8pt;
+
+    text-align:center;
+
+}
+
+.value{
+
+    background:var(--value-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:12pt;
+
+    text-align:center;
+
+}
+
+.value-sm{
+
+    background:var(--value-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:10pt;
+
+    text-align:center;
+
+}
+
+.info{
+
+    background:var(--info-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:12pt;
+
+    text-align:center;
+
+}
+
+.bestlap{
+
+    background:var(--info-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:18pt;
+
+    text-align:center;
+
+}
+
+.info-sm{
+
+    background:var(--info-bg) !important;
+
+    font-family:var(--value-font);
+
+    font-size:10pt;
+
+    text-align:center;
+
+}
+
+.vertical{
+
+    writing-mode:vertical-rl;
+
+    transform:rotate(180deg);
+
+    text-align:center;
+
+    vertical-align:middle;
+
+    white-space:nowrap;
+
+    font-family:var(--label-font);
+
+    font-size:10pt;
+
+    font-weight:700;
+
+}

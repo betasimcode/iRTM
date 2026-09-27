@@ -1,0 +1,615 @@
+{
+    "16": {
+        "track_name": "USA International Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "219": {
+        "track_name": "Mount Panorama Circuit",
+        "splits": [
+            0.181861,
+            0.360013,
+            0.52112,
+            0.595056,
+            0.829202
+        ]
+    },
+    "451": {
+        "track_name": "Rudskogen Motorsenter",
+        "splits": [
+            0.335977,
+            0.672094,
+            0.822589
+        ]
+    },
+    "212": {
+        "track_name": "Autdromo Jos Carlos Pace",
+        "splits": [
+            0.278071,
+            0.431505,
+            0.609232,
+            0.725358
+        ]
+    },
+    "15": {
+        "track_name": "Concord Motorsport Park",
+        "splits": [
+            0.5
+        ]
+    },
+    "275": {
+        "track_name": "USA International Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "303": {
+        "track_name": "Limaland Motorsports Park",
+        "splits": [
+            0.5
+        ]
+    },
+    "156": {
+        "track_name": "Mid-Ohio Sports Car Course",
+        "splits": [
+            0.25,
+            0.5,
+            0.75
+        ]
+    },
+    "143": {
+        "track_name": "Centripetal Circuit",
+        "splits": [
+            0.5
+        ]
+    },
+    "319": {
+        "track_name": "Detroit Grand Prix",
+        "splits": [
+            0.19907,
+            0.356254,
+            0.564072,
+            0.800274
+        ]
+    },
+    "390": {
+        "track_name": "Hockenheimring Baden-Wrttemberg",
+        "splits": [
+            0.225832,
+            0.707461
+        ]
+    },
+    "448": {
+        "track_name": "Indianapolis Motor Speedway",
+        "splits": [
+            0.260837,
+            0.50526,
+            0.662425
+        ]
+    },
+    "473": {
+        "track_name": "Circuito de Jerez - ngel Nieto",
+        "splits": [
+            0.253645,
+            0.417346,
+            0.697159
+        ]
+    },
+    "47": {
+        "track_name": "WeatherTech Raceway Laguna Seca",
+        "splits": [
+            0.183471,
+            0.377318,
+            0.642595,
+            0.803793
+        ]
+    },
+    "124": {
+        "track_name": "Michigan International Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "218": {
+        "track_name": "Circuit Gilles Villeneuve",
+        "splits": [
+            0.252998,
+            0.554444
+        ]
+    },
+    "498": {
+        "track_name": "Autodromo del Mugello",
+        "splits": [
+            0.356625,
+            0.644156
+        ]
+    },
+    "166": {
+        "track_name": "Okayama International Circuit",
+        "splits": [
+            0.259885,
+            0.509689,
+            0.694809
+        ]
+    },
+    "202": {
+        "track_name": "Oran Park Raceway",
+        "splits": [
+            0.303496,
+            0.48098,
+            0.659154,
+            0.840057
+        ]
+    },
+    "127": {
+        "track_name": "Road Atlanta",
+        "splits": [
+            0.167875,
+            0.442307,
+            0.787105
+        ]
+    },
+    "95": {
+        "track_name": "Sebring International Raceway",
+        "splits": [
+            0.130902,
+            0.3069,
+            0.44224,
+            0.53158,
+            0.658844,
+            0.876665
+        ]
+    },
+    "341": {
+        "track_name": "Silverstone Circuit",
+        "splits": [
+            0.134735,
+            0.293053,
+            0.609174,
+            0.830708
+        ]
+    },
+    "434": {
+        "track_name": "Watkins Glen",
+        "splits": [
+            0.298486,
+            0.47226,
+            0.68461,
+            0.838991
+        ]
+    },
+    "557": {
+        "track_name": "Charlotte Motor Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "201": {
+        "track_name": "Langley Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "288": {
+        "track_name": "Lanier National Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "12": {
+        "track_name": "Oxford Plains Raceway",
+        "splits": [
+            0.5
+        ]
+    },
+    "181": {
+        "track_name": "Oulton Park Circuit",
+        "splits": [
+            0.222404,
+            0.574298,
+            0.80425
+        ]
+    },
+    "192": {
+        "track_name": "Daytona International Speedway",
+        "splits": [
+            0.137196,
+            0.273519,
+            0.353413,
+            0.630555
+        ]
+    },
+    "14": {
+        "track_name": "South Boston Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "256": {
+        "track_name": "Southern National Motorsports Park",
+        "splits": [
+            0.5
+        ]
+    },
+    "121": {
+        "track_name": "Texas Motor Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "465": {
+        "track_name": "Virginia International Raceway",
+        "splits": [
+            0.184456,
+            0.337214,
+            0.504637,
+            0.734279,
+            0.829332
+        ]
+    },
+    "432": {
+        "track_name": "Watkins Glen",
+        "splits": [
+            0.415715,
+            0.77555
+        ]
+    },
+    "345": {
+        "track_name": "Circuit de Barcelona-Catalunya",
+        "splits": [
+            0.343873,
+            0.722794
+        ]
+    },
+    "349": {
+        "track_name": "Circuit de Barcelona-Catalunya",
+        "splits": [
+            0.336695,
+            0.707093
+        ]
+    },
+    "474": {
+        "track_name": "Circuito de Jerez - ngel Nieto",
+        "splits": [
+            0.253301,
+            0.416781,
+            0.696216
+        ]
+    },
+    "509": {
+        "track_name": "Autodromo Internacional do Algarve",
+        "splits": [
+            0.315993,
+            0.675255
+        ]
+    },
+    "413": {
+        "track_name": "Hungaroring Circuit",
+        "splits": [
+            0.392544,
+            0.782605
+        ]
+    },
+    "163": {
+        "track_name": "Circuit de Spa-Francorchamps",
+        "splits": [
+            0.310613,
+            0.522299,
+            0.692902,
+            0.931096
+        ]
+    },
+    "9": {
+        "track_name": "Summit Point Raceway",
+        "splits": [
+            0.4672,
+            0.803916
+        ]
+    },
+    "324": {
+        "track_name": "Tsukuba Circuit 2k Full",
+        "splits": [
+            0.25,
+            0.5,
+            0.75
+        ]
+    },
+    "233": {
+        "track_name": "Donington Park Racing Circuit",
+        "splits": [
+            0.237986,
+            0.495375,
+            0.794538
+        ]
+    },
+    "347": {
+        "track_name": "Circuit de Barcelona-Catalunya Club",
+        "splits": [
+            0.519332
+        ]
+    },
+    "145": {
+        "track_name": "Brands Hatch Circuit",
+        "splits": [
+            0.120787,
+            0.278897,
+            0.473626,
+            0.674871,
+            0.845488
+        ]
+    },
+    "239": {
+        "track_name": "Autodromo Nazionale Monza",
+        "splits": [
+            0.345492,
+            0.475864,
+            0.657524,
+            0.853068
+        ]
+    },
+    "241": {
+        "track_name": "Autodromo Nazionale Monza",
+        "splits": [
+            0.646761
+        ]
+    },
+    "139": {
+        "track_name": "Pocono Raceway",
+        "splits": [
+            0.299681
+        ]
+    },
+    "161": {
+        "track_name": "Thompson International Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "475": {
+        "track_name": "MotorLand Aragn",
+        "splits": [
+            0.295088,
+            0.538566,
+            0.75662
+        ]
+    },
+    "350": {
+        "track_name": "Charlotte Motor Speedway",
+        "splits": [
+            0.146306,
+            0.27745,
+            0.616231
+        ]
+    },
+    "293": {
+        "track_name": "Daytona International Speedway",
+        "splits": [
+            0.35647,
+            0.745671
+        ]
+    },
+    "234": {
+        "track_name": "Donington Park Racing Circuit",
+        "splits": [
+            0.297797,
+            0.619
+        ]
+    },
+    "536": {
+        "track_name": "Portland International Raceway",
+        "splits": [
+            0.199392,
+            0.471146,
+            0.69606
+        ]
+    },
+    "17": {
+        "track_name": "Lanier National Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "136": {
+        "track_name": "Pocono Raceway",
+        "splits": [
+            0.5
+        ]
+    },
+    "198": {
+        "track_name": "Mobility Resort Motegi",
+        "splits": [
+            0.5
+        ]
+    },
+    "146": {
+        "track_name": "Brands Hatch Circuit",
+        "splits": [
+            0.244291,
+            0.564546
+        ]
+    },
+    "46": {
+        "track_name": "Barber Motorsports Park",
+        "splits": [
+            0.248178,
+            0.421476,
+            0.686769
+        ]
+    },
+    "268": {
+        "track_name": "Circuit des 24 Heures du Mans",
+        "splits": [
+            0.130304,
+            0.263124,
+            0.408216,
+            0.530068,
+            0.686259,
+            0.815876
+        ]
+    },
+    "255": {
+        "track_name": "Nrburgring Grand Prix No Chicane",
+        "splits": [
+            0.283763,
+            0.432067,
+            0.63701,
+            0.843575
+        ]
+    },
+    "42": {
+        "track_name": "Silverstone Circuit",
+        "splits": [
+            0.179133,
+            0.423934,
+            0.741563
+        ]
+    },
+    "266": {
+        "track_name": "Autodromo Enzo e Dino Ferrari",
+        "splits": [
+            0.238799,
+            0.417892,
+            0.6445,
+            0.778207
+        ]
+    },
+    "18": {
+        "track_name": "Road America",
+        "splits": [
+            0.143086,
+            0.326681,
+            0.478771,
+            0.760854,
+            0.865939
+        ]
+    },
+    "470": {
+        "track_name": "Daytona International Speedway",
+        "splits": [
+            0.35647,
+            0.745671
+        ]
+    },
+    "247": {
+        "track_name": "Autodromo Nazionale Monza Combined",
+        "splits": [
+            0.255417,
+            0.51773,
+            0.624069,
+            0.698959,
+            0.803313,
+            0.915589
+        ]
+    },
+    "167": {
+        "track_name": "Okayama International Circuit",
+        "splits": [
+            0.205668,
+            0.422204,
+            0.737686
+        ]
+    },
+    "105": {
+        "track_name": "Phoenix International Raceway",
+        "splits": [
+            0.326713,
+            0.558634
+        ]
+    },
+    "463": {
+        "track_name": "Circuit de Nevers Magny-Cours",
+        "splits": [
+            0.379767,
+            0.720392
+        ]
+    },
+    "485": {
+        "track_name": "Circuit Zandvoort",
+        "splits": [
+            0.355549,
+            0.698221
+        ]
+    },
+    "556": {
+        "track_name": "Charlotte Motor Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "191": {
+        "track_name": "Daytona International Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "104": {
+        "track_name": "Phoenix International Raceway",
+        "splits": [
+            0.5
+        ]
+    },
+    "339": {
+        "track_name": "Charlotte Motor Speedway",
+        "splits": [
+            0.5
+        ]
+    },
+    "539": {
+        "track_name": "Miami International Autodrome",
+        "splits": [
+            0.33064,
+            0.679153
+        ]
+    },
+    "580": {
+        "track_name": "Adelaide Street Circuit",
+        "splits": [
+            0.328407,
+            0.634463
+        ]
+    },
+    "585": {
+        "track_name": "Barber Motorsports Park",
+        "splits": [
+            0.374882,
+            0.700884
+        ]
+    },
+    "577": {
+        "track_name": "Autodromo Hermanos Rodriguez",
+        "splits": [
+            0.5
+        ]
+    },
+    "153": {
+        "track_name": "Mid-Ohio Sports Car Course",
+        "splits": [
+            0.194037,
+            0.478817,
+            0.813699
+        ]
+    },
+    "515": {
+        "track_name": "Circuito de Navarra",
+        "splits": [
+            0.269865,
+            0.568338,
+            0.735294
+        ]
+    },
+    "449": {
+        "track_name": "Motorsport Arena Oschersleben",
+        "splits": [
+            0.362077,
+            0.717004
+        ]
+    },
+    "297": {
+        "track_name": "Snetterton Racing Circuit",
+        "splits": [
+            0.321653,
+            0.662068
+        ]
+    }
+}

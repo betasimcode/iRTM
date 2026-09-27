@@ -1,0 +1,356 @@
+[
+    {
+        "track_id": 128,
+        "aliases": [
+            "Adelaide Street Circuit"
+        ]
+    },
+    {
+        "track_id": 132,
+        "aliases": [
+            "Algarve International Circuit - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 157,
+        "aliases": [
+            "Autodromo Internazionale Enzo e Dino Ferrari - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 112,
+        "aliases": [
+            "Autodromo Internazionale del Mugello - Grand"
+        ]
+    },
+    {
+        "track_id": null,
+        "aliases": [
+            "Autodromo Nazionale Monza - GP without first"
+        ]
+    },
+    {
+        "track_id": 140,
+        "aliases": [
+            "Autodromo Nazionale Monza - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 198,
+        "aliases": [
+            "Autódromo Hermanos Rodríguez - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 99,
+        "aliases": [
+            "Autódromo José Carlos Pace - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 169,
+        "aliases": [
+            "Barber Motorsports Park"
+        ]
+    },
+    {
+        "track_id": 139,
+        "aliases": [
+            "Brands Hatch Circuit - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 204,
+        "aliases": [
+            "Canadian Tire Motorsports Park"
+        ]
+    },
+    {
+        "track_id": 205,
+        "aliases": [
+            "Charlotte Motor Speedway - Roval 2025"
+        ]
+    },
+    {
+        "track_id": 206,
+        "aliases": [
+            "Chicago Street Course - 2023 Cup"
+        ]
+    },
+    {
+        "track_id": 111,
+        "aliases": [
+            "Circuit Gilles Villeneuve"
+        ]
+    },
+    {
+        "track_id": 164,
+        "aliases": [
+            "Circuit Zandvoort - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 201,
+        "aliases": [
+            "Circuit Zandvoort - Nationaal"
+        ]
+    },
+    {
+        "track_id": 193,
+        "aliases": [
+            "Circuit Zolder - Alternate"
+        ]
+    },
+    {
+        "track_id": 129,
+        "aliases": [
+            "Circuit de Barcelona Catalunya - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 130,
+        "aliases": [
+            "Circuit de Barcelona Catalunya - Historic"
+        ]
+    },
+    {
+        "track_id": 203,
+        "aliases": [
+            "Circuit de Lédenon"
+        ]
+    },
+    {
+        "track_id": 163,
+        "aliases": [
+            "Circuit de Nevers Magny-Cours - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 210,
+        "aliases": [
+            "Circuit de Spa-Francorchamps - Classic Pits"
+        ]
+    },
+    {
+        "track_id": 134,
+        "aliases": [
+            "Circuit de Spa-Francorchamps - Grand Prix Pits"
+        ]
+    },
+    {
+        "track_id": 154,
+        "aliases": [
+            "Circuit des 24 Heures du Mans - 24 Heures du"
+        ]
+    },
+    {
+        "track_id": 173,
+        "aliases": [
+            "Circuito de Navarra - Speed Circuit"
+        ]
+    },
+    {
+        "track_id": 159,
+        "aliases": [
+            "Daytona International Speedway - Road Course"
+        ]
+    },
+    {
+        "track_id": 147,
+        "aliases": [
+            "Donington Park Racing Circuit - National"
+        ]
+    },
+    {
+        "track_id": 188,
+        "aliases": [
+            "Fuji International Speedway - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 106,
+        "aliases": [
+            "Hockenheimring Baden-Württemberg - Grand"
+        ]
+    },
+    {
+        "track_id": 22,
+        "aliases": [
+            "Homestead Miami Speedway - Road Course B"
+        ]
+    },
+    {
+        "track_id": 133,
+        "aliases": [
+            "Hungaroring"
+        ]
+    },
+    {
+        "track_id": 107,
+        "aliases": [
+            "Indianapolis Motor Speedway - Road Course"
+        ]
+    },
+    {
+        "track_id": 208,
+        "aliases": [
+            "Lime Rock Park - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 168,
+        "aliases": [
+            "Miami International Autodrome - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 172,
+        "aliases": [
+            "Mid-Ohio Sports Car Course - Full Course"
+        ]
+    },
+    {
+        "track_id": 95,
+        "aliases": [
+            "Mobility Resort Motegi - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 174,
+        "aliases": [
+            "Motorsport Arena Oschersleben - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 97,
+        "aliases": [
+            "Mount Panorama Circuit"
+        ]
+    },
+    {
+        "track_id": 113,
+        "aliases": [
+            "Okayama International Circuit - Full Course"
+        ]
+    },
+    {
+        "track_id": 114,
+        "aliases": [
+            "Oran Park Raceway - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 122,
+        "aliases": [
+            "Oulton Park Circuit - Fosters"
+        ]
+    },
+    {
+        "track_id": 209,
+        "aliases": [
+            "Oulton Park Circuit - International"
+        ]
+    },
+    {
+        "track_id": 148,
+        "aliases": [
+            "Portland International Raceway - Full Circuit"
+        ]
+    },
+    {
+        "track_id": 189,
+        "aliases": [
+            "Red Bull Ring - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 158,
+        "aliases": [
+            "Road America - Full Course"
+        ]
+    },
+    {
+        "track_id": 92,
+        "aliases": [
+            "Road Atlanta - Full Course"
+        ]
+    },
+    {
+        "track_id": 98,
+        "aliases": [
+            "Rudskogen Motorsenter"
+        ]
+    },
+    {
+        "track_id": 180,
+        "aliases": [
+            "Sebring International Raceway - International"
+        ]
+    },
+    {
+        "track_id": 115,
+        "aliases": [
+            "Silverstone Circuit - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 175,
+        "aliases": [
+            "Snetterton Circuit - 300"
+        ]
+    },
+    {
+        "track_id": 195,
+        "aliases": [
+            "St. Petersburg Grand Prix - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 135,
+        "aliases": [
+            "Summit Point Raceway - Summit Point Raceway"
+        ]
+    },
+    {
+        "track_id": 116,
+        "aliases": [
+            "Suzuka International Racing Course - Grand Prix"
+        ]
+    },
+    {
+        "track_id": 136,
+        "aliases": [
+            "Tsukuba Circuit - 2000 Full"
+        ]
+    },
+    {
+        "track_id": 96,
+        "aliases": [
+            "Virginia International Raceway - Full Course"
+        ]
+    },
+    {
+        "track_id": 117,
+        "aliases": [
+            "Watkins Glen International - Boot"
+        ]
+    },
+    {
+        "track_id": 117,
+        "aliases": [
+            "Watkins Glen International - Classic Boot"
+        ]
+    },
+    {
+        "track_id": 212,
+        "aliases": [
+            "Watkins Glen International - Cup"
+        ]
+    },
+    {
+        "track_id": 586,
+        "aliases": [
+            "WeatherTech Raceway at Laguna Seca - 2026"
+        ]
+    }
+]

@@ -1,0 +1,371 @@
+SessionTime = 899.4333337143137
+SessionTick = 54125
+SessionNum = 0
+SessionState = 4
+SessionUniqueID = 1
+SessionFlags = 268698112
+SessionTimeRemain = 604800.0
+SessionLapsRemain = 32767
+SessionLapsRemainEx = 32767
+SessionTimeTotal = 604800.0
+SessionLapsTotal = 32767
+SessionJokerLapsRemain = 0
+SessionOnJokerLap = False
+SessionTimeOfDay = 44099.0
+RadioTransmitCarIdx = -1
+RadioTransmitRadioIdx = 0
+RadioTransmitFrequencyIdx = 0
+DisplayUnits = 1
+DriverMarker = False
+PushToTalk = False
+PushToPass = False
+ManualBoost = False
+ManualNoBoost = False
+IsOnTrack = False
+IsReplayPlaying = True
+ReplayFrameNum = 51673
+ReplayFrameNumEnd = 1201
+IsDiskLoggingEnabled = True
+IsDiskLoggingActive = False
+FrameRate = 149.01034545898438
+CpuUsageFG = 0.1274854838848114
+GpuUsage = 0.37776491045951843
+ChanAvgLatency = 0.033333078026771545
+ChanLatency = 0.03333333507180214
+ChanQuality = 1.000116229057312
+ChanPartnerQuality = 1.0
+CpuUsageBG = 0.11699996143579483
+ChanClockSkew = 0.0
+MemPageFaultSec = 0.0
+MemSoftPageFaultSec = 0.0
+PlayerCarPosition = 1
+PlayerCarClassPosition = 1
+PlayerCarClass = 0
+PlayerTrackSurface = 1
+PlayerTrackSurfaceMaterial = 5
+PlayerCarIdx = 0
+PlayerCarTeamIncidentCount = 5
+PlayerCarMyIncidentCount = 5
+PlayerCarDriverIncidentCount = 5
+PlayerCarWeightPenalty = 0.0
+PlayerCarPowerAdjust = 0.0
+PlayerCarDryTireSetLimit = 0
+PlayerCarTowTime = 0.0
+PlayerCarInPitStall = True
+PlayerCarPitSvStatus = 0
+PlayerTireCompound = 0
+PlayerFastRepairsUsed = 0
+CarIdxLap = [4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxLapCompleted = [3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxLapDistPct = [0.9988081455230713, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+CarIdxTrackSurface = [1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxTrackSurfaceMaterial = [5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxOnPitRoad = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+CarIdxPosition = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+CarIdxClassPosition = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+CarIdxClass = [0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0]
+CarIdxF2Time = [96.99479675292969, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+CarIdxEstTime = [93.409423828125, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+CarIdxLastLapTime = [96.99479675292969, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+CarIdxBestLapTime = [96.99479675292969, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+CarIdxBestLapNum = [3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxTireCompound = [0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxQualTireCompound = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxQualTireCompoundLocked = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+CarIdxFastRepairsUsed = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+CarIdxSessionFlags = [262144, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+PaceMode = 4
+CarIdxPaceLine = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxPaceRow = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+CarIdxPaceFlags = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+OnPitRoad = True
+CarIdxSteer = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+CarIdxRPM = [300.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+CarIdxGear = [0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+SteeringWheelAngle = 0.0
+Throttle = 0.0
+Brake = 1.0
+Clutch = 0.0
+Gear = 0
+RPM = 300.0
+PlayerCarSLFirstRPM = 6200.0
+PlayerCarSLShiftRPM = 7600.0
+PlayerCarSLLastRPM = 7600.0
+PlayerCarSLBlinkRPM = 7650.0
+Lap = 4
+LapCompleted = 3
+LapDist = 3880.8046875
+LapDistPct = 0.9988081455230713
+RaceLaps = 4
+CarDistAhead = 500000.0
+CarDistBehind = 500000.0
+LapBestLap = 3
+LapBestLapTime = 96.99479675292969
+LapLastLapTime = 96.99479675292969
+LapCurrentLapTime = 451.15069580078125
+LapLasNLapSeq = 0
+LapLastNLapTime = 0.0
+LapBestNLapLap = 0
+LapBestNLapTime = 0.0
+LapDeltaToBestLap = 0.0
+LapDeltaToBestLap_DD = 0.0
+LapDeltaToBestLap_OK = False
+LapDeltaToOptimalLap = 0.0
+LapDeltaToOptimalLap_DD = 0.0
+LapDeltaToOptimalLap_OK = False
+LapDeltaToSessionBestLap = 0.0
+LapDeltaToSessionBestLap_DD = 0.0
+LapDeltaToSessionBestLap_OK = False
+LapDeltaToSessionOptimalLap = 0.0
+LapDeltaToSessionOptimalLap_DD = 0.0
+LapDeltaToSessionOptimalLap_OK = False
+LapDeltaToSessionLastlLap = 0.0
+LapDeltaToSessionLastlLap_DD = 0.0
+LapDeltaToSessionLastlLap_OK = False
+Speed = 5.716793748433702e-05
+Yaw = -0.7241708040237427
+YawNorth = 1.053981065750122
+Pitch = 0.0030508057679980993
+Roll = -0.021976027637720108
+EnterExitReset = 0
+TrackTemp = 35.555572509765625
+TrackTempCrew = 35.555572509765625
+AirTemp = 19.27926254272461
+TrackWetness = 1
+Skies = 1
+AirDensity = 1.1927289962768555
+AirPressure = 100676.7109375
+WindVel = 2.705195665359497
+WindDir = 5.786725997924805
+RelativeHumidity = 0.6619377136230469
+FogLevel = 0.0
+Precipitation = 0.0
+SolarAltitude = 0.9839773178100586
+SolarAzimuth = 2.838447093963623
+WeatherDeclaredWet = False
+SteeringFFBEnabled = True
+DCLapStatus = 2
+DCDriversSoFar = 1
+OkToReloadTextures = True
+LoadNumTextures = False
+CarLeftRight = 1
+PitsOpen = True
+VidCapEnabled = False
+VidCapActive = False
+PlayerIncidents = 0
+PitRepairLeft = 0.0
+PitOptRepairLeft = 0.0
+PitstopActive = False
+FastRepairUsed = 0
+FastRepairAvailable = 0
+LFTiresUsed = 1
+RFTiresUsed = 1
+LRTiresUsed = 1
+RRTiresUsed = 1
+LeftTireSetsUsed = 1
+RightTireSetsUsed = 1
+FrontTireSetsUsed = 1
+RearTireSetsUsed = 1
+TireSetsUsed = 1
+LFTiresAvailable = 1
+RFTiresAvailable = 1
+LRTiresAvailable = 1
+RRTiresAvailable = 1
+LeftTireSetsAvailable = 1
+RightTireSetsAvailable = 1
+FrontTireSetsAvailable = 1
+RearTireSetsAvailable = 1
+TireSetsAvailable = 1
+CamCarIdx = 0
+CamCameraNumber = 1
+CamGroupNumber = 18
+CamCameraState = 209
+IsOnTrackCar = True
+IsInGarage = False
+SteeringWheelAngleMax = 7.592175483703613
+ShiftPowerPct = 0.0
+ShiftGrindRPM = 0.0
+ThrottleRaw = 0.0
+BrakeRaw = 0.0
+ClutchRaw = 0.0
+HandbrakeRaw = 0.0
+BrakeABSactive = False
+Shifter = 0
+EngineWarnings = 14
+FuelLevelPct = 0.5833261013031006
+PitSvFlags = 0
+PitSvLFP = 137.89500427246094
+PitSvRFP = 137.89500427246094
+PitSvLRP = 137.89500427246094
+PitSvRRP = 137.89500427246094
+PitSvFuel = 80.0
+PitSvTireCompound = 0
+CarIdxP2P_Status = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+CarIdxP2P_Count = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+P2P_Status = False
+P2P_Count = 0
+SteeringWheelPctTorque = 0.0
+SteeringWheelPctTorqueSign = 0.0
+SteeringWheelPctTorqueSignStops = 0.0
+SteeringWheelPctIntensity = 0.0
+SteeringWheelPctSmoothing = 0.0
+SteeringWheelPctDamper = 0.0
+SteeringWheelLimiter = 0.0
+SteeringWheelMaxForceNm = 50.10525894165039
+SteeringWheelPeakForceNm = -1.0
+SteeringWheelUseLinear = False
+ShiftIndicatorPct = 0.0
+IsGarageVisible = False
+ReplayPlaySpeed = 1
+ReplayPlaySlowMotion = False
+ReplaySessionTime = 878.4466715494791
+ReplaySessionNum = 0
+TireLF_RumblePitch = 0.0
+TireRF_RumblePitch = 0.0
+TireLR_RumblePitch = 0.0
+TireRR_RumblePitch = 0.0
+SteeringWheelTorque_ST = [-4.875329971313477, -4.876428604125977, -4.877298355102539, -4.877148628234863, -4.876016616821289, -4.875085830688477]
+SteeringWheelTorque = -4.875085830688477
+VelocityZ_ST = [3.0998029387774295e-07, 4.664306629820203e-07, 7.937513828437659e-07, 1.086524434867897e-06, 7.675744200241752e-07, 3.9710744204057846e-07]
+VelocityY_ST = [1.734422221488785e-05, -1.5086499843164347e-05, -4.410041219671257e-05, -2.7932825105381198e-05, 2.497195964679122e-05, 7.314579852391034e-05]
+VelocityX_ST = [-4.2469968320801854e-05, -2.786956088129955e-07, 3.8958351069595665e-05, 4.302303204894997e-05, 1.739788604027126e-05, -6.453216428781161e-06]
+VelocityZ = 3.9710744204057846e-07
+VelocityY = 7.314579852391034e-05
+VelocityX = -6.453216428781161e-06
+YawRate_ST = [-2.481119963704259e-06, 5.415486725723895e-07, 3.0625708404841134e-06, 1.2652259329115623e-06, -3.90706645703176e-06, -8.205935955629684e-06]
+PitchRate_ST = [-4.858199531554419e-07, -3.580982138373656e-06, -6.385201686498476e-06, -6.528636731673032e-06, -4.51610367235844e-06, -2.769968659777078e-06]
+RollRate_ST = [0.0001062634983099997, 3.549500252120197e-05, -2.3743366909911856e-05, -2.312129618076142e-05, 1.4431860108743422e-05, 4.102993989363313e-05]
+YawRate = -8.205935955629684e-06
+PitchRate = -2.769968659777078e-06
+RollRate = 4.102993989363313e-05
+VertAccel_ST = [9.80424690246582, 9.804292678833008, 9.804354667663574, 9.804342269897461, 9.804121017456055, 9.804102897644043]
+LatAccel_ST = [-0.21315540373325348, -0.22716230154037476, -0.225932314991951, -0.20966845750808716, -0.19644322991371155, -0.19814573228359222]
+LongAccel_ST = [-0.02500186488032341, -0.014729373157024384, -0.01579282060265541, -0.028454722836613655, -0.039142969995737076, -0.03850427269935608]
+VertAccel = 9.804102897644043
+LatAccel = -0.19814573228359222
+LongAccel = -0.03850427269935608
+dcStarter = False
+dcToggleWindshieldWipers = False
+dcTriggerWindshieldWipers = False
+dpRFTireChange = 0.0
+dpLFTireChange = 0.0
+dpRRTireChange = 0.0
+dpLRTireChange = 0.0
+dpFuelFill = 0.0
+dpFuelAutoFillEnabled = 0.0
+dpFuelAutoFillActive = 0.0
+dpWindshieldTearoff = 0.0
+dpFuelAddKg = 80.0
+dpFastRepair = 0.0
+dcBrakeBias = 53.058509826660156
+dcLaunchRPM = 7000.0
+dpLFTireColdPress = 137.89500427246094
+dpRFTireColdPress = 137.89500427246094
+dpLRTireColdPress = 137.89500427246094
+dpRRTireColdPress = 137.89500427246094
+FuelUsePerHour = 2.0692360401153564
+Voltage = 0.0
+WaterTemp = 77.00196075439453
+WaterLevel = 8.0
+FuelPress = 2.035278257039863e-08
+OilTemp = 77.07028198242188
+OilPress = 0.0
+OilLevel = 4.0
+ManifoldPress = 1.0485996007919312
+FuelLevel = 46.66608810424805
+Engine0_RPM = 4.672010982176289e-05
+RFbrakeLinePress = 0.0
+RFcoldPressure = 137.89500427246094
+RFodometer = 0.0
+RFtempCL = 81.80154418945312
+RFtempCM = 80.46701049804688
+RFtempCR = 59.444976806640625
+RFwearL = 0.9593226909637451
+RFwearM = 0.9613279104232788
+RFwearR = 0.9708277583122253
+LFbrakeLinePress = 0.0
+LFcoldPressure = 137.89500427246094
+LFodometer = 0.0
+LFtempCL = 72.79348754882812
+LFtempCM = 84.47952270507812
+LFtempCR = 84.64297485351562
+LFwearL = 0.9617809057235718
+LFwearM = 0.9553149342536926
+LFwearR = 0.9550080895423889
+RRbrakeLinePress = 0.0
+RRcoldPressure = 137.89500427246094
+RRodometer = 0.0
+RRtempCL = 79.18722534179688
+RRtempCM = 76.34326171875
+RRtempCR = 57.321441650390625
+RRwearL = 0.9844467043876648
+RRwearM = 0.9872865676879883
+RRwearR = 0.9934692978858948
+LRbrakeLinePress = 0.0
+LRcoldPressure = 137.89500427246094
+LRodometer = 0.0
+LRtempCL = 74.5966796875
+LRtempCM = 84.30911254882812
+LRtempCR = 84.93988037109375
+LRwearL = 0.9814581871032715
+LRwearM = 0.9768003821372986
+LRwearR = 0.9759828448295593
+LRshockDefl = 0.10994278639554977
+LRshockDefl_ST = [0.10994305461645126, 0.10994300246238708, 0.1099429503083229, 0.10994289815425873, 0.10994283854961395, 0.10994278639554977]
+LRshockVel = -3.622033909778111e-05
+LRshockVel_ST = [-3.45693806593772e-05, -3.387444667168893e-05, -3.18295496981591e-05, -3.313800698379055e-05, -3.4774137020576745e-05, -3.622033909778111e-05]
+RRshockDefl = 0.11500371992588043
+RRshockDefl_ST = [0.11500360816717148, 0.11500360816717148, 0.11500366777181625, 0.11500371992588043, 0.11500371992588043, 0.11500371992588043]
+RRshockVel = -1.3480762390827294e-05
+RRshockVel_ST = [-1.6862190022948198e-05, -8.127053661155514e-06, -3.380573616595939e-06, -6.493478394986596e-06, -1.0856560948013794e-05, -1.3480762390827294e-05]
+LFshockDefl = 0.10830345004796982
+LFshockDefl_ST = [0.10830317437648773, 0.10830321907997131, 0.1083032637834549, 0.10830340534448624, 0.10830345004796982, 0.10830345004796982]
+LFshockVel = 2.6858535875362577e-06
+LFshockVel_ST = [-8.139882083924022e-06, 3.3692434953991324e-05, 5.753391087637283e-05, 4.2257801396772265e-05, 1.702108966128435e-05, 2.6858535875362577e-06]
+RFshockDefl = 0.10180801898241043
+RFshockDefl_ST = [0.10180820524692535, 0.10180820524692535, 0.1018081083893776, 0.10180801898241043, 0.10180796682834625, 0.10180801898241043]
+RFshockVel = 4.362175241112709e-05
+RFshockVel_ST = [5.6391520047327504e-05, 1.349722697341349e-05, -1.4729251233802643e-05, -2.55625286627037e-06, 2.6010762667283416e-05, 4.362175241112709e-05]
+
+
+===== SESSION INFO YAML =====
+
+CurrentSessionNum: 0
+Sessions:
+- SessionNum: 0
+  SessionLaps: unlimited
+  SessionTime: unlimited
+  SessionNumLapsToAvg: 0
+  SessionType: Offline Testing
+  SessionTrackRubberState: low usage
+  SessionName: TESTING
+  SessionSubType: null
+  SessionSkipped: 0
+  SessionRunGroupsUsed: 0
+  SessionEnforceTireCompoundChange: 0
+  ResultsPositions:
+  - Position: 1
+    ClassPosition: 0
+    CarIdx: 0
+    Lap: 3
+    Time: 96.9948
+    FastestLap: 3
+    FastestTime: 96.9948
+    LastTime: 96.9948
+    LapsLed: 0
+    LapsComplete: 3
+    JokerLapsComplete: 0
+    LapsDriven: 0.0
+    Incidents: 0
+    ReasonOutId: 0
+    ReasonOutStr: Running
+  ResultsFastestLap:
+  - CarIdx: 0
+    FastestLap: 3
+    FastestTime: 96.9948
+  ResultsAverageLapTime: -1.0
+  ResultsNumCautionFlags: 0
+  ResultsNumCautionLaps: 0
+  ResultsNumLeadChanges: 0
+  ResultsLapsComplete: -1
+  ResultsOfficial: 0

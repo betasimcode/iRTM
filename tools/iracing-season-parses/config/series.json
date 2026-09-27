@@ -1,0 +1,31 @@
+{
+    "season": {
+        "weeks": 12
+    },
+    "series": [
+        {
+            "iracing_series_id": 35,
+            "page": 144,
+            "end": 144,
+            "header": "Motorsport UK FF 1600 Trophy by Thrustmaster"
+        },
+        {
+            "iracing_series_id": 37,
+            "page": 145,
+            "end": 145,
+            "header": "Skip Barber Race Series"
+        },
+        {
+            "iracing_series_id": 9,
+            "page": 149,
+            "end": 149,
+            "header": "Formula C - Dallara F3 Series"
+        },
+        {
+            "iracing_series_id": 33,
+            "page": 155,
+            "end": 155,
+            "header": "iRacing Lotus 79 Grand Prix Series"
+        }
+    ]
+}

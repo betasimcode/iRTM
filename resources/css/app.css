@@ -1,0 +1,1612 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+@import "flag-icons/css/flag-icons.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.font-mono-timing {
+    font-family: 'JetBrains Mono', monospace;
+}
+.font-courier {
+    font-family: 'Courier New', monospace;
+}
+.font-microsport {
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 900;
+    font-style: normal;
+}
+
+/* .font-microsport {
+    font-family: 'microsport';
+    src: url(../fonts/microsport.ttf) format('ttf');
+    font-weight: bold;
+} */
+
+@layer components {
+
+    .sidebar-link {
+        @apply flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:bg-[var(--hover)] hover:text-[var(--text-h)] transition;
+    }
+
+    .sidebar-label {
+        @apply flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-gray-400 transition;
+    }
+
+    .sidebar-active {
+        @apply bg-gray-700 text-white;
+    }
+
+    .sidebar-section {
+        @apply px-4 pt-6 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider;
+    }
+
+
+}
+
+:root {
+    --value-font: "Courier New", monospace;
+}
+
+.setup-grid>div {
+    min-width: 0;
+}
+
+.text-xxs {
+    font-size: xx-small;
+}
+
+.track-map {
+    width: 800px;
+}
+
+.setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-areas:
+
+        "session session front_aero front_aero config config"
+
+        "fl_tyre fl_susp fl_dampers fr_dampers fr_susp fr_tyre"
+
+        "fl_tyre fl_susp front_dampers front_dampers fr_susp fr_tyre"
+
+        "fl_tyre fl_susp front_chassis front_chassis fr_susp fr_tyre"
+
+        ". diff main_chassis main_chassis drive_train ."
+
+        "rl_tyre rl_susp rear_chassis rear_chassis rr_susp rr_tyre"
+
+        "rl_tyre rl_susp rear_dampers rear_dampers rr_susp rr_tyre"
+
+        "rl_tyre rl_susp rl_dampers rr_dampers rr_susp rr_tyre"
+
+        ". . rear_aero rear_aero . .";
+
+    gap: 15px;
+}
+
+.view-drive_train {
+    grid-template-areas:
+        "session session session . . ."
+
+        "diff . drive_train . . .";
+}
+
+.view-tyres {
+    grid-template-areas:
+        "session session . . . ."
+        "fl_tyre fr_tyre . . ."
+        "rl_tyre rr_tyre . . .";
+}
+
+.view-susp {
+    grid-template-areas:
+        "session session . . . ."
+        "fl_susp front_dampers front_dampers fr_susp . ."
+        "fl_susp . . fr_susp . ."
+        "rl_susp rear_dampers rear_dampers rr_susp . ."
+        "rl_susp . . rr_susp . .";
+
+}
+
+.view-chassis {
+    grid-template-areas:
+        "session session . . . ."
+        ". front_chassis front_chassis . . ."
+        ". main_chassis main_chassis . . ."
+        ". rear_chassis rear_chassis . . .";
+}
+
+.view-aero {
+    grid-template-areas:
+        "session session . . . ."
+        ". front_aero front_aero . . ."
+        ". rear_aero rear_aero . . ."
+        ". config config . . ."
+        ". config config . . .";
+}
+
+.view-config {
+    grid-template-areas:
+        "session session . . . ."
+        ". config config . . ."
+        ". config config . . .";
+}
+
+
+
+.no-front-dampers {
+    grid-template-areas:
+
+        "session session front_aero front_aero config config"
+
+        "fl_tyre fl_susp fl_dampers fr_dampers fr_susp fr_tyre"
+
+        "fl_tyre fl_susp front_chassis front_chassis fr_susp fr_tyre"
+
+        ". diff main_chassis main_chassis drive_train ."
+
+        "rl_tyre rl_susp rear_chassis rear_chassis rr_susp rr_tyre"
+
+        "rl_tyre rl_susp rl_dampers rr_dampers rr_susp rr_tyre"
+
+        ". . . .  . ."
+
+        ". . rear_aero rear_aero . .";
+}
+
+.no-rear-dampers {
+    grid-template-areas:
+
+        "session session front_aero front_aero config config"
+
+        "fl_tyre fl_susp fl_dampers fr_dampers fr_susp fr_tyre"
+
+        "fl_tyre fl_susp front_chassis front_chassis fr_susp fr_tyre"
+
+        ". diff main_chassis main_chassis drive_train ."
+
+        "rl_tyre rl_susp rear_chassis rear_chassis rr_susp rr_tyre"
+
+        "rl_tyre rl_susp rl_dampers rr_dampers rr_susp rr_tyre"
+
+        ". . . .  . ."
+
+        ". . rear_aero rear_aero . .";
+}
+
+
+
+.tyre-block {
+    background: #404040;
+    border-radius: 32px;
+    padding: 10px;
+    border: 3px solid #606060;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 3px 3px 5px #131313a8;
+}
+
+.susp-block {
+    border-radius: 1px;
+    border: 2px solid #575757;
+    padding: 10px;
+    color: #131313;
+    font-size: 14px;
+}
+
+.chasis-block {
+    border-radius: 8px;
+    border: 2px solid #3f14ffFF;
+    padding: 10px;
+    color: #404040;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.drive-train {
+    background: #68656583;
+    border-radius: 8px;
+    border: 2px solid #3f14ffFF;
+    padding: 10px;
+    color: #000000;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.damper-block {
+    border-radius: 8px;
+    border: 2px solid rgb(255, 36, 20);
+    padding: 10px;
+    color: #404040;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.data {
+    border-radius: 8px;
+    border: 2px solid rgb(20, 255, 59);
+    padding: 10px;
+    color: #404040;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.config-block {
+    border-radius: 8px;
+    border: 2px solid rgb(20, 255, 59);
+    padding: 10px;
+    color: #404040;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.aero-block {
+
+    border-radius: 8px;
+    border: 1px solid #638349;
+    padding: 10px;
+    color: #131313;
+    font-size: 14px;
+}
+
+.setup-block {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    background: #fafafa;
+}
+
+.setup-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.setup-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.session-block {
+    grid-area: session;
+}
+
+.front-aero {
+    grid-area: front_aero;
+}
+
+.telemetry-block {
+    grid-area: telemetry;
+}
+
+.fl-tyre {
+    grid-area: fl_tyre;
+}
+
+.fl-susp {
+    grid-area: fl_susp;
+}
+
+.front-dampers {
+    grid-area: front_dampers;
+}
+
+.fr-dampers {
+    grid-area: fr_dampers;
+}
+
+.fl-dampers {
+    grid-area: fl_dampers;
+}
+
+.front-chassis {
+    grid-area: front_chassis;
+}
+
+.fr-susp {
+    grid-area: fr_susp;
+}
+
+.fr-tyre {
+    grid-area: fr_tyre;
+}
+
+.main-chassis {
+    grid-area: main_chassis;
+}
+
+.config {
+    grid-area: config;
+}
+
+.rl-tyre {
+    grid-area: rl_tyre;
+}
+
+.rl-susp {
+    grid-area: rl_susp;
+}
+
+.rear-chassis {
+    grid-area: rear_chassis;
+}
+
+.drive-train {
+    grid-area: drive_train;
+}
+
+.diff {
+    grid-area: diff;
+}
+
+.data {
+    grid-area: data;
+}
+
+.rear-dampers {
+    grid-area: rear_dampers;
+}
+
+.rr-dampers {
+    grid-area: rr_dampers;
+}
+
+.rl-dampers {
+    grid-area: rl_dampers;
+}
+
+.rr-susp {
+    grid-area: rr_susp;
+}
+
+.rr-tyre {
+    grid-area: rr_tyre;
+}
+
+.rear-aero {
+    grid-area: rear_aero;
+}
+
+.active-tab {
+    background-color: #2563eb;
+    color: white;
+}
+
+/* DEFAULT */
+:root {
+    --bg: #ffffff;
+    --card: #f3f4f6;
+    --text: #111827;
+    --accent: #3b82f6;
+}
+
+/* ocultar todos */
+.theme-logo {
+    display: none;
+}
+
+/* DARK */
+.theme-dark .logo-dark {
+    display: block;
+}
+
+/* LIGHT */
+.theme-monaco .logo-dark {
+    display: block;
+}
+
+/* IRACING */
+.theme-iracing .logo-light {
+    display: block;
+}
+
+.card-min {
+    min-width: 500px;
+}
+
+.button-min {
+    min-width: 200px;
+}
+
+.value-font {
+    --value-font: font-family:"Courier New", monospace;
+}
+
+/* DARK */
+.theme-dark {
+    /* BASE */
+    --bg: #1c222e;
+    --header: #1c222e;
+    --hover: #bebebe;
+    --base: rgb(40, 47, 61);
+    --card: #343f55;
+    --card-title: #2e374a;
+    --card-hover: #13171f;
+    --div: #38393b;
+
+    /* TEXT */
+    --text: #bebebe;
+    --text-topbar: #9ca3af;
+    --text-h: #405f72;
+    --text-logout-h: #e7e7e7;
+    --text-card-title: #c86260;
+    --text-title: #6f99b3;
+    --text-muted: #9ca3af;
+    --text-soft: #6b7280;
+
+    /* Track Map */
+    --active:#fefefe;
+    --inactive:#6d6d6d;
+    --buildings:#272c2e;
+    --ground:#435059;
+    --water:#5f9fc8;
+    --pit:#db3e3e;
+    --startline:#1eff00;
+    --mergeline:#385cc8;
+    --leyend:#e4f3ff;
+
+    /* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#6fa0b4;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#cf69694a;
+    --bsafe:#867e50fa;
+    --tinfo-a:#262f3f;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#1c222e;
+    --btn-app-hov:#303a4d;
+
+    /*     SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #384b56;
+
+    /* Text FORMS-VALUES */
+    --value-data: #ffffff;
+    --value-info: #2fbbc0;
+
+    /* BADGES */
+    --badge: #1c222e;
+    --badge-b: #364157;
+    --badge-text: rgb(190, 190, 190);
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: rgb(68, 74, 76);
+    --b-header: #405f72;
+    --b-card: rgb(18, 24, 36);
+    --b-card-light: #3f4c66;
+    --b-strong: #4b5563;
+
+    --closed: #a52f2f;
+    --pending: #cc9828;
+    --open: #35bb29;
+    --waiting: #d4601d;
+    --live: #117a18;
+    --ended: #c74343;
+
+    /* LIC CLASS */
+    --A: #5683cb;
+    --B: #3ca43d;
+    --C: #aba443;
+    --D: #bf8859;
+    --ROOKIE: #de5b5b;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #a855f7;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #405f72;
+    --btn-logout-h: #ef4444;
+    --btn-cancel:#713c3c;
+    --btn-cancel-h:#8f4c4c;
+    --btn-confirm:#36516d;
+    --btn-confirm-h:#426284;
+    --btn-text-logout-h: #ffffff;
+    --btn-bg: #ef4444;
+    --btn-hover: #dc2626;
+    --btn-text: #ffffff;
+    --btn-active: rgb(239, 68, 68);
+
+    /* INPUTS */
+    --input-bg: #1f2937;
+    --input-border: #4a576c;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* IRACING */
+.theme-iracing {
+
+    /* BASE */
+    --bg: #f9fbff;
+    --header: #f9fbff;
+    --hover: #1b3256;
+    --base: #e5e7eb;
+    --card: #eff1f5;
+    --card-header: #cacccf;
+    --card-title: #1b3256;
+    --card-hover: #c2c9d8;
+    --div: #ced3e0;
+
+    /* TEXT */
+    --text: #868686;
+    --text-topbar: #9ca3af;
+    --text-h: #c0c0c0;
+    --text-logout-h: #e7e7e7;
+    --text-card-title: #8dacdd;
+    --text-title: #1b3256;
+    --text-muted: #c3c3c3;
+    --text-soft: #6b7280;
+    --text-link:#2e43ff;
+
+    /* Track Map */
+    --active:#101010;
+    --inactive:#adadad;
+    --buildings:#848d91;
+    --ground:#c6c8bb;
+    --water:#549ed2;
+    --pit:#db3e3e;
+    --startline:#1eff00;
+    --mergeline:#385cc8;
+    --leyend:#530a0a;
+
+    /* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#c9caec;
+    --btn-app-hov:rgb(166, 169, 255);
+
+    /*     SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #e7e8eb;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #060606;
+    --text-model: #1b3256;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #c6c6c6;
+
+    /* Text FORMS-VALUES */
+    --value-data: #252525;
+    --value-info: #148e92;
+
+    /* BADGES */
+    --badge: #f2f6fa;
+    --badge-b: #1b3256;
+    --badge-text: #1b3256;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #bcc2c4;
+    --b-header: #1b3256;
+    --b-card: #1b325631;
+    --b-strong: #4b5563;
+    --b-card-light: #dadce2;
+
+    --closed: #a52f2f;
+    --pending: #9b782d;
+    --open: #35bb29;
+    --waiting: #5b8ff0;
+    --live: #117a18;
+    --ended: #862525;
+
+    /* LIC CLASS */
+    --A: #0153db;
+    --B: #00c702;
+    --C: #bdb109;
+    --D: #fc8a27;
+    --ROOKIE: #FC0706;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --wet-bg:#70deff;
+    --wet-b:#0f449b;
+    --wet-text:#0f449b;
+    --dry-bg:#d1cdb4;
+    --dry-b:#8f7528;
+    --dry-text:#8f7528;
+
+    /* TELEMETRY */
+    --lap-best: #a855f7;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #4c557a;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #1b3256;
+    --btn-logout-h: #335996;
+    --btn-text-logout-h: #ffffff;
+    --btn-bg: #1b3256;
+    --btn-hover: #3561a7;
+    --btn-text: #ffffff;
+    --btn-active: rgb(48, 74, 117);
+
+    /* INPUTS */
+    --input-bg: #d8d8d8;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+    --input-text: #131313;
+    /* SHADOW */
+    --shadow: #00000059;
+    --card-shadow: 1px 2px 8px 1px rgba(14, 14, 14, 0.149);
+}
+
+/* TEAM monaco */
+.theme-monaco {
+    /* BASE */
+    --bg: #f9fbff;
+    --header: #f9fbff;
+    --hover: #ca3232;
+    --base: #f5f5f5;
+    --card: #f3f3f3;
+    --card-title: #ca3232;
+    --card-hover: rgb(224, 224, 230);
+    --div: #e3e5ec;
+
+    /* TEXT */
+    --text: #524040;
+    --text-topbar: #9ca3af;
+    --text-h: #f9fbff;
+    --text-logout-h: #e7e7e7;
+    --text-card-title: #ca3232;
+    --text-title: #ca3232;
+    --text-muted: #9ca3af;
+    --text-soft: #6b7280;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#e3e1e1;
+    --btn-app-hov:#161616;
+
+    /*     SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #909ca3;
+
+    /* Text FORMS-VALUES */
+    --value-data: #317fdf;
+    --value-info: #13898d;
+
+    /* BADGES */
+    --badge: rgb(242, 246, 250);
+    --badge-b: #ca3232;
+    --badge-text: #272727;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: rgb(188, 194, 196);
+    --b-header: #ca3232;
+    --b-card: #1b325631;
+    --b-strong: #4b5563;
+    --b-card-light: #e4e4dd;
+
+    --closed: #a52f2f;
+    --pending: #b49b2a;
+    --open: #35bb29;
+    --waiting: #b67347;
+    --live: #117a18;
+    --ended: #691313;
+
+    /* LIC CLASS */
+    --A: #0153db;
+    --B: #00c702;
+    --C: #c4bc4d;
+    --D: #fc8a27;
+    --ROOKIE: #FC0706;
+
+    /* STATES */
+    --success: #063317;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #c081ff;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #513657;
+    --fuel: #1b9247;
+
+    /* BUTTONS */
+    --btn-logout: #772828;
+    --btn-logout-h: #ca3232;
+    --btn-text-logout-h: #ffffff;
+    --btn-bg: #ef4444;
+    --btn-hover: #dc2626;
+    --btn-text: #ffffff;
+    --btn-active: #ca3232;
+    ;
+    /* INPUTS */
+    --input-bg: #1f2937;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* TEAM monza */
+.theme-monza {
+    /* BASE */
+    --bg: #334753;
+    --header: #334753;
+    --hover: #405766;
+    --base: #394d5a;
+
+    --card: #405766;
+    --card-title: #aebfc9;
+    --card-hover: #4a6374;
+    --div: #243038;
+
+    /* TEXT */
+    --text: #9ca3af;
+    --text-topbar: #9ca3af;
+    --text-logout-h: #e7e7e7;
+    --text-h: #e7e7e7;
+    --text-title: #ffffff;
+    --text-card-title: #eef0f1;
+    --text-muted: #9ca3af;
+    --text-soft: #8b9099;
+
+    /* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#6fa0b4;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#6da180;
+    --bdang:#cf69694a;
+    --bsafe:#867e50fa;
+    --tinfo-a:#262f3f;
+    --tinfo-b:#8b9099;
+
+    /*TOOLS*/
+    --btn-app:#3d41c7;
+    --btn-app-hov:#464bd3;
+
+
+    /*     SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #909ca3;
+
+    /* Text FORMS-VALUES */
+    --value-data: #d3d3d3;
+    --value-info: #2fbbc0;
+
+    /* BADGES */
+    --badge: #526f81;
+    --badge-b: #334753;
+    --badge-text: #e6e6e6;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #243038;
+    --b-header: #202d35;
+    --b-card: #243038;
+    --b-strong: #4b5563;
+    --b-card-light: #445e6e;
+
+    --closed: #dd5858;
+    --pending: #b49b2a;
+    --open: #35bb29;
+    --waiting: #b67347;
+    --live: #117a18;
+    --ended: #311414;
+
+
+    /* LIC CLASS */
+    --A: #6b98e1;
+    --B: rgb(71, 217, 74);
+    --C: #dcd359;
+    --D: #d59257;
+    --ROOKIE: #e86666;
+
+    --AT: #ffffff;
+    --BT: #ffffff;
+    --CT: #131313;
+    --DT: #ffffff;
+    --RT: #ffffff;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #c180ff;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #9fb5ff;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #1c262c;
+    --btn-logout-h: #526f81;
+    --btn-text-logout-h: #ffffff;
+    --btn-bg: #364855;
+    --btn-hover: #618297;
+    --btn-text: #ffffff;
+    --btn-active: #aebfc9;
+
+    /* INPUTS */
+    --input-bg: #232e3d;
+    --input-border: #586883;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* TEAM laguna */
+.theme-laguna {
+    /* BASE */
+    --bg: #70726b;
+    --header: #494b46;
+    --hover: #4b4d48;
+    --base: #666862;
+    --card: #a0a399;
+    --card-title: #131822;
+    --card-hover: #84867e;
+    --div: #52534f;
+
+
+    /* TEXT */
+    --text: #3b3b39;
+    --text-topbar: #9ca3af;
+    --text-h: #e7e7e7;
+    --text-logout-h: #e7e7e7;
+    --text-title: #ffffff;
+    --text-muted: #9ca3af;
+    --text-soft: #afafae;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#989a95;
+    --btn-app-hov:#666662;
+
+    /* SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #909ca3;
+
+
+    /* Text FORMS-VALUES */
+    --value-data: #818d9b;
+    --value-info: #2fbbc0;
+
+    /* BADGES */
+    --badge: #8d8f87;
+    --badge-b: #3b3b39;
+    --badge-text: #3b3b39;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #a4a79e;
+    --b-header: #202d35;
+    --b-card: #243038;
+    --b-strong: #4b5563;
+    --b-card-light: #5e615b;
+
+    --closed: #833737;
+    --pending: #e6f091;
+    --open: #89e280;
+    --waiting: #daa17b;
+    --live: #117a18;
+    --ended: #691313;
+
+
+    /* LIC CLASS */
+    --A: #84a4d8;
+    --B: #56c458;
+    --C: #b2a714;
+    --D: #e1a067;
+    --ROOKIE: #6d3131;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #6d0f0f;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #4c1f75;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #257342;
+
+    /* BUTTONS */
+    --btn-logout: #533b3b;
+    --btn-logout-h: #615555;
+    --btn-text-logout-h: #ffffff;
+    --btn-bg: #616155;
+    --btn-hover: #a59d8e;
+    --btn-text: #ffffff;
+    --btn-active: #533b3b;
+
+    /* INPUTS */
+    --input-bg: #1f2937;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* TEAM hockenheim */
+.theme-hock {
+    /* BASE */
+    --bg: #2c3b31;
+    --header: #2c3b31;
+    --hover: #243028;
+    --base: #253129;
+    --card: #1b231e;
+    --card-title: #b6ffc0;
+    --card-hover: #212c25;
+    --div: #243028;
+
+    /* TEXT */
+    --text: #528f5f;
+    --text-topbar: #b6ffc0;
+    --text-h: #39e95f;
+    --text-title: #b6ffc0;
+    --text-muted: #a0af9c;
+    --text-soft: #5a7a5e;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#3f9d5e;
+    --btn-app-hov:#26362c;
+
+    /* SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #abd3b1;
+    --value-drive: #abd3b1;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #ffffff;
+    --text-drive: #ffffff;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #4d5a4f;
+    --bg-drive: #374139;
+
+    /* Text FORMS-VALUES */
+    --value-data: #ffffff;
+    --value-info: #2fbbc0;
+
+    /* BADGES */
+    --badge: #2c3b31;
+    --badge-b: #243028;
+    --badge-text: #b6ffc0;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #526458;
+    --b-header: #93af9c;
+    --b-card: #243038;
+    --b-strong: #4b5563;
+    --b-card-light: #4a6453;
+
+    --closed: #be5454;
+    --pending: #f1ff6e;
+    --open: #5cff4a;
+    --waiting: #f3ae46;
+    --live: #117a18;
+    --ended: #271111;
+
+    --A: #4d85de;
+    --B: #00c702;
+    --C: #d9ce3f;
+    --D: #e27c23;
+    --ROOKIE: #be5454;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #6d0f0f;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #a855f7;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #5a7a5e;
+    --btn-logout-h: #b6ffc0;
+    --btn-text-logout-h: #131313;
+    --btn-bg: #87bd8f;
+    --btn-hover: #b6ffc0;
+    --btn-text: #2e5035;
+
+    /* INPUTS */
+    --input-bg: #1f2937;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* spa */
+.theme-spa {
+
+    /* BASE */
+    --bg: #b1b1ab;
+    --header: #242422;
+    --hover: #257436;
+    --base: #a0a09a;
+    --card: #767673;
+    --card-title: #1b3256;
+    --card-hover: #585454;
+    ;
+    --div: rgb(206, 211, 224);
+
+    /* TEXT */
+    --text: #0e0e0e;
+    --text-topbar: #e2c027;
+    --text-h: #d8dbb7;
+    --text-logout-h: #e7e7e7;
+    --text-title: #b81f1f;
+    --text-muted: #9ca3af;
+    --text-soft: #5c5c5c;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#e2c027;
+    --btn-app-hov:#c1b068;
+
+    /* SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #909ca3;
+
+
+    /* Text FORMS-VALUES */
+    --value-data: #ffffff;
+    --value-info: #0c4720;
+
+    /* BADGES */
+    --badge: #6e6464;
+    --badge-b: #817b5c;
+    --badge-text: #e2c027;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #817b5c;
+    --b-header: #e2c027;
+    --b-card: rgba(27, 50, 86, 0.192);
+    --b-strong: #4b5563;
+    --b-card-light: #c2c2bc;
+
+    --closed: #a52f2f;
+    --pending: #f1ff6e;
+    --open: #0e7502;
+    --waiting: #7a5927;
+    --live: #117a18;
+    --ended: #691313;
+
+    /* LIC CLASS */
+    --A: #184182;
+    --B: #207021;
+    --C: #746e1e;
+    --D: #884f1c;
+    --ROOKIE: #902c2c;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ac4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #8940cc;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #28884b;
+
+    /* BUTTONS */
+    --btn-logout: #e2c027;
+    --btn-logout-h: #f1e4a9;
+    --btn-text-logout-h: #1b3256;
+    --btn-bg: #257436;
+    --btn-hover: #e2c027;
+    --btn-text: #0c2411;
+    --btn-active: rgb(48, 74, 117);
+
+    /* INPUTS */
+    --input-bg: #a0a09a;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+.theme-jerez {
+    /* BASE */
+    --bg: #123d61;
+    --header: #305574;
+    --hover: #eca92b;
+    --base: #305574;
+    --card: #123552;
+    --card-title: #eca92b;
+    --card-hover: #1e5683;
+    --div: #305574;
+
+    /* TEXT */
+    --text: #eca92b;
+    --text-topbar: #9ca3af;
+    --text-h: #000000;
+    --text-logout-h: #e7e7e7;
+    --text-title: #ececec;
+    --text-muted: #9ca3af;
+    --text-soft: #b0c2d1;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#123d61;
+    --btn-app-hov:#eca92b;
+
+    /* SETUP VIEWER   */
+    --value-aero: #35abbb;
+    --value-config: #0d3057;
+    --value-tyre: #2fc9dd;
+    --value-telemetry: #7be080;
+    --value-susp: #afe5f8;
+    --value-chassis: #24272e;
+    --value-drive: #24272e;
+
+    --text-aero: #adb4c0;
+    --text-config: #3f4146;
+    --text-tyre: #8b9099;
+    --text-setup: #8b9099;
+    --text-telemetry: #9ca3af;
+    --text-susp: #f1cf09;
+    --text-chassis: #24272e;
+    --text-drive: #121316;
+    --text-model: #ffffff;
+
+    --bg-telemetry: #163b19;
+    --bg-aero: #2e5775;
+    --bg-config: #e4e4e4;
+    --bg-tyre: #1d272e;
+    --bg-susp: #58778b;
+    --bg-chassis: #aebfc9;
+    --bg-drive: #374147;
+
+    /* Text FORMS-VALUES */
+    --value-data: #ffffff;
+    --value-info: #2fbbc0;
+
+    /* BADGES */
+    --badge: #131313;
+    --badge-b: #909090;
+    --badge-text: #eca92b;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #195586;
+    --b-header: #123d61;
+    --b-card: #74a5f331;
+    --b-strong: #4b5563;
+    --b-card-light: #1a4568;
+
+    --closed: #a54e4e;
+    --pending: #3d98ff;
+    --open: #61d355;
+    --waiting: #cfc530;
+    --live: #117a18;
+    --ended: #8d5151;
+
+    /* LIC CLASS */
+    --A: #5287dd;
+    --B: #00c702;
+    --C: #feec04;
+    --D: #fc8a27;
+    --ROOKIE: #dc5656;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #a855f7;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #084b79;
+    --btn-logout-h: #35a0e7;
+    --btn-text-logout-h: #131313;
+    --btn-bg: #be8926;
+    --btn-hover: #1e5683;
+    --btn-text: #ffffff;
+    --btn-active: #ca3232;
+
+    /* INPUTS */
+    --input-bg: #3e6788;
+    --input-dis: #394d5e;
+    --input-border: #2177bd;
+    --input-focus: #ef4444;
+    --text-input: #ffffff;
+
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* CRT GREEN */
+.theme-crtg {
+    /* BASE */
+    --bg: #273d2f;
+    --header: #273d2f;
+    --hover: #48ff00;
+    --base: #213127;
+    --card: #273d2f;
+    --card-title: #48ff00;
+    --card-hover: #4c773c;
+    ;
+    --div: rgb(206, 211, 224);
+
+    /* TEXT */
+    --text: #20b459;
+    --text-topbar: #48ff00;
+    --text-h: #273d2f;
+    --text-logout-h: #e7e7e7;
+    --text-title: #48ff00;
+    --text-muted: #9ca3af;
+    --text-soft: #428627;
+
+/* PLANIFICADOR ESTRATEGIA*/
+    --binfo-a:#85a9b7;
+    --binfo-b:#aec6cf;
+    --bbase:#1f2937;
+    --bcons:#86efac;
+    --bdang:#b36c6cbf;
+    --bsafe:#d4c260fa;
+    --tinfo-a:#ffffff;
+    --tinfo-b:#8b9099;
+    /*TOOLS*/
+    --btn-app:#254330;
+    --btn-app-hov:#48ff00;
+
+    /* Text FORMS-VALUES */
+    --value-data: #ffffff;
+    --value-info: #38ff63;
+
+    /* BADGES */
+    --badge: #405548;
+    --badge-b: #5ca042;
+    --badge-text: #48ff00;
+
+    /* BRAND */
+    --accent: #ef4444;
+    --accent-hover: #dc2626;
+
+    /* BORDERS */
+    --border: #3a5c46;
+    --b-header: #48ff00;
+    --b-card: #314d3b;
+    --b-strong: #4b5563;
+    --b-card-light: #375241;
+
+    --closed: #ffffff;
+    --pending: #ffffff;
+    --open: #ffffff;
+    --waiting: #ffffff;
+    --live: #ffffff;
+    --ended: #ffffff;
+
+    /* LIC CLASS */
+    --A: #6a9ef1;
+    --B: #00c702;
+    --C: #fdf581;
+    --D: #fcaf6c;
+    --ROOKIE: #fc7c7c;
+
+    /* STATES */
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* TELEMETRY */
+    --lap-best: #a855f7;
+    --lap-valid: #22c55e;
+    --lap-invalid: #ef4444;
+    --lap-avg: #e6e6e6;
+    --fuel: #22c55e;
+
+    /* BUTTONS */
+    --btn-logout: #213127;
+    --btn-logout-h: #48ff00;
+    --btn-text-logout-h: #1d2e17;
+    --btn-bg: #ef4444;
+    --btn-hover: #dc2626;
+    --btn-text: #48ff00;
+    --btn-active: rgb(48, 74, 117);
+
+    /* INPUTS */
+    --input-bg: #1f2937;
+    --input-border: #374151;
+    --input-focus: #ef4444;
+
+    /* SHADOW */
+    --shadow: rgba(0, 0, 0, 0.35);
+}
+
+.test {
+    background-color: #000000;
+}
+
+/* /////////////////////////////////////////////////////////////////////////////////////
+/* Scrollbar */
+
+::-webkit-scrollbar {
+
+    height: 10px;
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+
+    background: var(--base);
+}
+
+::-webkit-scrollbar-thumb {
+
+    background: var(--b-card);
+
+    border-radius: 999px;
+
+    border: 2px solid var(--base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+    background: var(--value-info);
+}

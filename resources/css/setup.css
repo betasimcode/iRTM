@@ -1,0 +1,18 @@
+.setup-block {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    background: #fafafa;
+}
+
+.setup-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.setup-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}

@@ -317,6 +317,20 @@ Route::group([
         Route::get('/championships/{series}/sessions', [CompetitionToolController::class, 'sessions',])
             ->name('teamcenter.championships.sessions');
 
+        // STRATEGY
+
+        Route::get('/championships/{series}/strategy', [CompetitionToolController::class, 'strategy'])
+            ->name('teamcenter.championships.strategy');
+
+        Route::post('/championships/{series}/strategy', [CompetitionToolController::class, 'strategyUpdate'])
+            ->name('teamcenter.championships.strategy.update');
+
+        Route::post('/championships/{series}/strategy/reset', [CompetitionToolController::class, 'strategyReset'])
+            ->name('teamcenter.championships.strategy.reset');
+
+        Route::post('/championships/{series}/strategy/favorite', [CompetitionToolController::class, 'strategyFavorite'])
+            ->name('teamcenter.championships.strategy.favorite');
+
     });
 
 

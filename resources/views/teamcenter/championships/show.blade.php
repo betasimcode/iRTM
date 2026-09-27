@@ -364,81 +364,165 @@
     </section>
 
 
-    {{-- COMPETITION TOOLS --}}
+
+{{-- COMPETITION TOOLS --}}
+
 <div
     x-data="{
-    activeTool: null,
-    toolContent: '',
-    loading: false,
+        activeTool: null,
+        toolContent: '',
+        loading: false,
 
-    open(tool) {
-        this.activeTool = tool;
-        this.toolContent = '';
-        this.loading = false;
-    },
+        async loadTool(url, tool) {
+            this.activeTool = tool;
+            this.loading = true;
+            this.toolContent = '';
 
-    async openSessions(url) {
-        this.activeTool = 'sessions';
-        this.loading = true;
-        this.toolContent = '';
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    }
+                });
 
-        console.log('Sessions URL:', url);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
 
-        try {
-            const response = await fetch(url, {
+                this.toolContent = await response.text();
+
+            } catch (error) {
+                console.error(error);
+
+                this.toolContent =
+                    '<div class=\'rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center text-red-400\'>'
+                    + 'No se ha podido cargar el contenido.'
+                    + '</div>';
+
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        open(tool) {
+            this.activeTool = tool;
+            this.toolContent = '';
+            this.loading = false;
+        },
+
+        openSessions(url) {
+            this.loadTool(url, 'sessions');
+        },
+
+        openStrategy(url) {
+            this.loadTool(url, 'strategy');
+        },
+
+        async submitStrategy(event) {
+            const form = event.target;
+
+            if (!(form instanceof HTMLFormElement)) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const method = (form.method || 'GET').toUpperCase();
+            const formData = new FormData(form);
+            let url = form.action;
+
+            const options = {
+                method: method,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'text/html'
                 }
-            });
+            };
 
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
+            if (method === 'GET') {
+                const params = new URLSearchParams();
+
+                for (const [key, value] of formData.entries()) {
+                    params.append(key, value);
+                }
+
+                if (params.toString() !== '') {
+                    url += (url.includes('?') ? '&' : '?')
+                        + params.toString();
+                }
+
+            } else {
+                options.body = formData;
             }
 
-            this.toolContent = await response.text();
+            this.loading = true;
 
-        } catch (error) {
-            console.error(error);
+            try {
+                const response = await fetch(url, options);
 
-            this.toolContent =
-                '<p class=text-red-400>' +
-                'No se ha podido cargar Sessions.' +
-                '</p>';
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
 
-        } finally {
+                this.toolContent = await response.text();
+
+            } catch (error) {
+                console.error(error);
+
+                this.toolContent =
+                    '<div class=\'rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center text-red-400\'>'
+                    + 'No se ha podido actualizar la estrategia.'
+                    + '</div>';
+
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        close() {
+            this.activeTool = null;
+            this.toolContent = '';
             this.loading = false;
         }
-    },
+    }"
 
-    close() {
-        this.activeTool = null;
-        this.toolContent = '';
-        this.loading = false;
-    }
-}"
+    data-sessions-url="{{ route(
+        'teamcenter.championships.sessions',
+        ['series' => $series->id]
+    ) }}"
 
+    data-strategy-url="{{ route(
+        'teamcenter.championships.strategy',
+        ['series' => $series->id]
+    ) }}"
 
-
-    data-sessions-url="{{ route('teamcenter.championships.sessions', ['series' => $series->id]) }}"
     class="mt-5"
 >
+
+    {{-- TOOL BUTTONS --}}
 
     <div class="flex flex-wrap gap-3">
 
         {{-- SESSIONS --}}
 
-    <button
-    type="button"
-    data-sessions-url="{{ route('teamcenter.championships.sessions', ['series' => $series->id]) }}"
-    @click="openSessions($el.dataset.sessionsUrl)"
-    class="w-32 px-4 py-2 uppercase font-microsport text-center rounded-lg
-           border border-[var(--border)] bg-[var(--btn-app)]
-           text-sm text-[var(--text-title)]
-           hover:bg-[var(--btn-app-hov)] transition"
->
-    Sessions
-</button>
+        <button
+            type="button"
+            data-sessions-url="{{ route(
+                'teamcenter.championships.sessions',
+                ['series' => $series->id]
+            ) }}"
+            @click="openSessions($el.dataset.sessionsUrl)"
+            class="w-32 px-4 py-2 uppercase font-microsport
+                   text-center rounded-lg
+                   border border-[var(--border)]
+                   bg-[var(--btn-app)]
+                   text-sm text-[var(--text-title)]
+                   hover:bg-[var(--btn-app-hov)] transition"
+        >
+            Sessions
+        </button>
 
 
         {{-- STINTS --}}
@@ -446,8 +530,10 @@
         <button
             type="button"
             @click="open('stints')"
-            class="w-32 px-4 py-2 uppercase font-microsport text-center rounded-lg
-                   border border-[var(--border)] bg-[var(--btn-app)]
+            class="w-32 px-4 py-2 uppercase font-microsport
+                   text-center rounded-lg
+                   border border-[var(--border)]
+                   bg-[var(--btn-app)]
                    text-sm text-[var(--text-title)]
                    hover:bg-[var(--btn-app-hov)] transition"
         >
@@ -459,9 +545,15 @@
 
         <button
             type="button"
-            @click="open('strategy')"
-            class="w-32 px-4 py-2 uppercase font-microsport text-center rounded-lg
-                   border border-[var(--border)] bg-[var(--btn-app)]
+            data-strategy-url="{{ route(
+                'teamcenter.championships.strategy',
+                ['series' => $series->id]
+            ) }}"
+            @click="openStrategy($el.dataset.strategyUrl)"
+            class="w-32 px-4 py-2 uppercase font-microsport
+                   text-center rounded-lg
+                   border border-[var(--border)]
+                   bg-[var(--btn-app)]
                    text-sm text-[var(--text-title)]
                    hover:bg-[var(--btn-app-hov)] transition"
         >
@@ -508,23 +600,19 @@
                         class="text-lg font-semibold
                                text-[var(--text-card-title)]"
                     >
-                        <span
-                            x-show="activeTool === 'sessions'"
-                        >
+
+                        <span x-show="activeTool === 'sessions'">
                             Sessions
                         </span>
 
-                        <span
-                            x-show="activeTool === 'stints'"
-                        >
+                        <span x-show="activeTool === 'stints'">
                             Stints
                         </span>
 
-                        <span
-                            x-show="activeTool === 'strategy'"
-                        >
+                        <span x-show="activeTool === 'strategy'">
                             Strategy
                         </span>
+
                     </h3>
 
                     <p
@@ -539,6 +627,8 @@
 
                 </div>
 
+
+                {{-- CLOSE BUTTON --}}
 
                 <button
                     type="button"
@@ -557,7 +647,7 @@
             </div>
 
 
-            {{-- CONTENT --}}
+            {{-- MODAL CONTENT --}}
 
             <div
                 class="max-h-[calc(90vh-8rem)]
@@ -570,6 +660,7 @@
                     x-show="activeTool === 'sessions'"
                     class="p-6"
                 >
+
                     <template x-if="loading">
                         <div
                             class="rounded-xl
@@ -587,6 +678,7 @@
                         x-show="!loading && toolContent !== ''"
                         x-html="toolContent"
                     ></div>
+
                 </div>
 
 
@@ -604,10 +696,7 @@
                                p-8 text-center"
                     >
 
-                        <p
-                            class="text-sm
-                                   text-[var(--text-muted)]"
-                        >
+                        <p class="text-sm text-[var(--text-muted)]">
                             Stints
                         </p>
 
@@ -621,23 +710,31 @@
                 <div
                     x-show="activeTool === 'strategy'"
                     class="p-6"
+                    @submit.prevent="submitStrategy($event)"
                 >
 
-                    <div
-                        class="rounded-xl
-                               border border-[var(--border)]
-                               bg-[var(--bg)]
-                               p-8 text-center"
-                    >
+                    {{-- LOADING --}}
 
-                        <p
-                            class="text-sm
-                                   text-[var(--text-muted)]"
+                    <template x-if="loading">
+                        <div
+                            class="rounded-xl
+                                   border border-[var(--border)]
+                                   bg-[var(--bg)]
+                                   p-8 text-center"
                         >
-                            Strategy
-                        </p>
+                            <p class="text-sm text-[var(--text-muted)]">
+                                Cargando estrategia...
+                            </p>
+                        </div>
+                    </template>
 
-                    </div>
+
+                    {{-- STRATEGY CONTENT --}}
+
+                    <div
+                        x-show="!loading && toolContent !== ''"
+                        x-html="toolContent"
+                    ></div>
 
                 </div>
 

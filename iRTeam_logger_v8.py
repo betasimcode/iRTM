@@ -1730,6 +1730,70 @@ class MRTLogger:
                 self.session_registered = False
 
                 print("🟢 Estado inicial capturado")
+
+                # ==========================================
+                # 🏁 DEBUG RANK iRACING (SOLO LECTURA)
+                # ==========================================
+                try:
+
+                    # 1. DATOS DE LA SERIE Y TEMPORADA
+                    weekend_info = ir['WeekendInfo'] or {}
+
+                    series_id = weekend_info.get('SeriesID')
+                    season_id = weekend_info.get('SeasonID')
+
+                    print("\n🏁 ===== iRACING SERIES / RANK =====")
+                    print(f"📌 SeriesID: {series_id}")
+                    print(f"📅 SeasonID: {season_id}")
+
+                    # 2. IDENTIFICAR NUESTRO PILOTO
+                    driver_data = current_driver_data(ir)
+
+                    my_user_id = (
+                        driver_data.get("iracing_user_id")
+                        if driver_data
+                        else None
+                    )
+
+                    driver_info = ir['DriverInfo'] or {}
+                    drivers = driver_info.get('Drivers') or []
+
+                    my_driver = None
+
+                    if my_user_id is not None:
+
+                        my_driver = next(
+                            (
+                                d for d in drivers
+                                if str(d.get("UserID")) == str(my_user_id)
+                            ),
+                            None
+                        )
+
+                    # 3. IMPRIMIR RANK DEL PILOTO PROPIO
+                    if my_driver:
+
+                        division_id = my_driver.get('DivisionID')
+                        division_name = my_driver.get('DivisionName')
+
+                        print(f"👤 UserID: {my_user_id}")
+                        print(f"🏆 DivisionID: {division_id}")
+                        print(f"🏆 DivisionName: {division_name}")
+
+                    else:
+
+                        print(
+                            f"⚠️ No se encontró nuestro piloto "
+                            f"en DriverInfo. UserID={my_user_id}"
+                        )
+
+                    print("🏁 ================================\n")
+
+                except Exception as e:
+
+                    print(f"⚠️ Error leyendo Rank iRacing: {e}")
+
+
                 print(f"📍 Track en inicio de stint: {track_id}")
                 self.current_status = "Session Active"
                 # 🔥 CARGAR SECTORES AQUÍ (CLAVE)

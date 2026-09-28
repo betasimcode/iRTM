@@ -33,14 +33,12 @@
                            md:pr-6"
                 >
 
-                    <p
-                        class="text-4xl font-bold
-                               font-microsport
-                               text-[var(--text-title)]"
-                    >
-                        SEASON {{ $series->season_number }}
-                    </p>
+                    <a href="https://members-ng.iracing.com/web/racing/results-stats/official-series-standings/{{ $series->IracingSeries->iracing_series_id }}/season-standings">
 
+                        <p class="text-4xl font-bold font-microsport text-[var(--text-title)]">
+                            SEASON {{ $series->season_number }}
+                        </p>
+                    </a>
                     @if($series->rounds->isNotEmpty())
 
                         @php

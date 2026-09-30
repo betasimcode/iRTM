@@ -204,7 +204,6 @@
                         >
                             Team Competition
                         </p>
-
                         <p
                             class="mt-1 text-sm
                                    text-[var(--text-muted)]"

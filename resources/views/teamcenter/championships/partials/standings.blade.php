@@ -1,465 +1,405 @@
 @if(!$hasStandings)
 
-    <div
-        class="rounded-xl
-               border border-[var(--border)]
-               bg-[var(--bg)]
-               p-8 text-center"
-    >
-        <p class="text-sm text-[var(--text-muted)]">
+    <div class="py-12 text-center">
+        <div class="text-sm text-[var(--text-muted)]">
             No hay clasificación disponible para esta temporada.
-        </p>
+        </div>
     </div>
 
 @else
 
-@php
-    $countryFlags = [
-        'US'  => '🇺🇸',
-        'ENG' => '🏴',
-        'SCO' => '🏴',
-        'WAL' => '🏴',
-        'NIR' => '🇬🇧',
-
-        'ES' => '🇪🇸',
-        'FR' => '🇫🇷',
-        'DE' => '🇩🇪',
-        'IT' => '🇮🇹',
-        'PT' => '🇵🇹',
-        'NL' => '🇳🇱',
-        'BE' => '🇧🇪',
-        'AT' => '🇦🇹',
-        'CH' => '🇨🇭',
-        'SE' => '🇸🇪',
-        'NO' => '🇳🇴',
-        'DK' => '🇩🇰',
-        'FI' => '🇫🇮',
-        'PL' => '🇵🇱',
-        'CZ' => '🇨🇿',
-        'SK' => '🇸🇰',
-        'HU' => '🇭🇺',
-        'RO' => '🇷🇴',
-        'GR' => '🇬🇷',
-        'IE' => '🇮🇪',
-
-        'BR' => '🇧🇷',
-        'AR' => '🇦🇷',
-        'MX' => '🇲🇽',
-        'CL' => '🇨🇱',
-        'CO' => '🇨🇴',
-
-        'CA' => '🇨🇦',
-        'AU' => '🇦🇺',
-        'NZ' => '🇳🇿',
-        'JP' => '🇯🇵',
-        'KR' => '🇰🇷',
-        'CN' => '🇨🇳',
-        'SG' => '🇸🇬',
-        'IN' => '🇮🇳',
-        'ZA' => '🇿🇦',
-    ];
-@endphp
-
-    {{-- HEADER --}}
-
     <div
-        class="flex flex-col
-               md:flex-row
-               md:items-center
-               md:justify-between
-               gap-4
-               mb-6"
+        x-data="{ standingsTab: 'division' }"
+        class="space-y-5"
     >
 
-        {{-- <div>
-
-            <p
-                class="text-xs uppercase
-                       tracking-wider
-                       text-[var(--text-muted)]"
-            >
-                Season standings
-            </p>
-
-            <p
-                class="mt-1 text-lg
-                       font-semibold
-                       text-[var(--text-card-title)]"
-            >
-                {{ $series->iracingSeries->name }}
-            </p>
-
-        </div> --}}
-
-
-        @if($division !== null)
-
-            {{-- <div
-                class="inline-flex
-                       items-center
-                       rounded-lg
-                       border border-[var(--border)]
-                       bg-[var(--bg)]
-                       px-4 py-2"
-            >
-
-                <span
-                    class="text-xs uppercase
-                           text-[var(--text-muted)]"
-                >
-                    Your division
-                </span>
-
-                <span
-                    class="ml-2 font-semibold
-                           text-[var(--value-data)]"
-                >
-                    {{ $division }}
-                </span>
-
-            </div> --}}
-
-        @endif
-
-    </div>
-
-
-    {{-- DIVISION --}}
-
-    @if($division !== null && $divisionDrivers->isNotEmpty())
-
-        <section class="mb-8">
-
-            <div
-                class="flex items-center
-                       justify-between
-                       mb-3"
-            >
-
-                <h4
-                    class="text-sm font-bold
-                           uppercase
-                           tracking-wide
-                           text-[var(--text-title)]"
-                >
-                    Division {{ $division }}
-                </h4>
-
-                <span
-                    class="text-xs
-                           text-[var(--text-muted)]"
-                >
-                    {{ $divisionDrivers->count() }} drivers
-                </span>
-
-            </div>
-
-
-            <div
-                class="overflow-hidden
-                       rounded-xl
-                       border border-[var(--border)]"
-            >
-
-                <table class="w-full text-sm">
-
-                    <thead class="bg-[var(--bg)]">
-
-                        <tr>
-
-                            <th class="px-4 py-3 text-left text-xs uppercase text-[var(--text-muted)]">
-                                Pos
-                            </th>
-
-                            <th class="px-4 py-3 text-left text-xs uppercase text-[var(--text-muted)]">
-                                Driver
-                            </th>
-
-                            <th class="w-10 px-4 py-3 text-center text-xs uppercase text-[var(--text-muted)]">
-                                Nation
-                            </th>
-
-                            <th class="px-4 py-3 text-right text-xs uppercase text-[var(--text-muted)]">
-                                Points
-                            </th>
-
-                            <th class="px-4 py-3 text-right text-xs uppercase text-[var(--text-muted)]">
-                                Starts
-                            </th>
-
-                            <th class="px-4 py-3 text-right text-xs uppercase text-[var(--text-muted)]">
-                                Wins
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody
-                        class="divide-y
-                               divide-[var(--border)]"
-                    >
-
-                        @foreach($divisionDrivers as $driver)
-
-                            <tr
-                                class="{{ (int) $driver->cust_id === (int) $currentCustId
-                                    ? 'bg-[var(--btn-app)]'
-                                    : '' }}"
-                            >
-
-                                <td
-                                    class="px-4 py-3
-                                           font-semibold
-                                           text-[var(--text)]"
-                                >
-                                    {{ $driver->rank }}
-                                </td>
-
-                                <td
-                                    class="px-4 py-3
-                                        text-[var(--text)]"
-                                >
-                                    <div class="font-bold uppercase">
-                                        {{ $driver->display_name }}
-                                    </div>
-                                </td>
-
-                                <td
-                                    class="px-4 py-3
-                                        text-center"
-                                >
-                                    @if($driver->country_code)
-
-                                        <span
-                                            class="text-xl leading-none"
-                                            title="{{ $driver->country_code }}"
-                                        >
-                                            {{ $countryFlags[$driver->country_code] ?? '🌐' }}
-                                        </span>
-
-                                    @else
-
-                                        <span
-                                            class="text-[var(--text-muted)]"
-                                        >
-                                            —
-                                        </span>
-
-                                    @endif
-                                </td>
-
-                                <td
-                                    class="px-4 py-3
-                                           text-right
-                                           font-semibold
-                                           text-[var(--value-data)]"
-                                >
-                                    {{ number_format($driver->points, 2) }}
-                                </td>
-
-                                <td
-                                    class="px-4 py-3
-                                           text-right
-                                           text-[var(--text-muted)]"
-                                >
-                                    {{ $driver->starts }}
-                                </td>
-
-                                <td
-                                    class="px-4 py-3
-                                           text-right
-                                           text-[var(--text-muted)]"
-                                >
-                                    {{ $driver->wins }}
-                                </td>
-
-                            </tr>
-
-                        @endforeach
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </section>
-
-    @endif
-
-
-    {{-- OVERALL --}}
-
-    <section>
+        {{-- ============================================================
+             TABS
+        ============================================================= --}}
 
         <div
-            class="flex items-center
-                   justify-between
-                   mb-3"
+            class="flex items-center gap-1
+                   border-b border-white/10"
         >
 
-            <h4
-                class="text-sm font-semibold
-                       uppercase
-                       tracking-wide
-                       text-[var(--text-title)]"
+            <button
+                type="button"
+                @click="standingsTab = 'division'"
+                class="relative px-4 py-3
+                       text-xs font-semibold uppercase tracking-wider
+                       transition"
+                :class="
+                    standingsTab === 'division'
+                        ? 'text-[var(--value-data)]'
+                        : 'text-[var(--text-muted)] hover:text-white'
+                "
+            >
+                My Division
+
+                @if($division !== null)
+                    <span
+                        class="ml-1 text-[10px] opacity-70"
+                    >
+                        {{ $division }}
+                    </span>
+                @endif
+
+                <span
+                    x-show="standingsTab === 'division'"
+                    class="absolute inset-x-0 bottom-[-1px] h-px
+                           bg-[var(--value-data)]"
+                ></span>
+            </button>
+
+
+            <button
+                type="button"
+                @click="standingsTab = 'overall'"
+                class="relative px-4 py-3
+                       text-xs font-semibold uppercase tracking-wider
+                       transition"
+                :class="
+                    standingsTab === 'overall'
+                        ? 'text-[var(--value-data)]'
+                        : 'text-[var(--text-muted)] hover:text-white'
+                "
             >
                 Overall
-            </h4>
 
-            <span
-                class="text-xs
-                       text-[var(--text-muted)]"
-            >
-                {{ $overallDrivers->count() }} drivers
-            </span>
+                <span
+                    x-show="standingsTab === 'overall'"
+                    class="absolute inset-x-0 bottom-[-1px] h-px
+                           bg-[var(--value-data)]"
+                ></span>
+            </button>
 
         </div>
 
+
+        {{-- ============================================================
+             MY DIVISION
+        ============================================================= --}}
 
         <div
-            class="overflow-hidden
-                   rounded-xl
-                   border border-[var(--border)]"
+            x-show="standingsTab === 'division'"
+            x-transition.opacity
+            class="overflow-hidden"
         >
 
-            <table class="w-full text-sm">
+            @if($divisionDrivers->isEmpty())
 
-                <thead class="bg-[var(--bg)]">
+                <div class="py-10 text-center">
+                    <div class="text-sm text-[var(--text-muted)]">
+                        No hay clasificación disponible para tu división.
+                    </div>
+                </div>
 
-                    <tr>
+            @else
 
-                        <th
-                            class="px-4 py-3
-                                   text-left
-                                   text-xs uppercase
+                <div class="mb-3 flex items-center justify-between">
+
+                    <div>
+                        <div
+                            class="text-xs font-semibold uppercase
+                                   tracking-wider
                                    text-[var(--text-muted)]"
                         >
-                            Pos
-                        </th>
+                            Division {{ $division }}
+                        </div>
 
-                        <th
-                            class="px-4 py-3
-                                   text-left
-                                   text-xs uppercase
+                        <div
+                            class="mt-1 text-[11px]
                                    text-[var(--text-muted)]"
                         >
-                            Driver
-                        </th>
+                            {{ $divisionDrivers->count() }} drivers
+                        </div>
+                    </div>
 
-                        <th
-                            class="w-24 px-4 py-3
-                                text-center
-                                text-xs uppercase
-                                text-[var(--text-muted)]"
-                        >
-                            Nation
-                        </th>
-
-                        <th
-                            class="px-4 py-3
-                                   text-right
-                                   text-xs uppercase
-                                   text-[var(--text-muted)]"
-                        >
-                            Points
-                        </th>
-
-                        <th
-                            class="px-4 py-3
-                                   text-right
-                                   text-xs uppercase
-                                   text-[var(--text-muted)]"
-                        >
-                            Div
-                        </th>
-
-                    </tr>
-
-                </thead>
+                </div>
 
 
-                <tbody
-                    class="divide-y
-                           divide-[var(--border)]"
-                >
+                <div class="overflow-x-auto">
 
-                    @foreach($overallDrivers as $driver)
+                    <table class="w-full text-sm">
 
-                        <tr
-                            class="{{ (int) $driver->cust_id === (int) $currentCustId
-                                ? 'bg-[var(--btn-app)]'
-                                : '' }}"
-                        >
-
-                            <td
-                                class="px-4 py-3
-                                       font-semibold
-                                       text-[var(--text)]"
-                            >
-                                {{ $driver->rank }}
-                            </td>
-
-                            <td
-                                class="px-4 py-3
-                                    text-[var(--text)]"
-                            >
-                                <div class="font-bold uppercase">
-                                    {{ $driver->display_name }}
-                                </div>
-                            </td>
-
-                            <td
-                                class="px-4 py-3
-                                    text-center"
-                            >
-                                @if($driver->country_code)
-
-                                    <span
-                                        class="text-xl leading-none"
-                                        title="{{ $driver->country_code }}"
-                                    >
-                                        {{ $countryFlags[$driver->country_code] ?? '🌐' }}
-                                    </span>
-
-                                @else
-
-                                    <span class="text-[var(--text-muted)]">
-                                        —
-                                    </span>
-
-                                @endif
-                            </td>
-
-                            <td
-                                class="px-4 py-3
-                                       text-right
-                                       font-semibold
-                                       text-[var(--value-data)]"
-                            >
-                                {{ number_format($driver->points, 2) }}
-                            </td>
-
-                            <td
-                                class="px-4 py-3
-                                       text-right
+                        <thead>
+                            <tr
+                                class="border-b border-white/10
+                                       text-[10px] uppercase
+                                       tracking-wider
                                        text-[var(--text-muted)]"
                             >
-                                {{ $driver->division ?? '—' }}
-                            </td>
 
-                        </tr>
+                                <th class="px-3 py-2 text-left">
+                                    Pos
+                                </th>
 
-                    @endforeach
+                                <th class="px-3 py-2 text-left">
+                                    Nation
+                                </th>
 
-                </tbody>
+                                <th class="px-3 py-2 text-left">
+                                    Driver
+                                </th>
 
-            </table>
+                                <th class="px-3 py-2 text-right">
+                                    Points
+                                </th>
+
+                                <th class="px-3 py-2 text-right">
+                                    Starts
+                                </th>
+
+                                <th class="px-3 py-2 text-right">
+                                    Wins
+                                </th>
+
+                            </tr>
+                        </thead>
+
+
+                        <tbody class="divide-y divide-white/5">
+
+                            @foreach($divisionDrivers as $driver)
+
+                                <tr
+                                    class="transition
+                                           hover:bg-white/[0.025]"
+                                    @class([
+                                        'bg-[var(--value-data)]/[0.06]'
+                                            => (string) $driver->cust_id
+                                                === (string) $currentCustId,
+                                    ])
+                                >
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               font-mono text-xs"
+                                    >
+                                        {{ $driver->rank }}
+                                    </td>
+
+
+                                    <td class="px-3 py-2.5">
+
+                                        <x-country-flag
+                                            :code="$driver->country_code"
+                                        />
+
+                                    </td>
+
+
+                                    <td class="px-3 py-2.5">
+
+                                        <div
+                                            @class([
+                                                'font-medium',
+                                                'text-[var(--value-data)]'
+                                                    => (string) $driver->cust_id
+                                                        === (string) $currentCustId,
+                                            ])
+                                        >
+                                            {{ $driver->display_name }}
+                                        </div>
+
+                                    </td>
+
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               text-right font-mono"
+                                    >
+                                        {{ number_format($driver->points, 1) }}
+                                    </td>
+
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               text-right font-mono
+                                               text-[var(--text-muted)]"
+                                    >
+                                        {{ $driver->starts }}
+                                    </td>
+
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               text-right font-mono
+                                               text-[var(--text-muted)]"
+                                    >
+                                        {{ $driver->wins }}
+                                    </td>
+
+                                </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            @endif
 
         </div>
 
-    </section>
+
+        {{-- ============================================================
+             OVERALL
+        ============================================================= --}}
+
+        <div
+            x-show="standingsTab === 'overall'"
+            x-transition.opacity
+            class="overflow-hidden"
+        >
+
+            @if($overallDrivers->isEmpty())
+
+                <div class="py-10 text-center">
+                    <div class="text-sm text-[var(--text-muted)]">
+                        No hay clasificación general disponible.
+                    </div>
+                </div>
+
+            @else
+
+                <div class="mb-3 flex items-center justify-between">
+
+                    <div>
+                        <div
+                            class="text-xs font-semibold uppercase
+                                   tracking-wider
+                                   text-[var(--text-muted)]"
+                        >
+                            Overall
+                        </div>
+
+                        <div
+                            class="mt-1 text-[11px]
+                                   text-[var(--text-muted)]"
+                        >
+                            {{ $overallDrivers->count() }} drivers
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="overflow-x-auto">
+
+                    <table class="w-full text-sm">
+
+                        <thead>
+                            <tr
+                                class="border-b border-white/10
+                                       text-[10px] uppercase
+                                       tracking-wider
+                                       text-[var(--text-muted)]"
+                            >
+
+                                <th class="px-3 py-2 text-left">
+                                    Pos
+                                </th>
+
+                                <th class="px-3 py-2 text-left">
+                                    Nation
+                                </th>
+
+                                <th class="px-3 py-2 text-left">
+                                    Driver
+                                </th>
+
+                                <th class="px-3 py-2 text-right">
+                                    Points
+                                </th>
+
+                                <th class="px-3 py-2 text-right">
+                                    Division
+                                </th>
+
+                            </tr>
+                        </thead>
+
+
+                        <tbody class="divide-y divide-white/5">
+
+                            @foreach($overallDrivers as $driver)
+
+                                <tr
+                                    class="transition
+                                           hover:bg-white/[0.025]"
+                                    @class([
+                                        'bg-[var(--value-data)]/[0.06]'
+                                            => (string) $driver->cust_id
+                                                === (string) $currentCustId,
+                                    ])
+                                >
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               font-mono text-xs"
+                                    >
+                                        {{ $driver->rank }}
+                                    </td>
+
+
+                                    <td class="px-3 py-2.5">
+
+                                        <x-country-flag
+                                            :code="$driver->country_code"
+                                        />
+
+                                    </td>
+
+
+                                    <td class="px-3 py-2.5">
+
+                                        <div
+                                            @class([
+                                                'font-medium',
+                                                'text-[var(--value-data)]'
+                                                    => (string) $driver->cust_id
+                                                        === (string) $currentCustId,
+                                            ])
+                                        >
+                                            {{ $driver->display_name }}
+                                        </div>
+
+                                    </td>
+
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               text-right font-mono"
+                                    >
+                                        {{ number_format($driver->points, 1) }}
+                                    </td>
+
+
+                                    <td
+                                        class="px-3 py-2.5
+                                               text-right font-mono
+                                               text-[var(--text-muted)]"
+                                    >
+                                        {{ $driver->division }}
+                                    </td>
+
+                                </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            @endif
+
+        </div>
+
+    </div>
 
 @endif

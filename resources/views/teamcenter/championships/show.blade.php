@@ -5,7 +5,127 @@
 
 @section('teamcenter-main')
 
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div
+    class="max-w-7xl mx-auto px-4 py-8"
+    x-data="{
+        activeTool: null,
+        toolContent: '',
+        loading: false,
+        error: '',
+
+        async loadTool(url, tool) {
+            this.activeTool = tool;
+            this.loading = true;
+            this.error = '';
+            this.toolContent = '';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                this.toolContent = await response.text();
+
+            } catch (error) {
+                console.error(error);
+                this.error = 'No se ha podido cargar el contenido.';
+                this.toolContent = '';
+
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        open(tool) {
+            this.activeTool = tool;
+            this.toolContent = '';
+            this.error = '';
+            this.loading = false;
+        },
+
+        openSessions(url) {
+            this.loadTool(url, 'sessions');
+        },
+
+        openStrategy(url) {
+            this.loadTool(url, 'strategy');
+        },
+
+        async submitStrategy(event) {
+            const form = event.target;
+
+            if (!(form instanceof HTMLFormElement)) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const method = (form.method || 'GET').toUpperCase();
+            const formData = new FormData(form);
+            let url = form.action;
+
+            const options = {
+                method: method,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            };
+
+            if (method === 'GET') {
+                const params = new URLSearchParams();
+
+                for (const [key, value] of formData.entries()) {
+                    params.append(key, value);
+                }
+
+                if (params.toString() !== '') {
+                    url += (url.includes('?') ? '&' : '?')
+                        + params.toString();
+                }
+
+            } else {
+                options.body = formData;
+            }
+
+            this.loading = true;
+            this.error = '';
+
+            try {
+                const response = await fetch(url, options);
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                this.toolContent = await response.text();
+
+            } catch (error) {
+                console.error(error);
+                this.error = 'No se ha podido actualizar la estrategia.';
+                this.toolContent = '';
+
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        close() {
+            this.activeTool = null;
+            this.toolContent = '';
+            this.error = '';
+            this.loading = false;
+        }
+    }"
+>
 
     {{-- COMPETITION CONTEXT --}}
     <section
@@ -91,6 +211,38 @@
                         >
                             {{ ucfirst($entry->status) }}
                         </p>
+
+                        <div class="mt-4">
+
+                            <button
+                                type="button"
+                                @click="loadTool(
+                                    '{{ route(
+                                        'teamcenter.championships.standings',
+                                        ['series' => $series->id]
+                                    ) }}',
+                                    'standings'
+                                )"
+                                class="inline-flex items-center justify-center
+                                    w-32 px-4 py-0 h-6
+                                    uppercase
+                                    font-microsport
+                                    text-center
+                                    rounded
+                                    border border-[var(--b-header)]
+                                    bg-[var(--btn-app)]
+                                    text-xs
+                                    text-[var(--text)]
+                                    hover:text-[var(--text-h)]
+                                    hover:bg-[var(--btn-app-hov)]
+                                    transition"
+                            >
+                                Standings
+                            </button>
+
+                        </div>
+
+
 
                     </div>
 
@@ -365,127 +517,9 @@
 
 {{-- COMPETITION TOOLS --}}
 
+{{-- COMPETITION TOOLS --}}
+
 <div
-    x-data="{
-        activeTool: null,
-        toolContent: '',
-        loading: false,
-
-        async loadTool(url, tool) {
-            this.activeTool = tool;
-            this.loading = true;
-            this.toolContent = '';
-
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'text/html'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                this.toolContent = await response.text();
-
-            } catch (error) {
-                console.error(error);
-
-                this.toolContent =
-                    '<div class=\'rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center text-red-400\'>'
-                    + 'No se ha podido cargar el contenido.'
-                    + '</div>';
-
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        open(tool) {
-            this.activeTool = tool;
-            this.toolContent = '';
-            this.loading = false;
-        },
-
-        openSessions(url) {
-            this.loadTool(url, 'sessions');
-        },
-
-        openStrategy(url) {
-            this.loadTool(url, 'strategy');
-        },
-
-        async submitStrategy(event) {
-            const form = event.target;
-
-            if (!(form instanceof HTMLFormElement)) {
-                return;
-            }
-
-            event.preventDefault();
-
-            const method = (form.method || 'GET').toUpperCase();
-            const formData = new FormData(form);
-            let url = form.action;
-
-            const options = {
-                method: method,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html'
-                }
-            };
-
-            if (method === 'GET') {
-                const params = new URLSearchParams();
-
-                for (const [key, value] of formData.entries()) {
-                    params.append(key, value);
-                }
-
-                if (params.toString() !== '') {
-                    url += (url.includes('?') ? '&' : '?')
-                        + params.toString();
-                }
-
-            } else {
-                options.body = formData;
-            }
-
-            this.loading = true;
-
-            try {
-                const response = await fetch(url, options);
-
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                this.toolContent = await response.text();
-
-            } catch (error) {
-                console.error(error);
-
-                this.toolContent =
-                    '<div class=\'rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center text-red-400\'>'
-                    + 'No se ha podido actualizar la estrategia.'
-                    + '</div>';
-
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        close() {
-            this.activeTool = null;
-            this.toolContent = '';
-            this.loading = false;
-        }
-    }"
-
     data-sessions-url="{{ route(
         'teamcenter.championships.sessions',
         ['series' => $series->id]
@@ -512,11 +546,11 @@
                 ['series' => $series->id]
             ) }}"
             @click="openSessions($el.dataset.sessionsUrl)"
-            class="w-32 px-4 py-2 uppercase font-microsport
-                   text-center rounded-lg
-                   border border-[var(--border)]
+            class="w-32 px-4 py-0 h-6 uppercase font-microsport
+                   text-center rounded
+                   border border-[var(--b-header)]
                    bg-[var(--btn-app)]
-                   text-sm text-[var(--text-title)]
+                   text-xs text-[var(--text-title)]
                    hover:bg-[var(--btn-app-hov)] transition"
         >
             Sessions
@@ -528,11 +562,11 @@
         <button
             type="button"
             @click="open('stints')"
-            class="w-32 px-4 py-2 uppercase font-microsport
-                   text-center rounded-lg
-                   border border-[var(--border)]
+            class="w-32 px-4 py-0 h-6 uppercase font-microsport
+                   text-center rounded
+                   border border-[var(--b-header)]
                    bg-[var(--btn-app)]
-                   text-sm text-[var(--text-title)]
+                   text-xs text-[var(--text-title)]
                    hover:bg-[var(--btn-app-hov)] transition"
         >
             Stints
@@ -548,11 +582,11 @@
                 ['series' => $series->id]
             ) }}"
             @click="openStrategy($el.dataset.strategyUrl)"
-            class="w-32 px-4 py-2 uppercase font-microsport
-                   text-center rounded-lg
-                   border border-[var(--border)]
+            class="w-32 px-4 py-0 h-6 uppercase font-microsport
+                   text-center rounded
+                   border border-[var(--b-header)]
                    bg-[var(--btn-app)]
-                   text-sm text-[var(--text-title)]
+                   text-xs text-[var(--text-title)]
                    hover:bg-[var(--btn-app-hov)] transition"
         >
             Strategy
@@ -596,8 +630,25 @@
 
                     <h3
                         class="text-lg font-semibold
-                               text-[var(--text-card-title)]"
+                            text-[var(--text-card-title)]"
                     >
+
+                        <span x-show="activeTool === 'standings'">
+                            <p class="justify-center align-middle text-center mt-1 text-sd text-[var(--text)]">
+                                <div class="flex">
+                                    <img class="w-20 h-auto" src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}" alt="">
+
+                                <p class="ml-4 pt-1.5 uppercase">
+                                {{ $series->iracingSeries->name }}
+                                ·
+                                {{ $series->season_year }}
+                                Season {{ $series->season_number }}
+                                </p>
+
+                                </div>
+
+                            </p>
+                        </span>
 
                         <span x-show="activeTool === 'sessions'">
                             Sessions
@@ -613,15 +664,7 @@
 
                     </h3>
 
-                    <p
-                        class="mt-1 text-xs
-                               text-[var(--text-muted)]"
-                    >
-                        {{ $series->iracingSeries->name }}
-                        ·
-                        {{ $series->season_year }}
-                        S{{ $series->season_number }}
-                    </p>
+
 
                 </div>
 
@@ -651,6 +694,36 @@
                 class="max-h-[calc(90vh-8rem)]
                        overflow-y-auto"
             >
+
+
+            {{-- STANDINGS --}}
+
+                <div
+                    x-show="activeTool === 'standings'"
+                    class="p-6"
+                >
+
+                    <template x-if="loading">
+                        <div
+                            class="rounded-xl
+                                border border-[var(--border)]
+                                bg-[var(--bg)]
+                                p-8 text-center"
+                        >
+                            <p class="text-sm text-[var(--text-muted)]">
+                                Cargando clasificación...
+                            </p>
+                        </div>
+                    </template>
+
+                    <div
+                        x-show="!loading && toolContent !== ''"
+                        x-html="toolContent"
+                    ></div>
+
+                </div>
+
+
 
                 {{-- SESSIONS --}}
 

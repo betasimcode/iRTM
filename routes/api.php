@@ -14,6 +14,7 @@ use App\Http\Controllers\FuelController;
 use App\Http\Controllers\LoggerController;
 use App\Http\Controllers\LapController;
 use App\Http\Controllers\Api\SessionResultController;
+use App\Http\Controllers\Api\SeriesEntryRankController;
 use App\Http\Controllers\TrackDataController;
 use App\Http\Controllers\Api\TelemetryTyreController;
 use App\Http\Controllers\Api\NewTelemetryController;
@@ -56,20 +57,20 @@ Route::get('/sync/series', function () {
 
 Route::post('/logger/token', [LoggerController::class, 'getToken']);
 
-Route::post('/logger/token', function (Request $request) {
-    // Buscamos al usuario que coincida con el ID que reporta el simulador
-    $user = \App\Models\User::where('iracing_user_id', $request->iracing_user_id)->first();
+// Route::post('/logger/token', function (Request $request) {
+//     // Buscamos al usuario que coincida con el ID que reporta el simulador
+//     $user = \App\Models\User::where('iracing_user_id', $request->iracing_user_id)->first();
 
-    if (!$user) {
-        return response()->json(['error' => 'Tu ID de iRacing no está vinculado a ninguna cuenta.'], 404);
-    }
+//     if (!$user) {
+//         return response()->json(['error' => 'Tu ID de iRacing no está vinculado a ninguna cuenta.'], 404);
+//     }
 
-    return response()->json([
-        'api_token' => $user->api_token,
-        'id' => $user->id // 👈 AÑADE ESTO
+//     return response()->json([
+//         'api_token' => $user->api_token,
+//         'id' => $user->id // 👈 AÑADE ESTO
 
-        ]);
-});
+//         ]);
+// });
 
 Route::post('/telemetry/ibt', [TelemetryController::class, 'processIbt']);
 
@@ -101,6 +102,8 @@ Route::get('/logger/version', function () {
         'download_url' => url('/downloads/iRacingTeamManager.exe')
     ]);
 });
+
+Route::post('/logger/rank', [SeriesEntryRankController::class, 'store']);
 
 Route::post('/init-session', [NewTelemetryController::class, 'initSession']);
 Route::post('/start-stint', [NewTelemetryController::class, 'startStint']);

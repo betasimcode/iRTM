@@ -573,9 +573,9 @@
     --div: #ced3e0;
 
     /* TEXT */
-    --text: #868686;
+    --text: #303030;
     --text-topbar: #9ca3af;
-    --text-h: #c0c0c0;
+    --text-h: #090909;
     --text-logout-h: #e7e7e7;
     --text-card-title: #8dacdd;
     --text-title: #1b3256;
@@ -603,9 +603,6 @@
     --bsafe:#d4c260fa;
     --tinfo-a:#ffffff;
     --tinfo-b:#8b9099;
-    /*TOOLS*/
-    --btn-app:#c9caec;
-    --btn-app-hov:rgb(166, 169, 255);
 
     /*     SETUP VIEWER   */
     --value-aero: #35abbb;
@@ -695,6 +692,8 @@
     --btn-hover: #3561a7;
     --btn-text: #ffffff;
     --btn-active: rgb(48, 74, 117);
+    --btn-app:#acbfe3;
+    --btn-app-hov:#c5d6f5;
 
     /* INPUTS */
     --input-bg: #d8d8d8;

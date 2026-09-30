@@ -13,8 +13,8 @@ class LoggerController extends Controller
     {
         // 🚩 ESTO ES EL MONITOR: Veremos qué envía Python exactamente
         Log::info('--- Intento de conexión del Logger ---');
-        Log::info('Headers:', $request->headers->all());
-        Log::info('Body:', $request->all());
+        // Log::info('Headers:', $request->headers->all());
+        // Log::info('Body:', $request->all());
 
         // Forzamos a que busque tanto en el body como en el query
         $iracingId = $request->input('iracing_user_id');

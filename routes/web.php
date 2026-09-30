@@ -1,5 +1,6 @@
 <?php
 namespace App\Services;
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
@@ -314,6 +315,9 @@ Route::group([
         Route::get('/championships/{series}', [ChampionshipController::class, 'show',])
             ->name('teamcenter.championships.show');
 
+        Route::get('/championships/{series}/standings', [ChampionshipController::class, 'standings'])
+        ->name('teamcenter.championships.standings');
+
         Route::get('/championships/{series}/sessions', [CompetitionToolController::class, 'sessions',])
             ->name('teamcenter.championships.sessions');
 
@@ -332,6 +336,11 @@ Route::group([
             ->name('teamcenter.championships.strategy.favorite');
 
     });
+
+
+
+
+
 
 
 
@@ -454,3 +463,5 @@ Route::get('/series-reference/{series}', [
     SeriesReferenceController::class,
     'show',
 ])->name('series.reference');
+
+

@@ -38,6 +38,8 @@ return [
     'iracing' => [
     'email' => env('IRACING_EMAIL'),
     'password' => env('IRACING_PASSWORD'),
+    'cookie' => env('IRACING_COOKIE'),
+
 ],
 
 

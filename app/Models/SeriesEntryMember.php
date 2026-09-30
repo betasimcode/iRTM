@@ -19,7 +19,14 @@ class SeriesEntryMember extends Model
 
         'joined_at',
 
-        'left_at'
+        'left_at',
+
+        // iRacing Session / Rank
+        'iracing_series_id',
+        'iracing_season_id',
+        'iracing_division_id',
+        'iracing_division_name',
+        'rank_updated_at',
 
     ];
 
@@ -28,6 +35,12 @@ class SeriesEntryMember extends Model
         'joined_at' => 'datetime',
 
         'left_at'   => 'datetime',
+
+        // iRacing Session / Rank
+        'iracing_series_id'     => 'integer',
+        'iracing_season_id'     => 'integer',
+        'iracing_division_id'   => 'integer',
+        'rank_updated_at'       => 'datetime',
 
     ];
 

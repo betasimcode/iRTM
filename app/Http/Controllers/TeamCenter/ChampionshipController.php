@@ -5,6 +5,8 @@ namespace App\Http\Controllers\TeamCenter;
 use App\Http\Controllers\Controller;
 use App\Models\Series;
 use App\Models\SeriesEntry;
+use App\Models\SeriesStanding;
+use App\Models\SeriesStandingDriver;
 use App\Services\TeamCenter\TeamCenterContext;
 
 class ChampionshipController extends Controller
@@ -235,7 +237,112 @@ class ChampionshipController extends Controller
     }
 
 
+    /**
+     * Championship standings.
+     *
+     * Shows the season standings for the current TeamCenter
+     * championship.
+     */
+    public function standings(
+        Series $series,
+        TeamCenterContext $context
+    ) {
+        $user = $context->user;
 
+        /*
+        |--------------------------------------------------------------------------
+        | Clasificación general de temporada
+        |--------------------------------------------------------------------------
+        */
+
+        $overallStanding = SeriesStanding::query()
+            ->where('series_id', $series->id)
+            ->where('scope', 'overall')
+            ->where('division_key', -1)
+            ->where('race_week_num', -1)
+            ->first();
+
+        if (!$overallStanding) {
+            return response()->view(
+                'teamcenter.championships.partials.standings',
+                [
+                    'overallDrivers' => collect(),
+                    'divisionDrivers' => collect(),
+                    'division' => null,
+                    'currentCustId' => $user->iracing_user_id,
+                    'hasStandings' => true,
+                    'series' => $series,
+                ]
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Piloto actual dentro de Overall
+        |--------------------------------------------------------------------------
+        */
+
+        $currentDriver = SeriesStandingDriver::query()
+            ->where('series_standing_id', $overallStanding->id)
+            ->where('cust_id', $user->iracing_user_id)
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | División del piloto
+        |--------------------------------------------------------------------------
+        */
+
+        $division = $currentDriver?->division;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Overall
+        |--------------------------------------------------------------------------
+        */
+
+        $overallDrivers = SeriesStandingDriver::query()
+            ->where('series_standing_id', $overallStanding->id)
+            ->orderBy('rank')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clasificación de la división del piloto
+        |--------------------------------------------------------------------------
+        */
+
+        $divisionDrivers = collect();
+
+        if ($division !== null) {
+
+            $divisionStanding = SeriesStanding::query()
+                ->where('series_id', $series->id)
+                ->where('scope', 'division')
+                ->where('division_key', (int) $division)
+                ->where('race_week_num', -1)
+                ->first();
+
+            if ($divisionStanding) {
+                $divisionDrivers = SeriesStandingDriver::query()
+                    ->where('series_standing_id', $divisionStanding->id)
+                    ->orderBy('rank')
+                    ->get();
+            }
+        }
+
+        return response()->view(
+            'teamcenter.championships.partials.standings',
+            [
+                'overallDrivers' => $overallDrivers,
+                'divisionDrivers' => $divisionDrivers,
+                'division' => $division,
+                'currentCustId' => $user->iracing_user_id,
+                'hasStandings' => true,
+                'series' => $series,
+            ]
+        );
+    }
 
 
 

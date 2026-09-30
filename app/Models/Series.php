@@ -5,8 +5,9 @@ use Illuminate\Support\Collection;
 use App\Models\Car;
 use App\Models\TeamCar;
 use App\Models\SeriesRound;
-use App\Models\iracingSerie;
+use App\Models\IracingSerie;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
 /**
@@ -62,10 +63,18 @@ class Series extends Model
         'start_date',
         'end_date',
         'iracing_series_id',
+        'iracing_season_id',
         'status',
         'team_id'
 
         ];
+
+
+    protected $casts = [
+
+       'iracing_season_id' => 'integer',
+
+    ];
 
     public function rounds()
     {
@@ -93,7 +102,7 @@ class Series extends Model
     public function iracingSerie()
     {
         return $this->belongsTo(
-            IracingSeries::class,
+            IracingSerie::class,
             'iracing_series_id'
         );
     }
@@ -811,8 +820,21 @@ public function racePlan($userId)
             ->values();
     }
 
+    public function standingConfigs(): HasMany
+    {
+        return $this->hasMany(
+            SeriesStandingConfig::class,
+            'series_id'
+        );
+    }
 
-
+    public function standings(): HasMany
+    {
+        return $this->hasMany(
+            SeriesStanding::class,
+            'series_id'
+        );
+    }
 
 
 

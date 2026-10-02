@@ -316,7 +316,10 @@ Route::group([
             ->name('teamcenter.championships.show');
 
         Route::get('/championships/{series}/standings', [ChampionshipController::class, 'standings'])
-        ->name('teamcenter.championships.standings');
+            ->name('teamcenter.championships.standings');
+
+        Route::get('/championships/{series}/stints', [ChampionshipController::class, 'stints'])
+            ->name('teamcenter.championships.stints');
 
         Route::get('/championships/{series}/sessions', [CompetitionToolController::class, 'sessions',])
             ->name('teamcenter.championships.sessions');

@@ -1,119 +1,152 @@
-@if(!$hasStandings)
+<div
+    x-data="{ standingsTab: 'division' }"
+    class="bg-[var(--card)]"
+>
 
-    <div class="py-12 text-center">
-        <div class="text-sm text-[var(--text-muted)]">
-            No hay clasificación disponible para esta temporada.
-        </div>
-    </div>
-
-@else
+    {{-- ============================================================
+         STANDINGS HEADER
+    ============================================================= --}}
 
     <div
-        x-data="{ standingsTab: 'division' }"
-        class="space-y-5"
+        class="border-b border-[var(--border)]"
     >
 
-        {{-- ============================================================
-             TABS
-        ============================================================= --}}
-
         <div
-            class="flex items-center gap-1
-                   border-b border-white/10"
+            class="px-6 pb-2"
         >
 
-            <button
-                type="button"
-                @click="standingsTab = 'division'"
-                class="relative px-4 py-3
-                       text-xs font-semibold uppercase tracking-wider
-                       transition"
-                :class="
-                    standingsTab === 'division'
-                        ? 'text-[var(--value-data)]'
-                        : 'text-[var(--text-muted)] hover:text-white'
-                "
-            >
-                My Division
+            <div class="flex items-center justify-between">
+                <img class="w-28 h-auto" src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}" alt="">
+                <div>
 
-                @if($division !== null)
-                    <span
-                        class="ml-1 text-[10px] opacity-70"
+                    <h2
+                        class="text-xl
+                               font-semibold
+                               uppercase
+                               tracking-wide
+                               text-[var(--text-title)]"
                     >
-                        {{ $division }}
-                    </span>
-                @endif
+                        {{ $series->iracingSeries->name }} {{ $series->season_year }} - Season {{ $series->season_number }}
+                    </h2>
 
-                <span
-                    x-show="standingsTab === 'division'"
-                    class="absolute inset-x-0 bottom-[-1px] h-px
-                           bg-[var(--value-data)]"
-                ></span>
-            </button>
+                </div>
 
 
-            <button
-                type="button"
-                @click="standingsTab = 'overall'"
-                class="relative px-4 py-3
-                       text-xs font-semibold uppercase tracking-wider
-                       transition"
-                :class="
-                    standingsTab === 'overall'
-                        ? 'text-[var(--value-data)]'
-                        : 'text-[var(--text-muted)] hover:text-white'
-                "
+
+
+            {{-- TABS --}}
+
+            <div
+                class="mt-4 flex items-center gap-1"
             >
-                Overall
 
-                <span
-                    x-show="standingsTab === 'overall'"
-                    class="absolute inset-x-0 bottom-[-1px] h-px
-                           bg-[var(--value-data)]"
-                ></span>
-            </button>
+                <button
+                    type="button"
+                    @click="standingsTab = 'division'"
+                    class="relative px-4 py-3
+                           text-[11px]
+                           font-semibold
+                           uppercase
+                           tracking-wider
+                           transition"
+                    :class="
+                        standingsTab === 'division'
+                            ? 'text-[var(--value-data)]'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                    "
+                >
+                    My Division
+
+                    @if($division !== null)
+                        <span
+                            class="ml-1 text-[10px] opacity-70"
+                        >
+
+                        </span>
+                    @endif
+
+                    <span
+                        x-show="standingsTab === 'division'"
+                        class="absolute inset-x-0 bottom-0 h-px
+                               bg-[var(--value-data)]"
+                    ></span>
+                </button>
+
+
+                <button
+                    type="button"
+                    @click="standingsTab = 'overall'"
+                    class="relative px-4 py-3
+                           text-[11px]
+                           font-semibold
+                           uppercase
+                           tracking-wider
+                           transition"
+                    :class="
+                        standingsTab === 'overall'
+                            ? 'text-[var(--value-data)]'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                    "
+                >
+                    Overall
+
+                    <span
+                        x-show="standingsTab === 'overall'"
+                        class="absolute inset-x-0 bottom-0 h-px
+                               bg-[var(--value-data)]"
+                    ></span>
+                </button>
+
+            </div>
 
         </div>
 
+        </div>
 
-        {{-- ============================================================
+    </div>
+
+
+    {{-- ============================================================
+         CONTENT
+    ============================================================= --}}
+
+    <div class="p-6">
+
+        {{-- ========================================================
              MY DIVISION
-        ============================================================= --}}
+        ========================================================= --}}
 
         <div
             x-show="standingsTab === 'division'"
             x-transition.opacity
-            class="overflow-hidden"
         >
 
             @if($divisionDrivers->isEmpty())
 
                 <div class="py-10 text-center">
-                    <div class="text-sm text-[var(--text-muted)]">
+
+                    <p
+                        class="text-sm
+                               text-[var(--text-muted)]"
+                    >
                         No hay clasificación disponible para tu división.
-                    </div>
+                    </p>
+
                 </div>
 
             @else
 
-                <div class="mb-3 flex items-center justify-between">
+                <div class="mb-4 w-32 m-auto text-center p-1 bg-[var(--bg)] rounded-md border border-[var(--border)]">
 
-                    <div>
-                        <div
-                            class="text-xs font-semibold uppercase
-                                   tracking-wider
-                                   text-[var(--text-muted)]"
-                        >
-                            Division {{ $division }}
-                        </div>
-
-                        <div
-                            class="mt-1 text-[11px]
-                                   text-[var(--text-muted)]"
-                        >
-                            {{ $divisionDrivers->count() }} drivers
-                        </div>
-                    </div>
+                    <p
+                        class="text-sm
+                               font-semibold
+                               uppercase
+                               tracking-wider
+                               text-[var(--text)]"
+                    >
+                        Division {{ $division }}
+                    </p>
 
                 </div>
 
@@ -123,9 +156,11 @@
                     <table class="w-full text-sm">
 
                         <thead>
+
                             <tr
-                                class="border-b border-white/10
-                                       text-[10px] uppercase
+                                class="border-b border-[var(--border)]
+                                       text-[10px]
+                                       uppercase
                                        tracking-wider
                                        text-[var(--text-muted)]"
                             >
@@ -155,22 +190,27 @@
                                 </th>
 
                             </tr>
+
                         </thead>
 
 
-                        <tbody class="divide-y divide-white/5">
+                        <tbody class="divide-y divide-[var(--border)] border border-[var(--border)] bg-[var(--bg)]">
 
                             @foreach($divisionDrivers as $driver)
 
+                                @if((int) $driver->cust_id === (int) $currentCustId)
+
                                 <tr
-                                    class="transition
-                                           hover:bg-white/[0.025]"
-                                    @class([
-                                        'bg-[var(--value-data)]/[0.06]'
-                                            => (string) $driver->cust_id
-                                                === (string) $currentCustId,
-                                    ])
+                                    class="transition bg-[var(--card)] border border-[var(--card)]"
                                 >
+
+                            @else
+
+                                <tr
+                                    class="transition hover:bg-[var(--hover)] hover:text-[var(--text-muted)]"
+                                >
+
+                            @endif
 
                                     <td
                                         class="px-3 py-2.5
@@ -192,12 +232,10 @@
                                     <td class="px-3 py-2.5">
 
                                         <div
-                                            @class([
-                                                'font-medium',
-                                                'text-[var(--value-data)]'
-                                                    => (string) $driver->cust_id
-                                                        === (string) $currentCustId,
-                                            ])
+                                            class="font-medium uppercase hover:text-[var(--text-muted)]"
+                                                {{ (int) $driver->cust_id === (int) $currentCustId
+                                                    ? 'text-[var(--value-data)]'
+                                                    : 'text-[var(--text)]'}}"
                                         >
                                             {{ $driver->display_name }}
                                         </div>
@@ -245,44 +283,48 @@
         </div>
 
 
-        {{-- ============================================================
+        {{-- ========================================================
              OVERALL
-        ============================================================= --}}
+        ========================================================= --}}
 
         <div
             x-show="standingsTab === 'overall'"
             x-transition.opacity
-            class="overflow-hidden"
         >
 
             @if($overallDrivers->isEmpty())
 
                 <div class="py-10 text-center">
-                    <div class="text-sm text-[var(--text-muted)]">
+
+                    <p
+                        class="text-sm
+                               text-[var(--text-muted)]"
+                    >
                         No hay clasificación general disponible.
-                    </div>
+                    </p>
+
                 </div>
 
             @else
 
-                <div class="mb-3 flex items-center justify-between">
+                <div class="mb-4 w-32 m-auto text-center p-1 bg-[var(--bg)] rounded-md border border-[var(--border)]">
 
-                    <div>
-                        <div
-                            class="text-xs font-semibold uppercase
-                                   tracking-wider
-                                   text-[var(--text-muted)]"
-                        >
-                            Overall
-                        </div>
+                    <p
+                        class="text-xs
+                               font-semibold
+                               uppercase
+                               tracking-wider
+                               text-[var(--text-muted)]"
+                    >
+                        Overall
+                    </p>
 
-                        <div
-                            class="mt-1 text-[11px]
-                                   text-[var(--text-muted)]"
-                        >
-                            {{ $overallDrivers->count() }} drivers
-                        </div>
-                    </div>
+                    <p
+                        class="mt-1 text-[11px]
+                               text-[var(--text-muted)]"
+                    >
+                        {{ $overallDrivers->count() }} drivers
+                    </p>
 
                 </div>
 
@@ -292,9 +334,11 @@
                     <table class="w-full text-sm">
 
                         <thead>
+
                             <tr
-                                class="border-b border-white/10
-                                       text-[10px] uppercase
+                                class="border-b border-[var(--border)]
+                                       text-[10px]
+                                       uppercase
                                        tracking-wider
                                        text-[var(--text-muted)]"
                             >
@@ -320,10 +364,11 @@
                                 </th>
 
                             </tr>
+
                         </thead>
 
 
-                        <tbody class="divide-y divide-white/5">
+                        <tbody class="divide-y divide-[var(--border)] border border-[var(--border)] bg-[var(--bg)]">
 
                             @foreach($overallDrivers as $driver)
 
@@ -332,8 +377,8 @@
                                            hover:bg-white/[0.025]"
                                     @class([
                                         'bg-[var(--value-data)]/[0.06]'
-                                            => (string) $driver->cust_id
-                                                === (string) $currentCustId,
+                                            => (int) $driver->cust_id
+                                                === (int) $currentCustId,
                                     ])
                                 >
 
@@ -402,4 +447,4 @@
 
     </div>
 
-@endif
+</div>

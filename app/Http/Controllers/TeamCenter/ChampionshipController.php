@@ -314,6 +314,10 @@ class ChampionshipController extends Controller
 
         $divisionDrivers = collect();
 
+
+
+
+
         if ($division !== null) {
 
             $divisionStanding = SeriesStanding::query()
@@ -345,7 +349,219 @@ class ChampionshipController extends Controller
     }
 
 
+/**
+ * Championship stints.
+ *
+ * Shows the stints belonging to the current
+ * championship and selected report scope.
+ */
+    public function stints(
+        Series $series,
+        TeamCenterContext $context
+    ) {
+        $team = $context->team;
 
+        /*
+        |--------------------------------------------------------------------------
+        | Team participation
+        |--------------------------------------------------------------------------
+        */
+
+        $entry = SeriesEntry::query()
+            ->with([
+                'workspace',
+                'competitionCar',
+                'members',
+            ])
+            ->where('series_id', $series->id)
+            ->whereIn('status', [
+                'pending',
+                'active',
+            ])
+            ->whereHas(
+                'workspace',
+                function ($query) use ($team) {
+
+                    $query
+                        ->where('type', 'team')
+                        ->where('team_id', $team->id)
+                        ->where('is_active', true);
+                }
+            )
+            ->firstOrFail();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Active drivers
+        |--------------------------------------------------------------------------
+        */
+
+        $driverIds = $entry->members
+            ->where('status', 'active')
+            ->pluck('user_id')
+            ->unique()
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Competition car
+        |--------------------------------------------------------------------------
+        */
+
+        $competitionCar = $entry->competitionCar;
+
+        if (!$competitionCar) {
+            return response()->view(
+                'teamcenter.championships.partials.stints',
+                [
+                    'stints' => collect(),
+                    'series' => $series,
+                    'reportScope' => request(
+                        'report_scope',
+                        'season'
+                    ),
+                    'message' => 'No hay coche asociado a la competición.',
+                ]
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Current round
+        |--------------------------------------------------------------------------
+        */
+
+        $currentRound = $series->currentRound();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Report scope
+        |--------------------------------------------------------------------------
+        */
+
+        $reportScope = request(
+            'report_scope',
+            'season'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Base stint query
+        |--------------------------------------------------------------------------
+        |
+        | StintAccessService already centralizes the access rules
+        | for telemetry data.
+        |
+        */
+
+        $stintQuery = app(
+            \App\Services\StintAccessService::class
+        )
+            ->query()
+            ->with([
+                'laps',
+                'session',
+                'track',
+                'user',
+            ])
+            ->withCount('laps')
+            ->whereIn(
+                'user_id',
+                $driverIds
+            )
+            ->where(
+                'car_id',
+                $competitionCar->iracing_car_id
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Report scope filtering
+        |--------------------------------------------------------------------------
+        */
+
+        if ($reportScope === 'season') {
+
+            if ($series->start_date) {
+
+                $stintQuery->where(
+                    'created_at',
+                    '>=',
+                    \Carbon\Carbon::parse(
+                        $series->start_date
+                    )->startOfDay()
+                );
+            }
+
+            if ($series->end_date) {
+
+                $stintQuery->where(
+                    'created_at',
+                    '<=',
+                    \Carbon\Carbon::parse(
+                        $series->end_date
+                    )->endOfDay()
+                );
+            }
+
+        } elseif ($reportScope === 'week') {
+
+            if ($currentRound) {
+
+                if ($currentRound->week_start) {
+
+                    $stintQuery->where(
+                        'created_at',
+                        '>=',
+                        \Carbon\Carbon::parse(
+                            $currentRound->week_start
+                        )->startOfDay()
+                    );
+                }
+
+                if ($currentRound->week_end) {
+
+                    $stintQuery->where(
+                        'created_at',
+                        '<=',
+                        \Carbon\Carbon::parse(
+                            $currentRound->week_end
+                        )->endOfDay()
+                    );
+                }
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Valid stints only
+        |--------------------------------------------------------------------------
+        */
+
+        $stints = $stintQuery
+            ->having(
+                'laps_count',
+                '>=',
+                2
+            )
+            ->orderByDesc('created_at')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | View
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->view(
+            'teamcenter.championships.partials.stints',
+            [
+                'stints' => $stints,
+                'series' => $series,
+                'reportScope' => $reportScope,
+            ]
+        );
+    }
 
 
 

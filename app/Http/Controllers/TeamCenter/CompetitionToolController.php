@@ -152,6 +152,39 @@ class CompetitionToolController extends Controller
                 'iracing_subsession_id'
             );
 
+        $reportScope = request(
+            'report_scope',
+            'season'
+        );
+
+        if ($reportScope === 'week') {
+
+            $stintQuery->whereBetween(
+                'created_at',
+                [
+                    $activeRound->week_start,
+                    $activeRound->week_end,
+                ]
+            );
+        }
+
+        if ($reportScope === 'season') {
+
+            $seasonStart = $series
+                ->rounds
+                ->min('week_start');
+
+            if ($seasonStart) {
+
+                $stintQuery->where(
+                    'created_at',
+                    '>=',
+                    $seasonStart
+                );
+            }
+        }
+
+
         /*
         |--------------------------------------------------------------------------
         | Debug
@@ -190,7 +223,18 @@ class CompetitionToolController extends Controller
                 'iracing_subsession_id',
                 $subsessionIds
             )
-            ->withCount('stints')
+            ->withCount([
+                'stints as stints_count' => function ($query) use (
+                    $driverIds,
+                    $carId,
+                    $trackId
+                ) {
+                    $query
+                        ->whereIn('user_id', $driverIds)
+                        ->where('car_id', $carId)
+                        ->where('track_id', $trackId);
+                },
+            ])
             ->orderByDesc('created_at')
             ->paginate(15);
 

@@ -118,6 +118,65 @@
             }
         },
 
+
+        async openStints(url) {
+
+            this.activeTool = 'stints';
+            this.loading = true;
+            this.toolContent = '';
+
+            const currentScope =
+                new URLSearchParams(
+                    window.location.search
+                ).get('report_scope') || 'season';
+
+            const requestUrl =
+                new URL(
+                    url,
+                    window.location.origin
+                );
+
+            requestUrl.searchParams.set(
+                'report_scope',
+                currentScope
+            );
+
+            try {
+
+                const response = await fetch(
+                    requestUrl.toString(),
+                    {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With':
+                                'XMLHttpRequest',
+                            'Accept':
+                                'text/html'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        'HTTP ' + response.status
+                    );
+                }
+
+                this.toolContent =
+                    await response.text();
+
+            } catch (error) {
+                console.error(error);
+                this.error = 'No se ha podido cargar stints.';
+                this.toolContent = '';
+
+            } finally {
+                this.loading = false;
+            }
+        },
+
+
+
         close() {
             this.activeTool = null;
             this.toolContent = '';
@@ -152,11 +211,11 @@
                            md:border-[var(--border)]
                            md:pr-6"
                 >
-
+                    <img class="w-32 h-auto pb-2 m-auto" src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}" alt="">
                     <a href="https://members-ng.iracing.com/web/racing/results-stats/official-series-standings/{{ $series->IracingSeries->iracing_series_id }}/season-standings">
 
-                        <p class="text-4xl font-bold font-microsport text-[var(--text-title)]">
-                            SEASON {{ $series->season_number }}
+                        <p class="text-3x1 text-center font-bold font-microsport text-[var(--text-title)]">
+                          {{ $series->season_year }}  SEASON {{ $series->season_number }}
                         </p>
                     </a>
                     @if($series->rounds->isNotEmpty())
@@ -177,14 +236,12 @@
                         @if($startDate && $endDate)
 
                             <p
-                                class="mt-2 text-sm
-                                       text-[var(--text-muted)]"
-                            >
+                                class="mt-2 text-sm text-center text-[var(--data-info)]">
                                 {{ \Carbon\Carbon::parse(
                                     $startDate
                                 )->format('d M Y') }}
 
-                                →
+                                to
 
                                 {{ $endDate->format('d M Y') }}
                             </p>
@@ -195,23 +252,14 @@
 
                     <div class="mt-4">
 
-                        <p
-                            class="mt-1 text-xl
-                                   font-light
-                                   uppercase
-                                   font-microsport
-                                   text-[var(--card-title)]"
-                        >
-                            Team Competition
-                        </p>
-                        <p
+                        {{-- <p
                             class="mt-1 text-sm
                                    text-[var(--text-muted)]"
                         >
                             {{ ucfirst($entry->status) }}
-                        </p>
+                        </p> --}}
 
-                        <div class="mt-4">
+                        <div class="mt-4 mx-auto">
 
                             <button
                                 type="button"
@@ -222,8 +270,8 @@
                                     ) }}',
                                     'standings'
                                 )"
-                                class="inline-flex items-center justify-center
-                                    w-32 px-4 py-0 h-6
+                                class="inline-flex m-auto items-center justify-center
+                                    w-full px-4 py-0 h-6
                                     uppercase
                                     font-microsport
                                     text-center
@@ -246,6 +294,7 @@
                     </div>
 
                 </div>
+
 
 
                 {{-- TRACK --}}
@@ -521,7 +570,10 @@
 <div
     data-sessions-url="{{ route(
         'teamcenter.championships.sessions',
-        ['series' => $series->id]
+        [
+            'series' => $series->id,
+            'report_scope' => request('report_scope', 'season'),
+        ]
     ) }}"
 
     data-strategy-url="{{ route(
@@ -540,11 +592,13 @@
 
         <button
             type="button"
-            data-sessions-url="{{ route(
-                'teamcenter.championships.sessions',
-                ['series' => $series->id]
-            ) }}"
-            @click="openSessions($el.dataset.sessionsUrl)"
+            @click="openRemote(
+                'sessions',
+                '{{ route('teamcenter.championships.sessions', [
+                    'series' => $series->id,
+                    'report_scope' => request('report_scope', 'season'),
+                ]) }}'
+            )"
             class="w-32 px-4 py-0 h-6 uppercase font-microsport
                    text-center rounded
                    border border-[var(--b-header)]
@@ -560,7 +614,7 @@
 
         <button
             type="button"
-            @click="open('stints')"
+            @click="openStints('{{ route('teamcenter.championships.stints',['series' => $series->id]) }}')"
             class="w-32 px-4 py-0 h-6 uppercase font-microsport
                    text-center rounded
                    border border-[var(--b-header)]
@@ -620,33 +674,13 @@
             {{-- HEADER --}}
 
             <div
-                class="flex items-center justify-between
-                       px-6 py-4
-                       border-b border-[var(--border)]"
-            >
+                class="flex items-center justify-between px-6 py-0 border-b border-[var(--border)]">
 
                 <div>
 
-                    <h3
-                        class="text-lg font-semibold
-                            text-[var(--text-card-title)]"
-                    >
+                    <h3 class="text-lg font-semibold text-[var(--text-card-title)]">
 
                         <span x-show="activeTool === 'standings'">
-                            <p class="justify-center align-middle text-center mt-1 text-sd text-[var(--text)]">
-                                <div class="flex">
-                                    <img class="w-20 h-auto" src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}" alt="">
-
-                                <p class="ml-4 pt-1.5 uppercase">
-                                {{ $series->iracingSeries->name }}
-                                ·
-                                {{ $series->season_year }}
-                                Season {{ $series->season_number }}
-                                </p>
-
-                                </div>
-
-                            </p>
                         </span>
 
                         <span x-show="activeTool === 'sessions'">

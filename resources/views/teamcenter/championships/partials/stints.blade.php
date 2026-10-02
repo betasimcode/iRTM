@@ -17,7 +17,7 @@
                 class="mt-1 text-xs
                        text-[var(--text-muted)]"
             >
-                {{ $stints->count() }}
+                {{ $stints->total() }}
                 tandas
                 ·
                 {{ match($reportScope) {
@@ -193,6 +193,284 @@
             </table>
 
         </div>
+
+
+        @if($stints->hasPages())
+
+            <div
+                class="flex items-center justify-between
+                       pt-2"
+            >
+
+                <div
+                    class="text-xs
+                           text-[var(--text-muted)]"
+                >
+                    Mostrando
+                    {{ $stints->firstItem() }}
+                    –
+                    {{ $stints->lastItem() }}
+                    de
+                    {{ $stints->total() }}
+                </div>
+
+
+                <div
+                    class="flex items-center gap-1"
+                >
+
+                    @if($stints->onFirstPage())
+
+                        <span
+                            class="px-3 py-1.5
+                                   rounded-lg
+                                   border border-[var(--border)]
+                                   text-xs
+                                   text-[var(--text-muted)]
+                                   opacity-50"
+                        >
+                            Anterior
+                        </span>
+
+                    @else
+
+                        @php
+                            $previousUrl = $stints->previousPageUrl();
+
+                            $previousUrl .=
+                                (str_contains($previousUrl, '?')
+                                    ? '&'
+                                    : '?')
+                                . http_build_query([
+                                    'report_scope' => $reportScope,
+                                ]);
+                        @endphp
+
+                        <a
+                            href="{{ $previousUrl }}"
+                            onclick="
+                                event.preventDefault();
+
+                                const root = this.closest('[x-data]');
+                                const component = Alpine.$data(root);
+
+                                component.loading = true;
+
+                                fetch(this.href, {
+                                    method: 'GET',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'text/html'
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(
+                                            'HTTP ' + response.status
+                                        );
+                                    }
+
+                                    return response.text();
+                                })
+                                .then(html => {
+                                    component.toolContent = html;
+                                })
+                                .catch(error => {
+                                    console.error(error);
+
+                                    component.error =
+                                        'No se ha podido cargar la página de stints.';
+                                })
+                                .finally(() => {
+                                    component.loading = false;
+                                });
+                            "
+                            class="px-3 py-1.5
+                                   rounded-lg
+                                   border border-[var(--border)]
+                                   text-xs
+                                   text-[var(--text-muted)]
+                                   hover:text-[var(--text)]
+                                   hover:bg-[var(--bg)]
+                                   transition"
+                        >
+                            Anterior
+                        </a>
+
+                    @endif
+
+
+                    @for($page = 1; $page <= $stints->lastPage(); $page++)
+
+                        @php
+                            $pageUrl = $stints->url($page);
+
+                            $pageUrl .=
+                                (str_contains($pageUrl, '?')
+                                    ? '&'
+                                    : '?')
+                                . http_build_query([
+                                    'report_scope' => $reportScope,
+                                ]);
+                        @endphp
+
+                        @if($page == $stints->currentPage())
+
+                            <span
+                                class="px-3 py-1.5
+                                       rounded-lg
+                                       border border-[var(--border)]
+                                       bg-[var(--btn-app)]
+                                       text-xs
+                                       font-semibold
+                                       text-[var(--text-title)]"
+                            >
+                                {{ $page }}
+                            </span>
+
+                        @else
+
+                            <a
+                                href="{{ $pageUrl }}"
+                                onclick="
+                                    event.preventDefault();
+
+                                    const root = this.closest('[x-data]');
+                                    const component = Alpine.$data(root);
+
+                                    component.loading = true;
+
+                                    fetch(this.href, {
+                                        method: 'GET',
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Accept': 'text/html'
+                                        }
+                                    })
+                                    .then(response => {
+                                        if (!response.ok) {
+                                            throw new Error(
+                                                'HTTP ' + response.status
+                                            );
+                                        }
+
+                                        return response.text();
+                                    })
+                                    .then(html => {
+                                        component.toolContent = html;
+                                    })
+                                    .catch(error => {
+                                        console.error(error);
+
+                                        component.error =
+                                            'No se ha podido cargar la página de stints.';
+                                    })
+                                    .finally(() => {
+                                        component.loading = false;
+                                    });
+                                "
+                                class="px-3 py-1.5
+                                       rounded-lg
+                                       border border-[var(--border)]
+                                       text-xs
+                                       text-[var(--text-muted)]
+                                       hover:text-[var(--text)]
+                                       hover:bg-[var(--bg)]
+                                       transition"
+                            >
+                                {{ $page }}
+                            </a>
+
+                        @endif
+
+                    @endfor
+
+
+                    @if($stints->hasMorePages())
+
+                        @php
+                            $nextUrl = $stints->nextPageUrl();
+
+                            $nextUrl .=
+                                (str_contains($nextUrl, '?')
+                                    ? '&'
+                                    : '?')
+                                . http_build_query([
+                                    'report_scope' => $reportScope,
+                                ]);
+                        @endphp
+
+                        <a
+                            href="{{ $nextUrl }}"
+                            onclick="
+                                event.preventDefault();
+
+                                const root = this.closest('[x-data]');
+                                const component = Alpine.$data(root);
+
+                                component.loading = true;
+
+                                fetch(this.href, {
+                                    method: 'GET',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'text/html'
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(
+                                            'HTTP ' + response.status
+                                        );
+                                    }
+
+                                    return response.text();
+                                })
+                                .then(html => {
+                                    component.toolContent = html;
+                                })
+                                .catch(error => {
+                                    console.error(error);
+
+                                    component.error =
+                                        'No se ha podido cargar la página de stints.';
+                                })
+                                .finally(() => {
+                                    component.loading = false;
+                                });
+                            "
+                            class="px-3 py-1.5
+                                   rounded-lg
+                                   border border-[var(--border)]
+                                   text-xs
+                                   text-[var(--text-muted)]
+                                   hover:text-[var(--text)]
+                                   hover:bg-[var(--bg)]
+                                   transition"
+                        >
+                            Siguiente
+                        </a>
+
+                    @else
+
+                        <span
+                            class="px-3 py-1.5
+                                   rounded-lg
+                                   border border-[var(--border)]
+                                   text-xs
+                                   text-[var(--text-muted)]
+                                   opacity-50"
+                        >
+                            Siguiente
+                        </span>
+
+                    @endif
+
+                </div>
+
+            </div>
+
+        @endif
 
     @endif
 

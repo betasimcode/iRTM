@@ -822,6 +822,11 @@ public function stints(Series $series)
 {
     $user = auth()->user();
 
+    $reportScope = request(
+        'report_scope',
+        'season'
+    );
+
     abort_unless(
         $user->team_id !== null,
         403

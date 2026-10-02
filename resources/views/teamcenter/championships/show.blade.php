@@ -119,64 +119,6 @@
         },
 
 
-        async openStints(url) {
-
-            this.activeTool = 'stints';
-            this.loading = true;
-            this.toolContent = '';
-
-            const currentScope =
-                new URLSearchParams(
-                    window.location.search
-                ).get('report_scope') || 'season';
-
-            const requestUrl =
-                new URL(
-                    url,
-                    window.location.origin
-                );
-
-            requestUrl.searchParams.set(
-                'report_scope',
-                currentScope
-            );
-
-            try {
-
-                const response = await fetch(
-                    requestUrl.toString(),
-                    {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With':
-                                'XMLHttpRequest',
-                            'Accept':
-                                'text/html'
-                        }
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(
-                        'HTTP ' + response.status
-                    );
-                }
-
-                this.toolContent =
-                    await response.text();
-
-            } catch (error) {
-                console.error(error);
-                this.error = 'No se ha podido cargar stints.';
-                this.toolContent = '';
-
-            } finally {
-                this.loading = false;
-            }
-        },
-
-
-
         close() {
             this.activeTool = null;
             this.toolContent = '';
@@ -592,13 +534,12 @@
 
         <button
             type="button"
-            @click="openRemote(
-                'sessions',
-                '{{ route('teamcenter.championships.sessions', [
-                    'series' => $series->id,
-                    'report_scope' => request('report_scope', 'season'),
-                ]) }}'
-            )"
+            @click="openSessions(
+            '{{ route('teamcenter.championships.sessions', [
+                'series' => $series->id,
+                'report_scope' => request('report_scope', 'season'),
+            ]) }}'
+        )"
             class="w-32 px-4 py-0 h-6 uppercase font-microsport
                    text-center rounded
                    border border-[var(--b-header)]
@@ -614,7 +555,12 @@
 
         <button
             type="button"
-            @click="openStints('{{ route('teamcenter.championships.stints',['series' => $series->id]) }}')"
+            @click="loadTool(
+            '{{ route('teamcenter.championships.stints', [
+                'series' => $series->id,
+            ]) }}',
+            'stints'
+        )"
             class="w-32 px-4 py-0 h-6 uppercase font-microsport
                    text-center rounded
                    border border-[var(--b-header)]
@@ -792,20 +738,18 @@
                     x-show="activeTool === 'stints'"
                     class="p-6"
                 >
+                    <template x-if="loading">
+                        <div class="py-12 text-center">
+                            <p class="text-sm text-[var(--text-muted)]">
+                                Cargando stints...
+                            </p>
+                        </div>
+                    </template>
 
                     <div
-                        class="rounded-xl
-                               border border-[var(--border)]
-                               bg-[var(--bg)]
-                               p-8 text-center"
-                    >
-
-                        <p class="text-sm text-[var(--text-muted)]">
-                            Stints
-                        </p>
-
-                    </div>
-
+                        x-show="!loading && toolContent !== ''"
+                        x-html="toolContent"
+                    ></div>
                 </div>
 
 

@@ -6,7 +6,7 @@
 @section('teamcenter-main')
 
 <div
-    class="max-w-7xl mx-auto px-4 py-8"
+    class="max-w-7xl mx-auto px-4 py-0"
     x-data="{
         activeTool: null,
         toolContent: '',
@@ -127,6 +127,7 @@
         }
     }"
 >
+
 
     {{-- COMPETITION CONTEXT --}}
     <section
@@ -634,7 +635,6 @@
                         </span>
 
                         <span x-show="activeTool === 'stints'">
-                            Stints
                         </span>
 
                         <span x-show="activeTool === 'strategy'">

@@ -4,8 +4,7 @@ namespace App\Services;
 
 use App\Models\SeriesEntry;
 use App\Models\SeriesRound;
-use Carbon\Carbon;
-use App\Models\Stint;
+use App\Services\TeamCompetitionStintQueryService;
 
 use Illuminate\Support\Collection;
 
@@ -98,86 +97,41 @@ class TeamCompetitionStatsService
         |
         */
 
-        $query = Stint::with('laps')
-            ->whereIn(
-                'user_id',
-                $driverIds
-            )
-            ->where(
-                'car_id',
-                $carId
-            )
-            ->where(
-                'track_id',
-                $trackId
-            );
-
         /*
-        |--------------------------------------------------------------------------
-        | Report scope
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| Competition stint query
+|--------------------------------------------------------------------------
+|
+| The competition query is shared with the Sessions and
+| Stints controllers.
+|
+*/
 
-        if ($reportScope === 'week') {
+$query = app(
+    TeamCompetitionStintQueryService::class
+)->query(
+    $entry,
+    $currentRound,
+    $reportScope
+);
 
-            $weekStart = Carbon::parse(
-                $currentRound->week_start
-            )->startOfDay();
+if (! $query) {
+    return $this->emptyStats();
+}
 
-            $weekEnd = Carbon::parse(
-                $currentRound->week_end
-            )->startOfDay();
+/*
+|--------------------------------------------------------------------------
+| Load stints
+|--------------------------------------------------------------------------
+*/
 
-            $query
-                ->where(
-                    'created_at',
-                    '>=',
-                    $weekStart
-                )
-                ->where(
-                    'created_at',
-                    '<',
-                    $weekEnd
-                );
-        }
+$stints = $query
+    ->with('laps')
+    ->get();
 
-        if ($reportScope === 'season') {
-
-            $seasonStart = $entry
-                ->series
-                ->rounds
-                ->min('week_start');
-
-            if ($seasonStart) {
-
-                $seasonPreparationStart = Carbon::parse(
-                    $seasonStart
-                )
-                    ->subDays(7)
-                    ->startOfDay();
-
-                $query->where(
-                    'created_at',
-                    '>=',
-                    $seasonPreparationStart
-                );
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Historical mode
-        |--------------------------------------------------------------------------
-        |
-        | No temporal filter.
-        |
-        */
-
-        $stints = $query->get();
-
-        if ($stints->isEmpty()) {
-            return $this->emptyStats();
-        }
+if ($stints->isEmpty()) {
+    return $this->emptyStats();
+}
 
         /*
         |--------------------------------------------------------------------------

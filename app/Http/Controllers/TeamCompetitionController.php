@@ -709,6 +709,11 @@ public function sessions(Series $series)
 {
     $user = auth()->user();
 
+    $reportScope = request(
+        'report_scope',
+        'season'
+    );
+
     abort_unless(
         $user->team_id !== null,
         403
@@ -754,53 +759,62 @@ public function sessions(Series $series)
             );
     }
 
-    $driverIds = $entry->members
-        ->where('status', 'active')
-        ->pluck('user_id')
-        ->unique()
-        ->values();
 
-    if ($driverIds->isEmpty()) {
-        $sessions = collect();
-
-        return view(
-            'sessions.index',
-            compact(
-                'series',
-                'entry',
-                'activeRound',
-                'competitionCar',
-                'sessions'
-            )
+    $stintService = app(
+        \App\Services\TeamCompetitionStintQueryService::class
         );
-    }
 
-    $carId = $competitionCar->iracing_car_id;
+        $stintQuery = $stintService->query(
+            $entry,
+            $activeRound,
+            $reportScope
+        );
 
-    $trackId = $activeRound
-        ->track
-        ->iracing_track_id;
+        if (! $stintQuery) {
+            $sessions = collect();
 
-    $subsessionIds = app(
-        \App\Services\StintAccessService::class
-    )
-        ->query()
-        ->whereIn('user_id', $driverIds)
-        ->where('car_id', $carId)
-        ->where('track_id', $trackId)
-        ->whereNotNull('iracing_subsession_id')
-        ->pluck('iracing_subsession_id')
-        ->unique()
-        ->values();
+            return view(
+                'sessions.index',
+                compact(
+                    'series',
+                    'entry',
+                    'activeRound',
+                    'competitionCar',
+                    'sessions',
+                    'reportScope'
+                )
+            );
+        }
+
+$subsessionIds = (clone $stintQuery)
+    ->whereNotNull('iracing_subsession_id')
+    ->pluck('iracing_subsession_id')
+    ->unique()
+    ->values();
 
     $sessions = \App\Models\IrSession::query()
         ->whereIn(
             'iracing_subsession_id',
             $subsessionIds
         )
-        ->withCount('stints')
+        ->withCount([
+            'stints as competition_stints_count' => function ($query) use (
+                $entry,
+                $activeRound,
+                $reportScope,
+                $stintService
+            ) {
+                $stintService->applyCompetitionFilters(
+                    $query,
+                    $entry,
+                    $activeRound,
+                    $reportScope
+                );
+            },
+        ])
         ->orderByDesc('created_at')
-        ->paginate(15);
+        ->paginate(15)
+        ->withQueryString();
 
     return view(
         'sessions.index',
@@ -852,12 +866,15 @@ public function stints(Series $series)
 
     $activeRound = $entry->series->activeRound();
 
-    if (! $activeRound || ! $activeRound->track) {
+    if (
+        $reportScope === 'week'
+        && (! $activeRound || ! $activeRound->track)
+    ) {
         return redirect()
             ->route('team.competitions.show', $series)
             ->with(
                 'error',
-                'No hay combinación activa de circuito.'
+                'No hay combinación activa de circuito para esta semana.'
             );
     }
 
@@ -872,35 +889,30 @@ public function stints(Series $series)
             );
     }
 
-    $driverIds = $entry->members
-        ->where('status', 'active')
-        ->pluck('user_id')
-        ->unique()
-        ->values();
+    $stintQuery = app(
+        \App\Services\TeamCompetitionStintQueryService::class
+    )->query(
+        $entry,
+        $activeRound,
+        $reportScope
+    );
 
-    $carId = $competitionCar->iracing_car_id;
-
-    $trackId = $activeRound
-        ->track
-        ->iracing_track_id;
-
-    $stints = app(
-        \App\Services\StintAccessService::class
-    )
-        ->query()
-        ->with([
-            'laps',
-            'session',
-            'track',
-            'user',
-        ])
-        ->withCount('laps')
-        ->whereIn('user_id', $driverIds)
-        ->where('car_id', $carId)
-        ->where('track_id', $trackId)
-        ->having('laps_count', '>=', 2)
-        ->orderByDesc('created_at')
-        ->paginate(15);
+    if (! $stintQuery) {
+        $stints = collect();
+    } else {
+        $stints = $stintQuery
+            ->with([
+                'laps',
+                'session',
+                'track',
+                'user',
+            ])
+            ->withCount('laps')
+            ->having('laps_count', '>=', 2)
+            ->orderByDesc('created_at')
+            ->paginate(15)
+            ->withQueryString();
+    }
 
     return view(
         'stints.index',

@@ -63,7 +63,26 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
         name="iracing_series_id"
         value="{{ old('iracing_series_id', $iracingSeries->iracing_series_id) }}"
         placeholder="Ej: 228"
-        class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]"></div>
+        class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
+</div>
+
+<div>
+    <x-input-label for="car_class_id" value="Car Class ID" />
+
+    <x-text-input
+        id="car_class_id"
+        name="car_class_id"
+        type="number"
+        min="0"
+        class="mt-1 block w-full"
+        :value="old('iracing_series_id', $iracingSeries->car_class_id)"
+    />
+
+    <x-input-error
+        :messages="$errors->get('car_class_id')"
+        class="mt-2"
+    />
+</div>
 
 <h2 class="text-[var(--card-title)] font-semibold">Config</h2>
 <hr class="border-[var(--card-title)]">

@@ -10,6 +10,7 @@ class IracingSerie extends Model
         'name',
         'short_name',
         'iracing_series_id',
+        'car_class_id',
         'logo_path',
         'background_img',
         'race_type',

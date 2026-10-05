@@ -39,6 +39,7 @@ class IracingSerieController extends Controller
             'official_forum' => 'nullable|string|max:255',
             'short_name' => 'nullable|string|max:50',
             'iracing_series_id' => 'nullable|integer|unique:iracing_series,iracing_series_id',
+            'car_class_id' => 'nullable|integer|min:0',
             'iracing_class' => 'required|string|max:25',
             // 🔥 clase del coche real
             'discipline' => 'required|string|max:50',
@@ -141,6 +142,7 @@ class IracingSerieController extends Controller
             Rule::unique('iracing_series', 'iracing_series_id')
                 ->ignore($iracingSeries->id),
         ],
+        'car_class_id' => 'nullable|integer|min:0',
         'iracing_class' => 'required|string|max:25',
         // 🔥 clase del coche real
         'discipline' => 'required|string|max:50',

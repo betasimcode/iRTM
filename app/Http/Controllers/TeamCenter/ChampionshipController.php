@@ -7,7 +7,10 @@ use App\Models\Series;
 use App\Models\SeriesEntry;
 use App\Models\SeriesStanding;
 use App\Models\SeriesStandingDriver;
+use App\Services\SeriesStandingsSyncService;
 use App\Services\TeamCenter\TeamCenterContext;
+use Illuminate\Http\Request;
+use RuntimeException;
 
 class ChampionshipController extends Controller
 {
@@ -251,18 +254,19 @@ class ChampionshipController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Permisos de sincronización
+        | Standings permissions
         |--------------------------------------------------------------------------
         |
-        | Solo el administrador del sitio y el Team Owner pueden
-        | actualizar la clasificación desde TeamCenter.
-        | Team Director queda expresamente excluido.
+        | Standings synchronization is intentionally restricted
+        | to site administrators and team owners.
+        |
+        | Team directors do NOT have permission to synchronize.
         |
         */
 
         $canSyncStandings =
-            $user->role === 'admin'
-            || $user->driver_role === 'team_owner';
+            $user->role === 'admin' ||
+            $user->driver_role === 'team_owner';
 
         /*
         |--------------------------------------------------------------------------
@@ -299,8 +303,14 @@ class ChampionshipController extends Controller
         */
 
         $currentDriver = SeriesStandingDriver::query()
-            ->where('series_standing_id', $overallStanding->id)
-            ->where('cust_id', $user->iracing_user_id)
+            ->where(
+                'series_standing_id',
+                $overallStanding->id
+            )
+            ->where(
+                'cust_id',
+                $user->iracing_user_id
+            )
             ->first();
 
         /*
@@ -318,7 +328,10 @@ class ChampionshipController extends Controller
         */
 
         $overallDrivers = SeriesStandingDriver::query()
-            ->where('series_standing_id', $overallStanding->id)
+            ->where(
+                'series_standing_id',
+                $overallStanding->id
+            )
             ->orderBy('rank')
             ->get();
 
@@ -330,22 +343,34 @@ class ChampionshipController extends Controller
 
         $divisionDrivers = collect();
 
-
-
-
-
         if ($division !== null) {
 
             $divisionStanding = SeriesStanding::query()
-                ->where('series_id', $series->id)
-                ->where('scope', 'division')
-                ->where('division_key', (int) $division)
-                ->where('race_week_num', -1)
+                ->where(
+                    'series_id',
+                    $series->id
+                )
+                ->where(
+                    'scope',
+                    'division'
+                )
+                ->where(
+                    'division_key',
+                    (int) $division
+                )
+                ->where(
+                    'race_week_num',
+                    -1
+                )
                 ->first();
 
             if ($divisionStanding) {
+
                 $divisionDrivers = SeriesStandingDriver::query()
-                    ->where('series_standing_id', $divisionStanding->id)
+                    ->where(
+                        'series_standing_id',
+                        $divisionStanding->id
+                    )
                     ->orderBy('rank')
                     ->get();
             }
@@ -366,5 +391,197 @@ class ChampionshipController extends Controller
     }
 
 
+    /**
+     * Actualiza manualmente los standings mediante un archivo JSON.
+     *
+     * Este mecanismo es temporal y será sustituido posteriormente
+     * por la descarga autenticada mediante OAuth de iRacing.
+     */
+    public function updateStandings(
+        Request $request,
+        Series $series,
+        TeamCenterContext $context,
+        SeriesStandingsSyncService $syncService
+    ) {
+        $user = $context->user;
 
+        /*
+        |--------------------------------------------------------------------------
+        | Authorization
+        |--------------------------------------------------------------------------
+        |
+        | Solamente:
+        |
+        | - site admin
+        | - team owner
+        |
+        | Team director queda explícitamente fuera.
+        |
+        */
+
+        $canSyncStandings =
+            $user->role === 'admin' ||
+            $user->driver_role === 'team_owner';
+
+        if (!$canSyncStandings) {
+            abort(
+                403,
+                'No tienes permisos para actualizar los standings.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Standings actuales
+        |--------------------------------------------------------------------------
+        |
+        | Utilizamos la clasificación Overall existente para obtener
+        | el car_class_id asociado a esta competición.
+        |
+        */
+
+        $overallStanding = SeriesStanding::query()
+            ->where('series_id', $series->id)
+            ->where('scope', 'overall')
+            ->where('division_key', -1)
+            ->where('race_week_num', -1)
+            ->first();
+
+        if (!$overallStanding) {
+            throw new RuntimeException(
+                'No existe una clasificación Overall para esta serie.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validación del archivo
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+            'standings_file' => [
+                'required',
+                'file',
+                'mimetypes:application/json,text/plain',
+                'max:10240',
+            ],
+        ]);
+
+        $file = $request->file('standings_file');
+
+        if (!$file || !$file->isValid()) {
+            throw new RuntimeException(
+                'El archivo de standings no es válido.'
+            );
+        }
+
+        $jsonContent = file_get_contents(
+            $file->getRealPath()
+        );
+
+        if ($jsonContent === false) {
+            throw new RuntimeException(
+                'No se pudo leer el archivo de standings.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Importación
+        |--------------------------------------------------------------------------
+        */
+
+        $sync = $syncService->importCsv(
+            series: $series,
+            iracingSeasonId: (int) $overallStanding->iracing_season_id,
+            iracingSeriesId: (int) $overallStanding->iracing_series_id,
+            carClassId: (int) $overallStanding->car_class_id,
+            csvContent: $jsonContent,
+            syncType: 'manual'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recargar standings
+        |--------------------------------------------------------------------------
+        */
+
+        $overallStanding = SeriesStanding::query()
+            ->where('series_id', $series->id)
+            ->where('scope', 'overall')
+            ->where('division_key', -1)
+            ->where('race_week_num', -1)
+            ->first();
+
+        $currentDriver = SeriesStandingDriver::query()
+            ->where(
+                'series_standing_id',
+                $overallStanding->id
+            )
+            ->where(
+                'cust_id',
+                $user->iracing_user_id
+            )
+            ->first();
+
+        $division = $currentDriver?->division;
+
+        $overallDrivers = SeriesStandingDriver::query()
+            ->where(
+                'series_standing_id',
+                $overallStanding->id
+            )
+            ->orderBy('rank')
+            ->get();
+
+        $divisionDrivers = collect();
+
+        if ($division !== null) {
+
+            $divisionStanding = SeriesStanding::query()
+                ->where(
+                    'series_id',
+                    $series->id
+                )
+                ->where(
+                    'scope',
+                    'division'
+                )
+                ->where(
+                    'division_key',
+                    (int) $division
+                )
+                ->where(
+                    'race_week_num',
+                    -1
+                )
+                ->first();
+
+            if ($divisionStanding) {
+
+                $divisionDrivers = SeriesStandingDriver::query()
+                    ->where(
+                        'series_standing_id',
+                        $divisionStanding->id
+                    )
+                    ->orderBy('rank')
+                    ->get();
+            }
+        }
+
+        return response()->view(
+            'teamcenter.championships.partials.standings',
+            [
+                'overallDrivers' => $overallDrivers,
+                'divisionDrivers' => $divisionDrivers,
+                'division' => $division,
+                'currentCustId' => $user->iracing_user_id,
+                'hasStandings' => true,
+                'series' => $series,
+                'canSyncStandings' => $canSyncStandings,
+                'sync' => $sync,
+            ]
+        );
+    }
 }

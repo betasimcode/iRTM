@@ -318,11 +318,15 @@ Route::group([
         Route::get('/championships/{series}/standings', [ChampionshipController::class, 'standings'])
             ->name('teamcenter.championships.standings');
 
+        Route::post('/championships/{series}/standings', [ChampionshipController::class, 'updateStandings'])
+            ->name('teamcenter.championships.standings.update');
+
         Route::get('/championships/{series}/stints', [CompetitionToolController::class, 'stints'])
             ->name('teamcenter.championships.stints');
 
         Route::get('/championships/{series}/sessions', [CompetitionToolController::class, 'sessions',])
             ->name('teamcenter.championships.sessions');
+
 
         // STRATEGY
 

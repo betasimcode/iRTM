@@ -1,5 +1,9 @@
 <div
-    x-data="{ standingsTab: 'division' }"
+    x-data="{
+        standingsTab: 'division',
+        standingsSyncing: false,
+        standingsSyncError: ''
+    }"
     class="bg-[var(--card)]"
 >
 
@@ -37,50 +41,112 @@
 
                 </div>
 
+@if($canSyncStandings ?? false)
 
-                @if($canSyncStandings)
+    <div class="mt-4 flex items-center justify-between gap-4">
 
-                    <button
-                        type="button"
-                        class="inline-flex
-                               items-center
-                               gap-2
-                               rounded-md
-                               border
-                               border-[var(--border)]
-                               bg-[var(--bg)]
-                               px-3
-                               py-2
-                               text-[10px]
-                               font-semibold
-                               uppercase
-                               tracking-wider
-                               text-[var(--text)]
-                               transition
-                               hover:bg-[var(--hover)]
-                               hover:text-[var(--value-data)]"
-                    >
+        <form
+            method="POST"
+            action="{{ route('teamcenter.championships.standings.update', ['series' => $series->id]) }}"
+            enctype="multipart/form-data"
+            @submit.prevent="
+                standingsSyncing = true;
+                standingsSyncError = '';
 
-                        <svg
-                            class="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M20 11a8.1 8.1 0 0 0-14.7-4.7L3 9"/>
-                            <path d="M3 4v5h5"/>
-                            <path d="M4 13a8.1 8.1 0 0 0 14.7 4.7L21 15"/>
-                            <path d="M21 20v-5h-5"/>
-                        </svg>
+                const formData = new FormData($event.target);
 
-                        Actualizar clasificación
+                fetch($event.target.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'text/html'
+                    }
+                })
+                .then(async response => {
+                    const html = await response.text();
 
-                    </button>
+                    if (!response.ok) {
+                        throw new Error('No se pudo actualizar la clasificación.');
+                    }
 
-                @endif
+                    toolContent = html;
+                })
+                .catch(error => {
+                    standingsSyncError = error.message;
+                })
+                .finally(() => {
+                    standingsSyncing = false;
+                });
+            "
+            class="flex items-center gap-2"
+        >
+
+            @csrf
+
+            <label
+                class="cursor-pointer rounded-md
+                       border border-[var(--border)]
+                       bg-[var(--bg)]
+                       px-3 py-2
+                       text-[10px]
+                       font-semibold
+                       uppercase
+                       tracking-wider
+                       text-[var(--text-muted)]
+                       transition
+                       hover:text-[var(--text)]"
+            >
+
+                Seleccionar JSON
+
+                <input
+                    type="file"
+                    name="standings_file"
+                    accept=".json,application/json"
+                    class="hidden"
+                    required
+                >
+
+            </label>
+
+            <button
+                type="submit"
+                :disabled="standingsSyncing"
+                class="rounded-md
+                       bg-[var(--value-data)]
+                       px-4 py-2
+                       text-[10px]
+                       font-semibold
+                       uppercase
+                       tracking-wider
+                       text-black
+                       transition
+                       hover:opacity-90
+                       disabled:cursor-not-allowed
+                       disabled:opacity-50"
+            >
+
+                <span x-show="!standingsSyncing">
+                    Actualizar
+                </span>
+
+                <span x-show="standingsSyncing">
+                    Actualizando...
+                </span>
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <p
+        x-show="standingsSyncError"
+        x-text="standingsSyncError"
+        class="mt-2 text-right text-xs text-red-400"
+    ></p>
+
+@endif
 
 
                 {{-- TABS --}}

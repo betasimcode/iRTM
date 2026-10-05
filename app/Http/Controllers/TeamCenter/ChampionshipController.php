@@ -251,6 +251,21 @@ class ChampionshipController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Permisos de sincronización
+        |--------------------------------------------------------------------------
+        |
+        | Solo el administrador del sitio y el Team Owner pueden
+        | actualizar la clasificación desde TeamCenter.
+        | Team Director queda expresamente excluido.
+        |
+        */
+
+        $canSyncStandings =
+            $user->role === 'admin'
+            || $user->driver_role === 'team_owner';
+
+        /*
+        |--------------------------------------------------------------------------
         | Clasificación general de temporada
         |--------------------------------------------------------------------------
         */
@@ -272,6 +287,7 @@ class ChampionshipController extends Controller
                     'currentCustId' => $user->iracing_user_id,
                     'hasStandings' => true,
                     'series' => $series,
+                    'canSyncStandings' => $canSyncStandings,
                 ]
             );
         }
@@ -344,6 +360,7 @@ class ChampionshipController extends Controller
                 'currentCustId' => $user->iracing_user_id,
                 'hasStandings' => true,
                 'series' => $series,
+                'canSyncStandings' => $canSyncStandings,
             ]
         );
     }

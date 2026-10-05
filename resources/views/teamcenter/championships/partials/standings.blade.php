@@ -16,7 +16,13 @@
         >
 
             <div class="flex items-center justify-between">
-                <img class="w-28 h-auto" src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}" alt="">
+
+                <img
+                    class="w-28 h-auto"
+                    src="{{ asset('storage/' . $series->iracingSeries->logo_path ) }}"
+                    alt=""
+                >
+
                 <div>
 
                     <h2
@@ -32,74 +38,117 @@
                 </div>
 
 
+                @if($canSyncStandings)
 
+                    <button
+                        type="button"
+                        class="inline-flex
+                               items-center
+                               gap-2
+                               rounded-md
+                               border
+                               border-[var(--border)]
+                               bg-[var(--bg)]
+                               px-3
+                               py-2
+                               text-[10px]
+                               font-semibold
+                               uppercase
+                               tracking-wider
+                               text-[var(--text)]
+                               transition
+                               hover:bg-[var(--hover)]
+                               hover:text-[var(--value-data)]"
+                    >
 
-            {{-- TABS --}}
-
-            <div
-                class="mt-4 flex items-center gap-1"
-            >
-
-                <button
-                    type="button"
-                    @click="standingsTab = 'division'"
-                    class="relative px-4 py-3
-                           text-[11px]
-                           font-semibold
-                           uppercase
-                           tracking-wider
-                           transition"
-                    :class="
-                        standingsTab === 'division'
-                            ? 'text-[var(--value-data)]'
-                            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                    "
-                >
-                    My Division
-
-                    @if($division !== null)
-                        <span
-                            class="ml-1 text-[10px] opacity-70"
+                        <svg
+                            class="h-3.5 w-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                         >
+                            <path d="M20 11a8.1 8.1 0 0 0-14.7-4.7L3 9"/>
+                            <path d="M3 4v5h5"/>
+                            <path d="M4 13a8.1 8.1 0 0 0 14.7 4.7L21 15"/>
+                            <path d="M21 20v-5h-5"/>
+                        </svg>
 
-                        </span>
-                    @endif
+                        Actualizar clasificación
 
-                    <span
-                        x-show="standingsTab === 'division'"
-                        class="absolute inset-x-0 bottom-0 h-px
-                               bg-[var(--value-data)]"
-                    ></span>
-                </button>
+                    </button>
+
+                @endif
 
 
-                <button
-                    type="button"
-                    @click="standingsTab = 'overall'"
-                    class="relative px-4 py-3
-                           text-[11px]
-                           font-semibold
-                           uppercase
-                           tracking-wider
-                           transition"
-                    :class="
-                        standingsTab === 'overall'
-                            ? 'text-[var(--value-data)]'
-                            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                    "
+                {{-- TABS --}}
+
+                <div
+                    class="mt-4 flex items-center gap-1"
                 >
-                    Overall
 
-                    <span
-                        x-show="standingsTab === 'overall'"
-                        class="absolute inset-x-0 bottom-0 h-px
-                               bg-[var(--value-data)]"
-                    ></span>
-                </button>
+                    <button
+                        type="button"
+                        @click="standingsTab = 'division'"
+                        class="relative px-4 py-3
+                               text-[11px]
+                               font-semibold
+                               uppercase
+                               tracking-wider
+                               transition"
+                        :class="
+                            standingsTab === 'division'
+                                ? 'text-[var(--value-data)]'
+                                : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                        "
+                    >
+                        My Division
+
+                        @if($division !== null)
+                            <span
+                                class="ml-1 text-[10px] opacity-70"
+                            >
+
+                            </span>
+                        @endif
+
+                        <span
+                            x-show="standingsTab === 'division'"
+                            class="absolute inset-x-0 bottom-0 h-px
+                                   bg-[var(--value-data)]"
+                        ></span>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        @click="standingsTab = 'overall'"
+                        class="relative px-4 py-3
+                               text-[11px]
+                               font-semibold
+                               uppercase
+                               tracking-wider
+                               transition"
+                        :class="
+                            standingsTab === 'overall'
+                                ? 'text-[var(--value-data)]'
+                                : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                        "
+                    >
+                        Overall
+
+                        <span
+                            x-show="standingsTab === 'overall'"
+                            class="absolute inset-x-0 bottom-0 h-px
+                                   bg-[var(--value-data)]"
+                        ></span>
+                    </button>
+
+                </div>
 
             </div>
-
-        </div>
 
         </div>
 
@@ -428,7 +477,7 @@
                                                text-right font-mono
                                                text-[var(--text-muted)]"
                                     >
-                                        {{ $driver->division }}
+                                        {{ $driver->division +1 }}
                                     </td>
 
                                 </tr>

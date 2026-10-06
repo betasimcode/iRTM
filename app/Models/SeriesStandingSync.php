@@ -10,7 +10,6 @@ class SeriesStandingSync extends Model
 {
     protected $fillable = [
         'series_id',
-        'car_class_id',
         'sync_type',
         'status',
         'classifications_processed',

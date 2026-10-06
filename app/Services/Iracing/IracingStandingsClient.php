@@ -15,7 +15,6 @@ interface IracingStandingsClient
      */
     public function getStandings(
         int $seasonId,
-        int $carClassId,
         int $division
     ): array;
 
@@ -25,7 +24,6 @@ interface IracingStandingsClient
      */
     public function getAvailableDivisions(
         int $seasonId,
-        int $carClassId
     ): array;
 
     /**

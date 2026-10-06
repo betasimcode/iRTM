@@ -240,39 +240,15 @@ class ChampionshipController extends Controller
     }
 
 
-    /**
-     * Championship standings.
-     *
-     * Shows the season standings for the current TeamCenter
-     * championship.
-     */
     public function standings(
         Series $series,
         TeamCenterContext $context
     ) {
         $user = $context->user;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Standings permissions
-        |--------------------------------------------------------------------------
-        |
-        | Standings synchronization is intentionally restricted
-        | to site administrators and team owners.
-        |
-        | Team directors do NOT have permission to synchronize.
-        |
-        */
-
         $canSyncStandings =
             $user->role === 'admin' ||
             $user->driver_role === 'team_owner';
-
-        /*
-        |--------------------------------------------------------------------------
-        | Clasificación general de temporada
-        |--------------------------------------------------------------------------
-        */
 
         $overallStanding = SeriesStanding::query()
             ->where('series_id', $series->id)
@@ -296,12 +272,6 @@ class ChampionshipController extends Controller
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Piloto actual dentro de Overall
-        |--------------------------------------------------------------------------
-        */
-
         $currentDriver = SeriesStandingDriver::query()
             ->where(
                 'series_standing_id',
@@ -313,19 +283,7 @@ class ChampionshipController extends Controller
             )
             ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | División del piloto
-        |--------------------------------------------------------------------------
-        */
-
         $division = $currentDriver?->division;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Overall
-        |--------------------------------------------------------------------------
-        */
 
         $overallDrivers = SeriesStandingDriver::query()
             ->where(
@@ -335,16 +293,9 @@ class ChampionshipController extends Controller
             ->orderBy('rank')
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Clasificación de la división del piloto
-        |--------------------------------------------------------------------------
-        */
-
         $divisionDrivers = collect();
 
         if ($division !== null) {
-
             $divisionStanding = SeriesStanding::query()
                 ->where(
                     'series_id',
@@ -365,7 +316,6 @@ class ChampionshipController extends Controller
                 ->first();
 
             if ($divisionStanding) {
-
                 $divisionDrivers = SeriesStandingDriver::query()
                     ->where(
                         'series_standing_id',
@@ -390,13 +340,6 @@ class ChampionshipController extends Controller
         );
     }
 
-
-    /**
-     * Actualiza manualmente los standings mediante un archivo JSON.
-     *
-     * Este mecanismo es temporal y será sustituido posteriormente
-     * por la descarga autenticada mediante OAuth de iRacing.
-     */
     public function updateStandings(
         Request $request,
         Series $series,
@@ -404,20 +347,6 @@ class ChampionshipController extends Controller
         SeriesStandingsSyncService $syncService
     ) {
         $user = $context->user;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Authorization
-        |--------------------------------------------------------------------------
-        |
-        | Solamente:
-        |
-        | - site admin
-        | - team owner
-        |
-        | Team director queda explícitamente fuera.
-        |
-        */
 
         $canSyncStandings =
             $user->role === 'admin' ||
@@ -429,35 +358,6 @@ class ChampionshipController extends Controller
                 'No tienes permisos para actualizar los standings.'
             );
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Standings actuales
-        |--------------------------------------------------------------------------
-        |
-        | Utilizamos la clasificación Overall existente para obtener
-        | el car_class_id asociado a esta competición.
-        |
-        */
-
-        $overallStanding = SeriesStanding::query()
-            ->where('series_id', $series->id)
-            ->where('scope', 'overall')
-            ->where('division_key', -1)
-            ->where('race_week_num', -1)
-            ->first();
-
-        if (!$overallStanding) {
-            throw new RuntimeException(
-                'No existe una clasificación Overall para esta serie.'
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validación del archivo
-        |--------------------------------------------------------------------------
-        */
 
         $request->validate([
             'standings_file' => [
@@ -488,24 +388,72 @@ class ChampionshipController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Importación
+        | Validación de identidad del archivo
         |--------------------------------------------------------------------------
+        |
+        | Se valida únicamente por claves contenidas en el nombre.
+        |
+        | - Lotus
+        | - 79
+        | - año
+        | - Season_X
+        | - rwnum_all_div_all
+        |
+        | ccid_x no participa en la identificación.
+        |
         */
+
+        $filename = $file->getClientOriginalName();
+
+        $filenameLower = strtolower($filename);
+
+        $expectedSeriesKeys = [
+            'lotus',
+            '79',
+        ];
+
+        foreach ($expectedSeriesKeys as $key) {
+            if (!str_contains($filenameLower, strtolower($key))) {
+                throw new RuntimeException(
+                    "El archivo de standings no contiene la clave requerida: {$key}."
+                );
+            }
+        }
+
+        $expectedYear = (string) $series->season_year;
+        $expectedSeason = (string) $series->season_number;
+
+        if (!str_contains($filenameLower, $expectedYear)) {
+            throw new RuntimeException(
+                "El archivo de standings no corresponde al año {$expectedYear}."
+            );
+        }
+
+        if (!str_contains(
+            $filenameLower,
+            'season_' . $expectedSeason
+        )) {
+            throw new RuntimeException(
+                "El archivo de standings no corresponde a Season {$expectedSeason}."
+            );
+        }
+
+        if (!str_contains(
+            $filenameLower,
+            'rwnum_all_div_all'
+        )) {
+            throw new RuntimeException(
+                'El archivo de standings no corresponde a una clasificación Overall.'
+            );
+        }
 
         $sync = $syncService->importCsv(
             series: $series,
-            iracingSeasonId: (int) $overallStanding->iracing_season_id,
-            iracingSeriesId: (int) $overallStanding->iracing_series_id,
-            carClassId: (int) $overallStanding->car_class_id,
+            iracingSeasonId: (int) $series->iracing_season_id,
+            iracingSeriesId: (int) $series->iracing_series_id,
             csvContent: $jsonContent,
             syncType: 'manual'
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Recargar standings
-        |--------------------------------------------------------------------------
-        */
 
         $overallStanding = SeriesStanding::query()
             ->where('series_id', $series->id)
@@ -538,7 +486,6 @@ class ChampionshipController extends Controller
         $divisionDrivers = collect();
 
         if ($division !== null) {
-
             $divisionStanding = SeriesStanding::query()
                 ->where(
                     'series_id',
@@ -559,7 +506,6 @@ class ChampionshipController extends Controller
                 ->first();
 
             if ($divisionStanding) {
-
                 $divisionDrivers = SeriesStandingDriver::query()
                     ->where(
                         'series_standing_id',
@@ -584,4 +530,5 @@ class ChampionshipController extends Controller
             ]
         );
     }
+
 }

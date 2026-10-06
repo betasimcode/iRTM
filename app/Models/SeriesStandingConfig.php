@@ -10,8 +10,6 @@ class SeriesStandingConfig extends Model
 {
     protected $fillable = [
         'series_id',
-        'car_class_id',
-        'car_class_name',
         'enabled',
     ];
 
@@ -19,7 +17,6 @@ class SeriesStandingConfig extends Model
     {
         return [
             'enabled' => 'boolean',
-            'car_class_id' => 'integer',
         ];
     }
 
@@ -30,7 +27,10 @@ class SeriesStandingConfig extends Model
 
     public function standings(): HasMany
     {
-        return $this->hasMany(SeriesStanding::class, 'series_id', 'series_id')
-            ->where('car_class_id', $this->car_class_id);
+        return $this->hasMany(
+            SeriesStanding::class,
+            'series_id',
+            'series_id'
+        );
     }
 }

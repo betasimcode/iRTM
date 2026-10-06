@@ -30,14 +30,12 @@ class SeriesStandingsSyncService
         Series $series,
         int $iracingSeasonId,
         int $iracingSeriesId,
-        int $carClassId,
         string $csvContent,
         string $syncType = 'manual',
         ?string $sourceLastUpdated = null
     ): SeriesStandingSync {
         $sync = SeriesStandingSync::create([
             'series_id' => $series->id,
-            'car_class_id' => $carClassId,
             'sync_type' => $syncType,
             'status' => 'running',
             'started_at' => now(),
@@ -70,7 +68,6 @@ class SeriesStandingsSyncService
                 $series,
                 $iracingSeasonId,
                 $iracingSeriesId,
-                $carClassId,
                 $rows,
                 $divisions,
                 $sync,
@@ -88,7 +85,6 @@ class SeriesStandingsSyncService
                     $series->id,
                     $iracingSeriesId,
                     $iracingSeasonId,
-                    $carClassId,
                     'overall',
                     -1,
                     null,
@@ -127,7 +123,6 @@ class SeriesStandingsSyncService
                         $series->id,
                         $iracingSeriesId,
                         $iracingSeasonId,
-                        $carClassId,
                         'division',
                         (int) $division,
                         (int) $division,
@@ -168,7 +163,6 @@ class SeriesStandingsSyncService
             Log::error('Error importando standings de iRacing', [
                 'sync_id' => $sync->id,
                 'series_id' => $series->id,
-                'car_class_id' => $carClassId,
                 'exception' => $e->getMessage(),
             ]);
 
@@ -686,7 +680,6 @@ class SeriesStandingsSyncService
         int $seriesId,
         int $iracingSeriesId,
         int $iracingSeasonId,
-        int $carClassId,
         string $scope,
         int $divisionKey,
         ?int $division,
@@ -694,7 +687,6 @@ class SeriesStandingsSyncService
     ): SeriesStanding {
         $standing = SeriesStanding::firstOrNew([
             'series_id' => $seriesId,
-            'car_class_id' => $carClassId,
             'scope' => $scope,
             'division_key' => $divisionKey,
             'race_week_num' => -1,

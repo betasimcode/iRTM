@@ -70,7 +70,6 @@ class SeriesStandingsSyncService
     ): void {
         $sync = SeriesStandingSync::create([
             'series_id' => $series->id,
-            'car_class_id' => $config->car_class_id,
             'sync_type' => $syncType,
             'status' => 'running',
             'started_at' => now(),
@@ -88,7 +87,6 @@ class SeriesStandingsSyncService
             $divisions = $this->client
                 ->getAvailableDivisions(
                     $seasonId,
-                    $config->car_class_id
                 );
 
             $divisions = collect($divisions)
@@ -147,7 +145,6 @@ class SeriesStandingsSyncService
                  */
                 $response = $this->client->getStandings(
                     $seasonId,
-                    $config->car_class_id,
                     $division ?? -1
                 );
 
@@ -221,7 +218,6 @@ class SeriesStandingsSyncService
                 'Series standings sync failed.',
                 [
                     'series_id' => $series->id,
-                    'car_class_id' => $config->car_class_id,
                     'sync_id' => $sync->id,
                     'exception' => $e->getMessage(),
                 ]
@@ -239,7 +235,6 @@ class SeriesStandingsSyncService
         return SeriesStanding::firstOrCreate(
             [
                 'series_id' => $series->id,
-                'car_class_id' => $config->car_class_id,
                 'scope' => $classification['scope'],
                 'division_key' => $classification['division_key'],
                 'race_week_num' => -1,
@@ -422,7 +417,6 @@ class SeriesStandingsSyncService
     ): void {
         SeriesStanding::query()
             ->where('series_id', $series->id)
-            ->where('car_class_id', $config->car_class_id)
             ->where('status', '!=', 'finalized')
             ->update([
                 'status' => 'finalized',

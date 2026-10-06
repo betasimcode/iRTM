@@ -23,7 +23,6 @@ class TestIracingStandingsRequest extends Command
 
         $params = [
             'season_id' => (int) $this->option('season'),
-            'car_class_id' => (int) $this->option('class'),
             'race_week_num' => (int) $this->option('week'),
             'division' => (int) $this->option('division'),
         ];

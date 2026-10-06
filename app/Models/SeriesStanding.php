@@ -12,7 +12,6 @@ class SeriesStanding extends Model
         'series_id',
         'iracing_series_id',
         'iracing_season_id',
-        'car_class_id',
         'scope',
         'division_key',
         'division',
@@ -29,7 +28,6 @@ class SeriesStanding extends Model
         return [
             'division' => 'integer',
             'division_key' => 'integer',
-            'car_class_id' => 'integer',
             'iracing_season_id' => 'integer',
             'iracing_series_id' => 'integer',
             'source_last_updated' => 'datetime',

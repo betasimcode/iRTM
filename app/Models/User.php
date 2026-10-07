@@ -167,10 +167,10 @@ class User extends Authenticatable
         );
     }
 
-    public function sessionFiles()
+    public function StintFiles()
     {
         return $this->hasMany(
-            SessionFile::class
+            StintFile::class
         );
     }
 

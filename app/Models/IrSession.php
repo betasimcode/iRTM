@@ -19,7 +19,7 @@ class IrSession extends Model
     {
         return $this->hasMany(IrSessionPhase::class, 'session_id');
     }
-    
+
     public function stints()
     {
         return $this->hasMany(
@@ -47,21 +47,6 @@ class IrSession extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    public function files()
-    {
-        return $this->hasMany(
-            SessionFile::class,
-            'session_id'
-        );
-    }
-
-
-
-
-
-
-
 
 
 

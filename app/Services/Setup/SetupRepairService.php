@@ -4,15 +4,14 @@ namespace App\Services\Setup;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use App\Models\SessionFile;
+use App\Models\StintFile;
 use App\Models\Stint;
 
 class SetupRepairService
 {
     public static function repair(Stint $stint): array
     {
-        $ibt = $stint->session
-            ->files()
+        $ibt = $stint->files()
             ->where('type', 'ibt')
             ->first();
 

@@ -30,6 +30,14 @@ class Stint extends Model {
         );
     }
 
+    public function files()
+    {
+        return $this->hasMany(
+            StintFile::class,
+            'stint_id'
+        );
+    }
+
     public function scopeValid($query)
     {
         return $query->has('laps', '>=', 1);

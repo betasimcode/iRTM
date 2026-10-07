@@ -129,46 +129,60 @@
 
                 @foreach($stints as $stint)
 
-                    <tr
-                        class="transition
-                               hover:bg-[var(--bg)]"
+                <tr
+                    class="transition hover:bg-[var(--bg)]"
+                >
+
+                    <td
+                        class="p-0 text-[var(--text)]"
                     >
-                        <td
-                            class="px-4 py-3
-                                   text-[var(--text)]"
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full px-4 py-3"
                         >
                             #{{ $stint->id ?? '—' }}
-                        </td>
+                        </a>
+                    </td>
 
-                        <td
-                            class="px-4 py-3
-                                   text-[var(--text)]"
+                    <td
+                        class="p-0 text-[var(--text)]"
+                    >
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full px-4 py-3"
                         >
                             {{ $stint->updated_at ?? '—' }}
-                        </td>
+                        </a>
+                    </td>
 
-
-                        <td
-                            class="px-4 py-3
-                                   text-[var(--text-muted)]"
+                    <td
+                        class="p-0 text-[var(--text-muted)]"
+                    >
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full px-4 py-3"
                         >
                             {{ $stint->user?->name ?? '—' }}
-                        </td>
+                        </a>
+                    </td>
 
-
-                        <td
-                            class="px-4 py-3
-                                   text-right
-                                   text-[var(--value-data)]"
+                    <td
+                        class="p-0 text-right text-[var(--value-data)]"
+                    >
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full justify-end px-4 py-3"
                         >
                             {{ $stint->laps_count }}
-                        </td>
+                        </a>
+                    </td>
 
-
-                        <td
-                            class="px-4 py-3
-                                   text-right
-                                   text-[var(--lap-best)]"
+                    <td
+                        class="p-0 text-right text-[var(--lap-best)]"
+                    >
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full justify-end px-4 py-3"
                         >
                             {{ $stint->laps->min('lap_time')
                                 ? lapTime(
@@ -176,13 +190,15 @@
                                 )
                                 : '—'
                             }}
-                        </td>
+                        </a>
+                    </td>
 
-
-                        <td
-                            class="px-4 py-3
-                                   text-right
-                                   text-[var(--value-data)]"
+                    <td
+                        class="p-0 text-right text-[var(--value-data)]"
+                    >
+                        <a
+                            href="{{ route('stints.show', $stint->id) }}"
+                            class="flex w-full justify-end px-4 py-3"
                         >
                             {{ $stint->avg_fuel !== null
                                 ? number_format(
@@ -191,11 +207,12 @@
                                 ) . ' L'
                                 : '—'
                             }}
-                        </td>
+                        </a>
+                    </td>
 
-                    </tr>
+                </tr>
 
-                @endforeach
+            @endforeach
 
             </tbody>
 

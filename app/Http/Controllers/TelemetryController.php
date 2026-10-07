@@ -19,7 +19,7 @@ use App\Events\LapCompleted;
 use App\Models\TrackSector;
 use App\Models\IrSessionPhase;
 use App\Models\IracingSerie;
-use App\Models\SessionFile;
+use App\Models\StintFile;
 
 class TelemetryController extends Controller
 {
@@ -713,7 +713,7 @@ public function store(Request $request)
                     // ==================================
 
                     $finalFilename =
-                        $subsessionId . '.ibt';
+                        'stint_' . $stintId . '.ibt';
 
                     $finalPath =
                         $destinationFolder .
@@ -759,38 +759,41 @@ public function store(Request $request)
             }
 
 
-            // ========================================
-            //  8.6 REGISTER SESSION FILE
+            /// ========================================
+            //  8.6 REGISTER STINT FILE
             // ========================================
 
             try {
 
                 if (
 
-                    $userId
+                    $stintId
 
-                    && isset($session)
+                    && $stint
 
                     && $finalPath
 
                     && Storage::exists($finalPath)
 
                 ) {
+
                     $hashStart = microtime(true);
-                    SessionFile::updateOrCreate(
+
+                    StintFile::updateOrCreate(
 
                         [
 
-                            'session_id' => $session->id,
+                            'stint_id' => $stint->id,
 
                             'user_id' => $userId,
 
                             'type' => 'ibt',
 
-                            'filename' => $finalFilename,
                         ],
 
                         [
+
+                            'filename' => $finalFilename,
 
                             'filepath' => $finalPath,
 
@@ -806,41 +809,43 @@ public function store(Request $request)
                     );
 
                     Log::info('IBT HASH', [
+
                         'seconds' => round(
                             microtime(true) - $hashStart,
                             3
                         )
+
                     ]);
 
                     Log::info(
-
-                        'SESSION FILE REGISTERED',
-
+                        'STINT FILE REGISTERED',
                         [
 
-                            'session_id' => $session->id,
+                            'stint_id' => $stint->id,
 
                             'file' => $finalFilename
+
                         ]
                     );
                 }
 
                 Log::info('IBT TOTAL PROCESS', [
+
                     'seconds' => round(
                         microtime(true) - $methodStart,
                         3
                     )
+
                 ]);
 
             } catch (\Exception $e) {
 
                 Log::error(
-
-                    'SESSION FILE REGISTER ERROR',
-
+                    'STINT FILE REGISTER ERROR',
                     [
 
                         'error' => $e->getMessage()
+
                     ]
                 );
             }

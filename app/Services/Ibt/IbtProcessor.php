@@ -549,6 +549,7 @@ class IbtProcessor
             'LapCompleted',
             'LapLastLapTime',
             'LapBestLapTime',
+            'LapBestLap',
         ];
 
         $previousCompleted = null;
@@ -754,8 +755,11 @@ class IbtProcessor
                         'source_completed' =>
                             $completed,
 
+                        'best_lap' =>
+                            (int) ($record['LapBestLap'] ?? 0),
+
                         'best_lap_time' =>
-                            $bestLapTime,
+                            (float) ($record['LapBestLapTime'] ?? 0),
                     ];
                 }
             }

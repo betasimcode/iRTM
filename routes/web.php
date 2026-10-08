@@ -14,6 +14,7 @@ use App\Services\IracingService;
 use App\Http\Controllers\SetupSheetController;
 use App\Http\Controllers\SeasonParserController;
 use App\Http\Controllers\TelemetryController;
+use App\Http\Controllers\TelemetryLabController;
 use App\Http\Controllers\IracingSyncController;
 use App\Http\Controllers\StintController;
 use App\Http\Controllers\SessionStintController;
@@ -56,21 +57,6 @@ Route::group([
         return view('landing');
     });
 
-    Route::middleware(['auth'])
-    ->group(function () {
-
-        Route::get(
-            '/profile',
-            [ProfileController::class, 'edit']
-        )->name('profile.edit');
-
-        Route::put(
-            '/profile',
-            [ProfileController::class, 'update']
-        )->name('profile.update');
-
-    });
-
     Route::middleware('auth')
         ->get('/drivers', function () {
             return view('drivers.index');
@@ -83,6 +69,16 @@ Route::group([
     ->name('teams.index');
 
     Route::middleware('auth')->group(function () {
+
+        Route::get('/telemetry/lab', [TelemetryLabController::class, 'index'])
+            ->name('telemetry.lab');
+
+
+        Route::get('/profile', [ProfileController::class, 'edit'])
+            ->name('profile.edit');
+
+        Route::put('/profile', [ProfileController::class, 'update'])
+            ->name('profile.update');
 
         Route::post('/user/theme', [UserController::class, 'updateTheme'])
             ->name('user.theme');

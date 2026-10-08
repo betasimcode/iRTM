@@ -538,6 +538,241 @@ class IbtProcessor
     }
 
 
+    public function extractLaps(
+        string $filePath
+    ): array {
+        $laps = [];
+
+        $variables = [
+            'SessionTime',
+            'Lap',
+            'LapCompleted',
+            'LapLastLapTime',
+            'LapBestLapTime',
+        ];
+
+        $previousCompleted = null;
+        $previousLastLapTime = null;
+
+        /*
+        * Vueltas consumidas que todavía no
+        * tienen un tiempo asociado.
+        *
+        * Se conserva el orden nativo de iRacing.
+        */
+        $pendingLaps = [];
+
+        /*
+        * Detectamos estados transitorios como:
+        *
+        *   Lap 4 -> 0 -> 4
+        *   Completed 3 -> 0 -> 3
+        *
+        * observados tanto con ESC como entrando
+        * físicamente a boxes.
+        */
+        $resetActive = false;
+        $resetBaseCompleted = null;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                $variables
+            ) as $index => $record
+        ) {
+            $sessionTime =
+                (float) ($record['SessionTime'] ?? 0);
+
+            $lap =
+                (int) ($record['Lap'] ?? 0);
+
+            $completed =
+                (int) ($record['LapCompleted'] ?? 0);
+
+            if ($completed === 4294967295) {
+                $completed = -1;
+            }
+
+            $lastLapTime =
+                (float) ($record['LapLastLapTime'] ?? -1);
+
+            $bestLapTime =
+                (float) ($record['LapBestLapTime'] ?? -1);
+
+            /*
+            * ==================================================
+            * DETECTAR CONSUMO DE NUEVA VUELTA
+            * ==================================================
+            */
+            if (
+                $previousCompleted !== null &&
+                $completed > $previousCompleted
+            ) {
+                for (
+                    $lapNumber = $previousCompleted + 1;
+                    $lapNumber <= $completed;
+                    $lapNumber++
+                ) {
+                    if ($lapNumber > 0) {
+                        $pendingLaps[] = $lapNumber;
+                    }
+                }
+            }
+
+            /*
+            * ==================================================
+            * DETECTAR RESET TRANSITORIO
+            * ==================================================
+            */
+            if (
+                $previousCompleted !== null &&
+                $completed < $previousCompleted
+            ) {
+                $resetActive = true;
+
+                $resetBaseCompleted =
+                    $previousCompleted;
+            }
+
+            /*
+            * Restauración del contador después
+            * del estado transitorio.
+            */
+            if (
+                $resetActive &&
+                $resetBaseCompleted !== null &&
+                $completed === $resetBaseCompleted
+            ) {
+                /*
+                * No hacemos nada todavía.
+                *
+                * El siguiente cambio de LapLastLapTime
+                * será el que determine si iRacing
+                * acaba de publicar el tiempo.
+                */
+            }
+
+            /*
+            * ==================================================
+            * NUEVO TIEMPO PUBLICADO POR IRACING
+            * ==================================================
+            */
+            $newLapTime =
+                $lastLapTime > 0 &&
+                (
+                    $previousLastLapTime === null ||
+                    $previousLastLapTime <= 0 ||
+                    abs(
+                        $lastLapTime -
+                        $previousLastLapTime
+                    ) > 0.000001
+                );
+
+            if ($newLapTime) {
+
+                $associatedLap = null;
+
+                /*
+                * --------------------------------------------------
+                * CASO NORMAL
+                * --------------------------------------------------
+                *
+                * En una tanda limpia hemos observado:
+                *
+                *   Completed 2
+                *   LastLapTime = Lap 1
+                *
+                *   Completed 3
+                *   LastLapTime = Lap 2
+                *
+                * Por tanto, cuando no existe transición de reset,
+                * el tiempo se asigna a la primera vuelta pendiente.
+                */
+                if (
+                    !$resetActive &&
+                    !empty($pendingLaps)
+                ) {
+                    $associatedLap =
+                        array_shift($pendingLaps);
+                }
+
+                /*
+                * --------------------------------------------------
+                * CASO RESET / BOX / ESC
+                * --------------------------------------------------
+                *
+                * Hemos observado:
+                *
+                *   Completed 3
+                *   ...
+                *   Lap 4 -> 0 -> 4
+                *   LastLapTime = tiempo de Lap 3
+                *
+                * En este caso el tiempo corresponde a la
+                * vuelta más recientemente consumida.
+                */
+                if (
+                    $resetActive &&
+                    !empty($pendingLaps)
+                ) {
+                    $associatedLap =
+                        array_pop($pendingLaps);
+
+                    $resetActive = false;
+                    $resetBaseCompleted = null;
+                }
+
+                if ($associatedLap !== null) {
+                    $laps[] = [
+                        'lap' =>
+                            $associatedLap,
+
+                        'lap_time' =>
+                            $lastLapTime,
+
+                        'completed' =>
+                            $associatedLap,
+
+                        'completion_index' =>
+                            $index,
+
+                        'time_index' =>
+                            $index,
+
+                        'clean_sequence' =>
+                            count($laps) + 1,
+
+                        'record_index' =>
+                            $index,
+
+                        'session_time' =>
+                            $sessionTime,
+
+                        'source_lap' =>
+                            $lap,
+
+                        'source_completed' =>
+                            $completed,
+
+                        'best_lap_time' =>
+                            $bestLapTime,
+                    ];
+                }
+            }
+
+            $previousCompleted =
+                $completed;
+
+            if ($lastLapTime > 0) {
+                $previousLastLapTime =
+                    $lastLapTime;
+            }
+        }
+
+        return $laps;
+    }
+
+
     private function readVariableValue(
         string $record,
         array $variable

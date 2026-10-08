@@ -111,10 +111,9 @@ class TelemetryLabController extends Controller
                                 $path
                             );
 
-                        $laps = $this->buildTimedLaps(
-                            $processor,
-                            $path
-                        );
+                        $laps = $processor->extractLaps(
+                                $path
+                            );
 
                         $lapTimingDiagnostics =
                             $this->buildLapTimingDiagnostics(
@@ -165,7 +164,164 @@ class TelemetryLabController extends Controller
     }
 
 
+private function extractLaps(
+    IbtProcessor $processor,
+    string $path
+): array {
+    $laps = [];
 
+    $variables = [
+        'SessionTime',
+        'Lap',
+        'LapCompleted',
+        'LapLastLapTime',
+        'LapBestLapTime',
+    ];
+
+    $pendingLaps = [];
+
+    $previousCompleted = null;
+
+    foreach (
+        $processor->streamRecords(
+            $path,
+            $variables
+        ) as $index => $record
+    ) {
+        $completed = (int) $record['LapCompleted'];
+
+        /*
+         * Detectamos exclusivamente incrementos de LapCompleted.
+         *
+         * Esto representa una vuelta consumida por iRacing.
+         *
+         * No utilizamos Lap como disparador porque puede presentar
+         * transiciones transitorias, especialmente al entrar en boxes
+         * o abandonar con ESC.
+         */
+        if (
+            $previousCompleted !== null &&
+            $completed > $previousCompleted
+        ) {
+            for (
+                $lapNumber = $previousCompleted + 1;
+                $lapNumber <= $completed;
+                $lapNumber++
+            ) {
+                $pendingLaps[$lapNumber] = [
+                    'lap' => $lapNumber,
+                    'completed' => $completed,
+                    'completion_index' => $index,
+                    'lap_time' => null,
+                    'record_index' => null,
+                    'best_lap' => null,
+                    'best_lap_time' => null,
+                ];
+            }
+        }
+
+        /*
+         * El tiempo de la vuelta puede llegar varios ticks después
+         * del incremento de LapCompleted.
+         *
+         * Asociamos el primer LapLastLapTime válido pendiente.
+         */
+        $lastLapTime = $record['LapLastLapTime'];
+
+        if (
+            $lastLapTime !== null &&
+            is_numeric($lastLapTime) &&
+            (float) $lastLapTime > 0
+        ) {
+            foreach (
+                $pendingLaps as $lapNumber => &$pendingLap
+            ) {
+                if ($pendingLap['lap_time'] !== null) {
+                    continue;
+                }
+
+                $pendingLap['lap_time'] =
+                    (float) $lastLapTime;
+
+                $pendingLap['record_index'] =
+                    $index;
+
+                $bestLapTime = $record['LapBestLapTime'];
+
+                if (
+                    $bestLapTime !== null &&
+                    is_numeric($bestLapTime) &&
+                    (float) $bestLapTime > 0
+                ) {
+                    $pendingLap['best_lap_time'] =
+                        (float) $bestLapTime;
+                }
+
+                $pendingLap['best_lap'] =
+                    $pendingLap['best_lap_time'] !== null
+                        ? $lapNumber
+                        : null;
+
+                $laps[] = $pendingLap;
+
+                unset($pendingLaps[$lapNumber]);
+
+                break;
+            }
+
+            unset($pendingLap);
+        }
+
+        /*
+         * El valor anterior se actualiza siempre, incluso cuando
+         * iRacing hace una transición temporal hacia 0.
+         *
+         * Por tanto:
+         *
+         *   3 → 0
+         *
+         * no genera vuelta.
+         *
+         * Y posteriormente:
+         *
+         *   0 → 4
+         *
+         * tampoco genera una vuelta adicional si no existe
+         * un incremento real de vuelta consumida.
+         */
+        $previousCompleted = $completed;
+    }
+
+    /*
+     * Recalcular el mejor registro entre las vueltas realmente
+     * cronometradas que hemos podido reconstruir.
+     *
+     * Esto evita depender exclusivamente del momento exacto en
+     * que LapBestLapTime se actualizó dentro del IBT.
+     */
+    $bestLap = null;
+    $bestLapTime = null;
+
+    foreach ($laps as &$lap) {
+        if (
+            $lap['lap_time'] !== null &&
+            (
+                $bestLapTime === null ||
+                $lap['lap_time'] < $bestLapTime
+            )
+        ) {
+            $bestLapTime = $lap['lap_time'];
+            $bestLap = $lap['lap'];
+        }
+
+        $lap['best_lap'] = $bestLap;
+        $lap['best_lap_time'] = $bestLapTime;
+    }
+
+    unset($lap);
+
+    return $laps;
+}
 
 
     private function buildLapTransitions(

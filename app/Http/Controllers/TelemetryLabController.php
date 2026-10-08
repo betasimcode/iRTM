@@ -33,7 +33,43 @@ class TelemetryLabController extends Controller
         $header = null;
         $variables = [];
         $records = [];
+        $laps = [];
+        $lapTimingDiagnostics = [];
         $error = null;
+        $transitions = [];
+        $records = [];
+
+
+
+        $startRecord = max(
+            0,
+            $request->integer('from', 0)
+        );
+
+        $endRecord = max(
+            $startRecord,
+            $request->integer('to', 29)
+        );
+
+        $selectedVariables = $request->input(
+            'variables',
+            [
+                'SessionTime',
+                'Lap',
+                'LapCompleted',
+                'LapDistPct',
+                'LapLastLapTime',
+                'LapBestLapTime',
+                'OnPitRoad',
+                'PlayerCarInPitStall',
+                'PlayerTrackSurface',
+                'PlayerCarDriverIncidentCount',
+            ]
+        );
+
+        if (!is_array($selectedVariables)) {
+            $selectedVariables = [];
+        }
 
         $stintId = $request->integer('stint');
 
@@ -51,7 +87,8 @@ class TelemetryLabController extends Controller
                 ->firstWhere('type', 'ibt');
 
             if (!$ibtFile) {
-                $error = 'El stint no tiene un archivo IBT asociado.';
+                $error =
+                    'El stint no tiene un archivo IBT asociado.';
             } else {
                 $path = Storage::disk('local')->path(
                     $ibtFile->filepath
@@ -68,42 +105,35 @@ class TelemetryLabController extends Controller
                         $variables =
                             $processor->readVariables($path);
 
-                        $previewVariables = [
-                            'SessionTime',
-                            'Lap',
-                            'LapCompleted',
-                            'LapDist',
-                            'LapDistPct',
-                            'Speed',
-                            'RPM',
-                            'Gear',
-                            'Throttle',
-                            'Brake',
-                            'SteeringWheelAngle',
-                            'OnPitRoad',
-                            'PlayerCarInPitStall',
-                            'PlayerCarDriverIncidentCount',
-                            'PlayerTrackSurface',
-                            'LFrideHeight',
-                            'RFrideHeight',
-                            'LRrideHeight',
-                            'RRrideHeight',
-                        ];
+                        $transitions =
+                            $this->buildLapTransitions(
+                                $processor,
+                                $path
+                            );
+
+                        $laps = $this->buildTimedLaps(
+                            $processor,
+                            $path
+                        );
+
+                        $lapTimingDiagnostics =
+                            $this->buildLapTimingDiagnostics(
+                                $processor,
+                                $path
+                            );
 
                         foreach (
-                            $processor->streamRecords(
+                            $processor->streamRecordsRange(
                                 $path,
-                                $previewVariables
+                                $startRecord,
+                                $endRecord,
+                                $selectedVariables
                             ) as $index => $record
                         ) {
                             $records[] = [
                                 'index' => $index,
                                 'values' => $record,
                             ];
-
-                            if (count($records) >= 30) {
-                                break;
-                            }
                         }
                     } catch (\Throwable $e) {
                         $error =
@@ -122,8 +152,477 @@ class TelemetryLabController extends Controller
                 'header',
                 'variables',
                 'records',
+                'laps',
+                'lapTimingDiagnostics',
+                'startRecord',
+                'endRecord',
+                'selectedVariables',
+                'transitions',
                 'error'
             )
         );
+
     }
+
+
+
+
+
+    private function buildLapTransitions(
+        IbtProcessor $processor,
+        string $path
+    ): array {
+        $transitions = [];
+
+        $previous = null;
+
+        $variables = [
+            'SessionTime',
+            'Lap',
+            'LapCompleted',
+            'LapDistPct',
+            'OnPitRoad',
+            'PlayerCarInPitStall',
+            'PlayerCarDriverIncidentCount',
+            'PlayerTrackSurface',
+        ];
+
+        foreach (
+            $processor->streamRecords(
+                $path,
+                $variables
+            ) as $index => $record
+        ) {
+
+            if ($previous === null) {
+                $previous = $record;
+                continue;
+            }
+
+            $events = [];
+
+            /*
+            * LAP
+            */
+            if (
+                $record['Lap'] !==
+                $previous['Lap']
+            ) {
+                $events[] = sprintf(
+                    'Lap %s → %s',
+                    $previous['Lap'],
+                    $record['Lap']
+                );
+            }
+
+            /*
+            * LAP COMPLETED
+            */
+            if (
+                $record['LapCompleted'] !==
+                $previous['LapCompleted']
+            ) {
+                $events[] = sprintf(
+                    'LapCompleted %s → %s',
+                    $previous['LapCompleted'],
+                    $record['LapCompleted']
+                );
+            }
+
+            /*
+            * LAP DISTANCE RESET
+            *
+            * No tratamos cada cambio de LapDistPct
+            * como transición.
+            *
+            * Solo nos interesa un retroceso
+            * significativo, típico de un reset
+            * de vuelta.
+            */
+            if (
+                $record['LapDistPct'] <
+                $previous['LapDistPct'] - 0.50
+            ) {
+                $events[] = sprintf(
+                    'LapDistPct reset %.6f → %.6f',
+                    $previous['LapDistPct'],
+                    $record['LapDistPct']
+                );
+            }
+
+            /*
+            * PIT ROAD
+            */
+            if (
+                $record['OnPitRoad'] !==
+                $previous['OnPitRoad']
+            ) {
+                $events[] = sprintf(
+                    'OnPitRoad %s → %s',
+                    $previous['OnPitRoad'],
+                    $record['OnPitRoad']
+                );
+            }
+
+            /*
+            * PIT STALL
+            */
+            if (
+                $record['PlayerCarInPitStall'] !==
+                $previous['PlayerCarInPitStall']
+            ) {
+                $events[] = sprintf(
+                    'PitStall %s → %s',
+                    $previous['PlayerCarInPitStall'],
+                    $record['PlayerCarInPitStall']
+                );
+            }
+
+            /*
+            * INCIDENT COUNT
+            */
+            if (
+                $record['PlayerCarDriverIncidentCount'] !==
+                $previous['PlayerCarDriverIncidentCount']
+            ) {
+                $events[] = sprintf(
+                    'IncidentCount %s → %s',
+                    $previous['PlayerCarDriverIncidentCount'],
+                    $record['PlayerCarDriverIncidentCount']
+                );
+            }
+
+            /*
+            * TRACK SURFACE
+            *
+            * Lo mostramos porque el caso 27494
+            * demuestra que puede cambiar durante
+            * una transición de estado.
+            */
+            if (
+                $record['PlayerTrackSurface'] !==
+                $previous['PlayerTrackSurface']
+            ) {
+                $events[] = sprintf(
+                    'TrackSurface %s → %s',
+                    $previous['PlayerTrackSurface'],
+                    $record['PlayerTrackSurface']
+                );
+            }
+
+            /*
+            * Solo almacenamos registros que
+            * realmente contienen una transición.
+            */
+            if (!empty($events)) {
+
+                $transitions[] = [
+                    'index' => $index,
+                    'session_time' =>
+                        $record['SessionTime'],
+                    'lap' =>
+                        $record['Lap'],
+                    'lap_completed' =>
+                        $record['LapCompleted'],
+                    'lap_dist_pct' =>
+                        $record['LapDistPct'],
+                    'on_pit_road' =>
+                        $record['OnPitRoad'],
+                    'pit_stall' =>
+                        $record['PlayerCarInPitStall'],
+                    'incident_count' =>
+                        $record['PlayerCarDriverIncidentCount'],
+                    'track_surface' =>
+                        $record['PlayerTrackSurface'],
+                    'events' =>
+                        $events,
+                ];
+            }
+
+            $previous = $record;
+        }
+
+        return $transitions;
+    }
+
+
+
+    private function buildTimedLaps(
+        IbtProcessor $processor,
+        string $path
+    ): array {
+        $laps = [];
+
+        $variables = [
+            'SessionTime',
+            'Lap',
+            'LapCompleted',
+            'LapLastLapTime',
+            'LapBestLapTime',
+            'LapBestLap',
+        ];
+
+        $previousCompleted = null;
+
+        /*
+        * Último tiempo que iRacing tenía publicado
+        * en LapLastLapTime.
+        */
+        $knownLastLapTime = null;
+
+        /*
+        * Vuelta consumida que todavía estamos
+        * esperando poder asociar a un tiempo.
+        */
+        $pendingLap = null;
+        $pendingCompletionIndex = null;
+        $pendingCompletionTime = null;
+
+        foreach (
+            $processor->streamRecords(
+                $path,
+                $variables
+            ) as $index => $record
+        ) {
+            $sessionTime =
+                (float) ($record['SessionTime'] ?? 0);
+
+            $lap =
+                (int) ($record['Lap'] ?? 0);
+
+            $completed =
+                (int) ($record['LapCompleted'] ?? 0);
+
+            /*
+            * iRacing puede representar -1 como
+            * uint32 4294967295.
+            */
+            if ($completed === 4294967295) {
+                $completed = -1;
+            }
+
+            $lastLapTime =
+                (float) ($record['LapLastLapTime'] ?? 0);
+
+            /*
+            * Inicialización.
+            */
+            if ($previousCompleted === null) {
+                $previousCompleted = $completed;
+
+                $knownLastLapTime =
+                    $lastLapTime > 0
+                        ? $lastLapTime
+                        : null;
+
+                continue;
+            }
+
+            /*
+            * ==================================================
+            * 1. iRacing ha consumido una nueva vuelta
+            * ==================================================
+            */
+            if ($completed > $previousCompleted) {
+
+                $pendingLap = $completed;
+
+                $pendingCompletionIndex = $index;
+
+                $pendingCompletionTime =
+                    $sessionTime;
+            }
+
+            /*
+            * ==================================================
+            * 2. LapLastLapTime se ha actualizado
+            * ==================================================
+            */
+            if (
+                $pendingLap !== null &&
+                $lastLapTime > 0 &&
+                (
+                    $knownLastLapTime === null ||
+                    abs(
+                        $lastLapTime -
+                        $knownLastLapTime
+                    ) > 0.000001
+                )
+            ) {
+
+                $laps[] = [
+                    'lap' =>
+                        $pendingLap,
+
+                    'lap_time' =>
+                        $lastLapTime,
+
+                    'completed' =>
+                        $completed,
+
+                    'completion_index' =>
+                        $pendingCompletionIndex,
+
+                    'completion_time' =>
+                        $pendingCompletionTime,
+
+                    'record_index' =>
+                        $index,
+
+                    'session_time' =>
+                        $sessionTime,
+
+                    'best_lap' =>
+                        (int) (
+                            $record['LapBestLap'] ?? 0
+                        ),
+
+                    'best_lap_time' =>
+                        (float) (
+                            $record['LapBestLapTime'] ?? 0
+                        ),
+                ];
+
+                /*
+                * Ya hemos asociado el tiempo
+                * con la vuelta consumida.
+                */
+                $pendingLap = null;
+
+                $pendingCompletionIndex = null;
+
+                $pendingCompletionTime = null;
+            }
+
+            /*
+            * Guardamos el último valor conocido.
+            */
+            if ($lastLapTime > 0) {
+                $knownLastLapTime =
+                    $lastLapTime;
+            }
+
+            $previousCompleted =
+                $completed;
+        }
+
+        return $laps;
+    }
+
+
+    private function buildLapTimingDiagnostics(
+        IbtProcessor $processor,
+        string $path
+    ): array {
+        $diagnostics = [];
+
+        $variables = [
+            'SessionTime',
+            'Lap',
+            'LapCompleted',
+            'LapLastLapTime',
+            'LapBestLapTime',
+        ];
+
+        $previousCompleted = null;
+
+        $captureUntil = null;
+        $captureLap = null;
+
+        foreach (
+            $processor->streamRecords(
+                $path,
+                $variables
+            ) as $index => $record
+        ) {
+            $completed = (int) (
+                $record['LapCompleted'] ?? 0
+            );
+
+            /*
+            * iRacing puede representar -1 como
+            * uint32 4294967295.
+            */
+            if ($completed === 4294967295) {
+                $completed = -1;
+            }
+
+            /*
+            * Detectamos el cambio de LapCompleted.
+            */
+            if (
+                $previousCompleted !== null &&
+                $completed !== $previousCompleted
+            ) {
+                /*
+                * Capturamos este tick y los
+                * siguientes 15 registros.
+                */
+                $captureUntil = $index + 15;
+
+                $captureLap = $completed;
+            }
+
+            /*
+            * Mientras estamos dentro de una ventana
+            * de diagnóstico, guardamos cada registro.
+            */
+            if (
+                $captureUntil !== null &&
+                $index <= $captureUntil
+            ) {
+                $diagnostics[] = [
+                    'index' =>
+                        $index,
+
+                    'session_time' =>
+                        (float) (
+                            $record['SessionTime'] ?? 0
+                        ),
+
+                    'lap' =>
+                        (int) (
+                            $record['Lap'] ?? 0
+                        ),
+
+                    'lap_completed' =>
+                        $completed,
+
+                    'lap_last_lap_time' =>
+                        (float) (
+                            $record['LapLastLapTime'] ?? 0
+                        ),
+
+                    'lap_best_lap_time' =>
+                        (float) (
+                            $record['LapBestLapTime'] ?? 0
+                        ),
+
+                    'trigger_lap' =>
+                        $captureLap,
+                ];
+            }
+
+            /*
+            * Terminamos la ventana después
+            * de 15 registros.
+            */
+            if (
+                $captureUntil !== null &&
+                $index >= $captureUntil
+            ) {
+                $captureUntil = null;
+                $captureLap = null;
+            }
+
+            $previousCompleted =
+                $completed;
+        }
+
+        return $diagnostics;
+    }
+
+
+
+
 }

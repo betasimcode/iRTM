@@ -777,6 +777,580 @@ class IbtProcessor
     }
 
 
+        /**
+     * Extrae las vueltas detectadas del IBT y las escribe
+     * en un archivo JSON procesado.
+     *
+     * El JSON contiene únicamente la información necesaria
+     * para la capa base de vueltas y su estado meteorológico
+     * representativo.
+     *
+     * No modifica el IBT original.
+     */
+    public function writeLapsJson(
+        string $filePath,
+        string $outputPath
+    ): array {
+        if (!is_file($filePath)) {
+            throw new RuntimeException(
+                "IBT no encontrado: {$filePath}"
+            );
+        }
+
+        $laps = $this->extractLaps($filePath);
+        $weather = $this->extractLapWeather($filePath);
+        $fuel = $this->extractLapFuel($filePath);
+        $incidents = $this->extractLapIncidents($filePath);
+
+        $directory = dirname($outputPath);
+
+        if (
+            !is_dir($directory) &&
+            !mkdir($directory, 0775, true) &&
+            !is_dir($directory)
+        ) {
+            throw new RuntimeException(
+                "No se pudo crear el directorio de salida: {$directory}"
+            );
+        }
+
+        /*
+        * --------------------------------------------------------------
+        * Asociamos la meteorología a las vueltas cronometradas
+        * conservando el orden nativo del IBT.
+        *
+        * No exponemos índices de registros ni tiempos internos
+        * en el JSON final.
+        * --------------------------------------------------------------
+        */
+        $weatherIndex = 0;
+        $processedLaps = [];
+
+        foreach ($laps as $lap) {
+            $lapNumber = (int) $lap['lap'];
+
+            $lapPayload = [
+                'lap' => $lapNumber,
+                'lap_time' => (float) $lap['lap_time'],
+            ];
+
+            while (
+                isset($weather[$weatherIndex]) &&
+                (int) $weather[$weatherIndex]['lap'] < $lapNumber
+            ) {
+                $weatherIndex++;
+            }
+
+            if (
+                isset($weather[$weatherIndex]) &&
+                (int) $weather[$weatherIndex]['lap'] === $lapNumber
+            ) {
+                $lapPayload['weather'] =
+                    $weather[$weatherIndex]['weather'];
+
+                $weatherIndex++;
+            }
+
+            if (isset($fuel[$lapNumber])) {
+                $lapPayload['fuel_start'] =
+                    $fuel[$lapNumber]['fuel_start'];
+
+                $lapPayload['fuel_end'] =
+                    $fuel[$lapNumber]['fuel_end'];
+
+                $lapPayload['fuel_used'] =
+                    $fuel[$lapNumber]['fuel_used'];
+            }
+
+            $lapPayload['incidents'] =
+                $incidents[$lapNumber] ?? [];
+
+            $processedLaps[] = $lapPayload;
+        }
+
+        $fuelPerLapValues = [];
+
+        foreach ($fuel as $fuelLap) {
+            if (
+                isset($fuelLap['fuel_used']) &&
+                is_numeric($fuelLap['fuel_used'])
+            ) {
+                $fuelPerLapValues[] =
+                    (float) $fuelLap['fuel_used'];
+            }
+        }
+
+        $fuelPerLap = null;
+
+        if (!empty($fuelPerLapValues)) {
+            $fuelPerLap =
+                array_sum($fuelPerLapValues) /
+                count($fuelPerLapValues);
+        }
+
+        $incidentCount = 0;
+
+        foreach ($processedLaps as $lapPayload) {
+            foreach ($lapPayload['incidents'] ?? [] as $incident) {
+                $incidentCount +=
+                    (int) ($incident['count'] ?? 0);
+            }
+        }
+
+        $payload = [
+            'format_version' => 1,
+
+            'source' => [
+                'filename' => basename($filePath),
+                'filesize' => (int) filesize($filePath),
+            ],
+
+            'summary' => [
+                'timed_laps' => count($processedLaps),
+                'fuel_per_lap' => $fuelPerLap,
+                'incidents' => $incidentCount,
+            ],
+
+            'laps' => $processedLaps,
+        ];
+
+        $json = json_encode(
+            $payload,
+            JSON_PRETTY_PRINT |
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
+        );
+
+        if ($json === false) {
+            throw new RuntimeException(
+                'No se pudo serializar laps.json: ' .
+                json_last_error_msg()
+            );
+        }
+
+        $written = file_put_contents(
+            $outputPath,
+            $json . PHP_EOL,
+            LOCK_EX
+        );
+
+        if ($written === false) {
+            throw new RuntimeException(
+                "No se pudo escribir el archivo JSON: {$outputPath}"
+            );
+        }
+
+        return $payload;
+    }
+
+
+    /**
+     * Extrae los incidentes del piloto y los relaciona
+     * con su vuelta nativa de iRacing.
+     *
+     * La fuente del contador es PlayerCarDriverIncidentCount.
+     * PlayerIncidents no se utiliza como contador acumulativo.
+     *
+     * Cada incremento del contador genera un evento con:
+     * - count
+     * - total
+     * - session_time
+     * - lap_dist_pct
+     */
+    private function extractLapIncidents(
+        string $filePath
+    ): array {
+        $variables = [
+            'SessionTime',
+            'Lap',
+            'LapDistPct',
+            'PlayerCarDriverIncidentCount',
+        ];
+
+        $result = [];
+
+        $previousIncidentCount = null;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                $variables
+            ) as $record
+        ) {
+            $incidentCount =
+                (int) ($record['PlayerCarDriverIncidentCount'] ?? 0);
+
+            if ($previousIncidentCount === null) {
+                $previousIncidentCount =
+                    $incidentCount;
+
+                continue;
+            }
+
+            $delta =
+                $incidentCount -
+                $previousIncidentCount;
+
+            if ($delta > 0) {
+                $lap =
+                    (int) ($record['Lap'] ?? 0);
+
+                if ($lap > 0) {
+                    $result[$lap][] = [
+                        'count' => $delta,
+
+                        'total' =>
+                            $incidentCount,
+
+                        'session_time' =>
+                            (float) ($record['SessionTime'] ?? 0),
+
+                        'lap_dist_pct' =>
+                            (float) ($record['LapDistPct'] ?? 0),
+                    ];
+                }
+            }
+
+            $previousIncidentCount =
+                $incidentCount;
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * Extrae el consumo de combustible de cada vuelta positiva
+     * del IBT.
+     *
+     * FuelLevel se conserva en litros RAW. Para cada vuelta se
+     * toma la primera muestra como fuel_start y la última como
+     * fuel_end. fuel_used se calcula como la diferencia entre
+     * ambas.
+     *
+     * No se aplica redondeo ni reglas de validez de vuelta.
+     */
+    private function extractLapFuel(
+        string $filePath
+    ): array {
+        $variables = [
+            'Lap',
+            'FuelLevel',
+        ];
+
+        $ranges = [];
+        $currentLap = null;
+        $currentStart = null;
+        $lastIndex = null;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                ['Lap']
+            ) as $index => $record
+        ) {
+            $lastIndex = $index;
+            $lap = (int) ($record['Lap'] ?? 0);
+
+            if ($currentLap === null) {
+                $currentLap = $lap;
+                $currentStart = $index;
+                continue;
+            }
+
+            if ($lap !== $currentLap) {
+                if (
+                    $currentLap > 0 &&
+                    $currentStart !== null
+                ) {
+                    $ranges[] = [
+                        'lap' => $currentLap,
+                        'start' => $currentStart,
+                        'end' => $index - 1,
+                    ];
+                }
+
+                $currentLap = $lap;
+                $currentStart = $index;
+            }
+        }
+
+        if (
+            $currentLap !== null &&
+            $currentLap > 0 &&
+            $currentStart !== null
+        ) {
+            $ranges[] = [
+                'lap' => $currentLap,
+                'start' => $currentStart,
+                'end' => $lastIndex ?? $currentStart,
+            ];
+        }
+
+        $result = [];
+
+        foreach ($ranges as $range) {
+            $fuelStart = null;
+            $fuelEnd = null;
+
+            foreach (
+                $this->streamRecordsRange(
+                    $filePath,
+                    $range['start'],
+                    $range['end'],
+                    $variables
+                ) as $record
+            ) {
+                if (
+                    isset($record['FuelLevel']) &&
+                    is_numeric($record['FuelLevel'])
+                ) {
+                    $fuel = (float) $record['FuelLevel'];
+
+                    if ($fuelStart === null) {
+                        $fuelStart = $fuel;
+                    }
+
+                    $fuelEnd = $fuel;
+                }
+            }
+
+            if (
+                $fuelStart === null ||
+                $fuelEnd === null
+            ) {
+                continue;
+            }
+
+            $fuelUsed = $fuelStart - $fuelEnd;
+
+            $result[$range['lap']] = [
+                'fuel_start' => $fuelStart,
+                'fuel_end' => $fuelEnd,
+                'fuel_used' => $fuelUsed,
+            ];
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * Extrae un estado meteorológico representativo para cada
+     * tramo de vuelta presente en el IBT.
+     *
+     * Los límites se obtienen directamente de los cambios de
+     * la variable nativa Lap. Los estados transitorios Lap 0
+     * quedan fuera de las vueltas positivas.
+     *
+     * WindVel, WindDir y RelativeHumidity se promedian sobre
+     * las muestras de cada vuelta.
+     *
+     * TrackWetness, Skies, Precipitation y WeatherDeclaredWet
+     * conservan el valor RAW de la primera muestra de la vuelta.
+     */
+    private function extractLapWeather(
+        string $filePath
+    ): array {
+        $variables = [
+            'Lap',
+            'TrackWetness',
+            'Skies',
+            'WindVel',
+            'WindDir',
+            'RelativeHumidity',
+            'Precipitation',
+            'WeatherDeclaredWet',
+        ];
+
+        $ranges = [];
+        $currentLap = null;
+        $currentStart = null;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                ['Lap']
+            ) as $index => $record
+        ) {
+            $lap = (int) ($record['Lap'] ?? 0);
+
+            if ($currentLap === null) {
+                $currentLap = $lap;
+                $currentStart = $index;
+                continue;
+            }
+
+            if ($lap !== $currentLap) {
+                if (
+                    $currentLap > 0 &&
+                    $currentStart !== null
+                ) {
+                    $ranges[] = [
+                        'lap' => $currentLap,
+                        'start' => $currentStart,
+                        'end' => $index - 1,
+                    ];
+                }
+
+                $currentLap = $lap;
+                $currentStart = $index;
+            }
+        }
+
+        if (
+            $currentLap !== null &&
+            $currentLap > 0 &&
+            $currentStart !== null
+        ) {
+            $ranges[] = [
+                'lap' => $currentLap,
+                'start' => $currentStart,
+                'end' => $index ?? $currentStart,
+            ];
+        }
+
+        $result = [];
+
+        foreach ($ranges as $range) {
+            $windVelSum = 0.0;
+            $windVelCount = 0;
+
+            $windDirSum = 0.0;
+            $windDirCount = 0;
+
+            $humiditySum = 0.0;
+            $humidityCount = 0;
+
+            $stable = [
+                'TrackWetness' => null,
+                'Skies' => null,
+                'Precipitation' => null,
+                'WeatherDeclaredWet' => null,
+            ];
+
+            foreach (
+                $this->streamRecordsRange(
+                    $filePath,
+                    $range['start'],
+                    $range['end'],
+                    $variables
+                ) as $record
+            ) {
+                if (
+                    $stable['TrackWetness'] === null &&
+                    isset($record['TrackWetness'])
+                ) {
+                    $stable['TrackWetness'] =
+                        $record['TrackWetness'];
+                }
+
+                if (
+                    $stable['Skies'] === null &&
+                    isset($record['Skies'])
+                ) {
+                    $stable['Skies'] =
+                        $record['Skies'];
+                }
+
+                if (
+                    $stable['Precipitation'] === null &&
+                    isset($record['Precipitation'])
+                ) {
+                    $stable['Precipitation'] =
+                        $record['Precipitation'];
+                }
+
+                if (
+                    $stable['WeatherDeclaredWet'] === null &&
+                    isset($record['WeatherDeclaredWet'])
+                ) {
+                    $stable['WeatherDeclaredWet'] =
+                        $record['WeatherDeclaredWet'];
+                }
+
+                if (
+                    isset($record['WindVel']) &&
+                    is_numeric($record['WindVel'])
+                ) {
+                    $windVelSum +=
+                        (float) $record['WindVel'];
+
+                    $windVelCount++;
+                }
+
+                if (
+                    isset($record['WindDir']) &&
+                    is_numeric($record['WindDir'])
+                ) {
+                    $windDirSum +=
+                        (float) $record['WindDir'];
+
+                    $windDirCount++;
+                }
+
+                if (
+                    isset($record['RelativeHumidity']) &&
+                    is_numeric($record['RelativeHumidity'])
+                ) {
+                    $humiditySum +=
+                        (float) $record['RelativeHumidity'];
+
+                    $humidityCount++;
+                }
+            }
+
+            $windVel = null;
+            $windDir = null;
+            $humidity = null;
+
+            if ($windVelCount > 0) {
+                $windVel =
+                    $windVelSum / $windVelCount;
+            }
+
+            if ($windDirCount > 0) {
+                $windDir =
+                    $windDirSum / $windDirCount;
+            }
+
+            if ($humidityCount > 0) {
+                $humidity =
+                    $humiditySum / $humidityCount;
+            }
+
+            $result[] = [
+                'lap' => $range['lap'],
+
+                'weather' => [
+                    'TrackWetness' =>
+                        $stable['TrackWetness'],
+
+                    'Skies' =>
+                        $stable['Skies'],
+
+                    'WindVel' =>
+                        $windVel,
+
+                    'WindDir' =>
+                        $windDir,
+
+                    'RelativeHumidity' =>
+                        $humidity,
+
+                    'Precipitation' =>
+                        $stable['Precipitation'],
+
+                    'WeatherDeclaredWet' =>
+                        $stable['WeatherDeclaredWet'],
+                ],
+            ];
+        }
+
+        return $result;
+    }
+
+
     private function readVariableValue(
         string $record,
         array $variable

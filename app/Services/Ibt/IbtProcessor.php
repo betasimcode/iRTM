@@ -777,6 +777,237 @@ class IbtProcessor
     }
 
 
+    /**
+     * Extrae los límites de sector desde SplitTimeInfo del texto
+     * SessionInfo incluido en la cabecera del IBT.
+     *
+     * SectorStartPct contiene el inicio de cada sector. El límite
+     * final 1.0 se añade aquí para cerrar el último sector.
+     */
+    public function extractSectorBoundaries(string $filePath): array
+    {
+        $header = $this->readHeader($filePath);
+        $length = (int) $header['session_info_length'];
+        $offset = (int) $header['session_info_offset'];
+
+        if ($length <= 0) {
+            throw new RuntimeException(
+                'El IBT no contiene SessionInfo para extraer los sectores.'
+            );
+        }
+
+        $handle = fopen($filePath, 'rb');
+
+        if ($handle === false) {
+            throw new RuntimeException("No se pudo abrir el IBT: {$filePath}");
+        }
+
+        try {
+            $sessionInfo = $this->readBytes($handle, $offset, $length);
+        } finally {
+            fclose($handle);
+        }
+
+        $splitStart = strpos($sessionInfo, 'SplitTimeInfo:');
+
+        if ($splitStart === false) {
+            throw new RuntimeException(
+                'No se encontró SplitTimeInfo en el SessionInfo del IBT.'
+            );
+        }
+
+        $splitInfo = substr($sessionInfo, $splitStart);
+
+        // SessionInfo es texto YAML. El siguiente bloque de nivel raíz
+        // termina SplitTimeInfo; así evitamos leer sectores de otra sección.
+        if (preg_match('/\n[^ \t\r\n][^\r\n]*:/', $splitInfo, $nextSection, PREG_OFFSET_CAPTURE)) {
+            $splitInfo = substr($splitInfo, 0, $nextSection[0][1]);
+        }
+
+        if (!preg_match('/Sectors:\s*(.*)/s', $splitInfo, $sectorSection)) {
+            throw new RuntimeException(
+                'No se encontró la lista Sectors dentro de SplitTimeInfo.'
+            );
+        }
+
+        $sectorText = $sectorSection[1];
+        preg_match_all(
+            '/SectorNum:\s*(\d+)\s*[\r\n]+\s*SectorStartPct:\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))/i',
+            $sectorText,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        if (count($matches) < 2) {
+            throw new RuntimeException(
+                'No se pudieron extraer al menos dos límites de sector del IBT.'
+            );
+        }
+
+        $sectors = [];
+
+        foreach ($matches as $match) {
+            $sectors[(int) $match[1]] = (float) $match[2];
+        }
+
+        ksort($sectors, SORT_NUMERIC);
+        $boundaries = array_values($sectors);
+
+        // Validar y normalizar la secuencia obtenida del IBT.
+        if (abs($boundaries[0]) > 0.000001) {
+            array_unshift($boundaries, 0.0);
+        } else {
+            $boundaries[0] = 0.0;
+        }
+
+        $uniqueBoundaries = [];
+        foreach ($boundaries as $boundary) {
+            if ($boundary < 0.0 || $boundary >= 1.0) {
+                continue;
+            }
+
+            if (
+                empty($uniqueBoundaries) ||
+                abs($boundary - $uniqueBoundaries[count($uniqueBoundaries) - 1]) > 0.000001
+            ) {
+                $uniqueBoundaries[] = $boundary;
+            }
+        }
+
+        if (count($uniqueBoundaries) < 2) {
+            throw new RuntimeException(
+                'Los límites de sector del IBT no forman una secuencia válida.'
+            );
+        }
+
+        $uniqueBoundaries[] = 1.0;
+
+        return $uniqueBoundaries;
+    }
+
+    /**
+     * Reconstruye los tiempos de sector a partir de LapDistPct y
+     * SessionTime. Los cruces se interpolan entre muestras consecutivas.
+     * Devuelve sectores nulos cuando falta alguno de sus cruces.
+     */
+    public function extractLapSectors(string $filePath): array
+    {
+        $boundaries = $this->extractSectorBoundaries($filePath);
+        $sectorCount = count($boundaries) - 1;
+        $firstInteriorBoundary = $boundaries[1];
+        $lastInteriorBoundary = $boundaries[count($boundaries) - 2];
+
+        $previous = null;
+        $crossings = [];
+        $finishTimes = [];
+
+        $variables = ['SessionTime', 'Lap', 'LapDistPct'];
+
+        foreach ($this->streamRecords($filePath, $variables) as $index => $record) {
+            $lap = (int) ($record['Lap'] ?? 0);
+            $dist = (float) ($record['LapDistPct'] ?? 0.0);
+            $time = (float) ($record['SessionTime'] ?? 0.0);
+
+            if ($previous === null) {
+                $previous = ['lap' => $lap, 'dist' => $dist, 'time' => $time];
+                continue;
+            }
+
+            $prevLap = $previous['lap'];
+            $prevDist = $previous['dist'];
+            $prevTime = $previous['time'];
+            $timeDelta = $time - $prevTime;
+
+            $finishResetCandidate =
+                $prevDist >= $lastInteriorBoundary &&
+                $dist <= $firstInteriorBoundary &&
+                $dist < $prevDist;
+
+            if (
+                $timeDelta <= 0.0 ||
+                (!$finishResetCandidate && (
+                    $dist < 0.0 || $dist > 1.0 ||
+                    $prevDist < 0.0 || $prevDist > 1.0
+                ))
+            ) {
+                $previous = ['lap' => $lap, 'dist' => $dist, 'time' => $time];
+                continue;
+            }
+
+            // Cruces de los límites interiores: se atribuyen a la vuelta actual.
+            if ($lap > 0 && $lap === $prevLap && $dist >= $prevDist) {
+                for ($boundaryIndex = 1; $boundaryIndex < $sectorCount; $boundaryIndex++) {
+                    $boundary = $boundaries[$boundaryIndex];
+
+                    if (
+                        $prevDist < $boundary &&
+                        $dist >= $boundary &&
+                        !isset($crossings[$lap][$boundaryIndex])
+                    ) {
+                        $distanceDelta = $dist - $prevDist;
+                        if ($distanceDelta > 0.0) {
+                            $ratio = ($boundary - $prevDist) / $distanceDelta;
+                            $crossings[$lap][$boundaryIndex] =
+                                $prevTime + ($timeDelta * $ratio);
+                        }
+                    }
+                }
+            }
+
+            // Cruce de meta: el instante corresponde al final de la vuelta anterior.
+            if ($prevLap > 0 && $finishResetCandidate) {
+                $distanceDelta = (1.0 - $prevDist) + $dist;
+
+                if ($distanceDelta > 0.0 && !isset($finishTimes[$prevLap])) {
+                    $ratio = (1.0 - $prevDist) / $distanceDelta;
+                    $finishTimes[$prevLap] = $prevTime + ($timeDelta * $ratio);
+                }
+            }
+
+            $previous = ['lap' => $lap, 'dist' => $dist, 'time' => $time];
+        }
+
+        $lapNumbers = array_unique(array_merge(
+            array_keys($crossings),
+            array_keys($finishTimes)
+        ));
+        sort($lapNumbers, SORT_NUMERIC);
+
+        $result = [];
+
+        foreach ($lapNumbers as $lapNumber) {
+            $lapSectors = [];
+
+
+        for ($sector = 1; $sector <= $sectorCount; $sector++) {
+            // Los cruces interiores están etiquetados con la vuelta siguiente.
+            $crossingLap = (int) $lapNumber + 1;
+
+            if ($sector === 1) {
+                $start = $finishTimes[$lapNumber] ?? null;
+                $end = $crossings[$crossingLap][1] ?? null;
+            } elseif ($sector === $sectorCount) {
+                $start = $crossings[$crossingLap][$sectorCount - 1] ?? null;
+                $end = $finishTimes[$lapNumber + 1] ?? null;
+            } else {
+                $start = $crossings[$crossingLap][$sector - 1] ?? null;
+                $end = $crossings[$crossingLap][$sector] ?? null;
+            }
+
+            $lapSectors['S' . $sector] =
+                ($start !== null && $end !== null && $end > $start)
+                    ? $end - $start
+                    : null;
+        }
+
+
+            $result[(int) $lapNumber] = $lapSectors;
+        }
+
+        return $result;
+    }
+
+
         /**
      * Extrae las vueltas detectadas del IBT y las escribe
      * en un archivo JSON procesado.
@@ -798,6 +1029,7 @@ class IbtProcessor
         }
 
         $laps = $this->extractLaps($filePath);
+        $sectors = $this->extractLapSectors($filePath);
         $weather = $this->extractLapWeather($filePath);
         $fuel = $this->extractLapFuel($filePath);
         $incidents = $this->extractLapIncidents($filePath);
@@ -832,6 +1064,7 @@ class IbtProcessor
             $lapPayload = [
                 'lap' => $lapNumber,
                 'lap_time' => (float) $lap['lap_time'],
+                'sectors' => $sectors[$lapNumber] ?? [],
             ];
 
             while (

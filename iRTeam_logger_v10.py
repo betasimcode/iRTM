@@ -985,6 +985,7 @@ class MRTLogger:
                     )
 
                     print("📡 IBT response:", r.status_code)
+                    print("📡 IBT response body:", r.text)
 
                     # ===============================
                     # SETUP FILE

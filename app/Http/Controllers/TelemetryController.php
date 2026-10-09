@@ -698,7 +698,7 @@ public function store(Request $request)
 
                     $destinationFolder =
 
-                        "telemetry/{$year}/{$month}/user_{$userId}";
+                        "telemetry/{$year}/{$month}/user_{$userId}/stint_{$stintId}";
 
                     // ==================================
                     // CREATE DIRECTORY

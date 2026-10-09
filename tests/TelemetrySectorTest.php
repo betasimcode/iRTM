@@ -11,7 +11,7 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $processor = app(IbtProcessor::class);
 
-$ibt = 'B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1042.ibt';
+$ibt = 'B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1046\stint_1046.ibt';
 
 if (!is_file($ibt)) {
     echo "ERROR: IBT no encontrado: {$ibt}\n";

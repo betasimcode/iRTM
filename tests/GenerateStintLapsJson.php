@@ -6,72 +6,77 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-$app->make(\Illuminate\Contracts\Console\Kernel::class)
-    ->bootstrap();
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $processor = app(IbtProcessor::class);
+$stintId = isset($argv[1]) ? (int) $argv[1] : 1046;
 
-$ibt = 'B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1036.ibt';
+if ($stintId <= 0) {
+    fwrite(STDERR, "ERROR: indica un stint_id válido.\n");
+    exit(1);
+}
 
-$output = 'B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1036_laps.json';
+$directory = storage_path(
+    "app/private/telemetry/2026/10/user_1/stint_{$stintId}"
+);
+
+$ibt = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}.ibt";
+$output = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}_laps.json";
+
+if (!is_file($ibt)) {
+    fwrite(STDERR, "ERROR: IBT no encontrado: {$ibt}\n");
+    exit(1);
+}
 
 echo "========================================\n";
 echo " iRTeam Manager - IBT JSON Generator\n";
 echo "========================================\n\n";
+echo "IBT: {$ibt}\n";
+echo "Extrayendo límites de sector desde SplitTimeInfo...\n";
 
-echo "IBT:\n";
-echo $ibt . "\n\n";
+try {
+    $boundaries = $processor->extractSectorBoundaries($ibt);
+    echo 'Límites: ' . implode(', ', array_map(
+        static fn (float $value): string => number_format($value, 6, '.', ''),
+        $boundaries
+    )) . "\n";
 
-echo "Procesando...\n";
+    echo "Generando JSON...\n";
+    $payload = $processor->writeLapsJson($ibt, $output);
 
-$payload = $processor->writeLapsJson(
-    $ibt,
-    $output
-);
+    echo "\nJSON generado correctamente.\n";
+    echo "Archivo: {$output}\n";
+    echo 'Vueltas procesadas: ' . ($payload['summary']['timed_laps'] ?? 0) . "\n";
+    echo 'Fuel por vuelta: ' . ($payload['summary']['fuel_per_lap'] ?? 'N/A') . "\n";
+    echo 'Incidentes: ' . ($payload['summary']['incidents'] ?? 0) . "\n\n";
 
-echo "\nJSON generado correctamente.\n\n";
+    foreach ($payload['laps'] as $lap) {
+        echo sprintf(
+            "Lap %d | Time %.6f | Fuel start %.6f | Fuel end %.6f | Fuel used %.6f\n",
+            $lap['lap'],
+            $lap['lap_time'],
+            $lap['fuel_start'] ?? 0,
+            $lap['fuel_end'] ?? 0,
+            $lap['fuel_used'] ?? 0
+        );
 
-echo "Archivo:\n";
-echo $output . "\n\n";
-
-echo "Vueltas procesadas: ";
-echo $payload['summary']['timed_laps'] ?? 0;
-echo "\n";
-
-echo "Fuel por vuelta: ";
-echo $payload['summary']['fuel_per_lap'] ?? 'N/A';
-echo "\n";
-
-echo "Incidentes: ";
-echo $payload['summary']['incidents'] ?? 0;
-echo "\n\n";
-
-foreach ($payload['laps'] as $lap) {
-
-    echo sprintf(
-        "Lap %d | Time %.6f | Fuel start %.6f | Fuel end %.6f | Fuel used %.6f\n",
-        $lap['lap'],
-        $lap['lap_time'],
-        $lap['fuel_start'] ?? 0,
-        $lap['fuel_end'] ?? 0,
-        $lap['fuel_used'] ?? 0
-    );
-
-    if (!empty($lap['incidents'])) {
-
-        foreach ($lap['incidents'] as $incident) {
-
+        foreach (($lap['sectors'] ?? []) as $sector => $time) {
             echo sprintf(
-                "    INCIDENT | Count %d | Total %d | Time %.3f | Dist %.6f\n",
-                $incident['count'],
-                $incident['total'],
-                $incident['session_time'],
-                $incident['lap_dist_pct']
+                "    %s: %s\n",
+                $sector,
+                $time === null ? 'SIN DATOS' : number_format((float) $time, 6, '.', '') . ' s'
             );
         }
+
+        $sectorValues = array_values($lap['sectors'] ?? []);
+        $complete = count($sectorValues) > 0 && !in_array(null, $sectorValues, true);
+        if ($complete) {
+            $sum = array_sum($sectorValues);
+            echo sprintf("    SUMA SECTORES: %.6f | VUELTA: %.6f | DIF: %+.6f s\n", $sum, $lap['lap_time'], $sum - $lap['lap_time']);
+        }
     }
+} catch (Throwable $e) {
+    fwrite(STDERR, "ERROR: {$e->getMessage()}\n");
+    exit(1);
 }
 
-echo "\n========================================\n";
-echo " FIN\n";
-echo "========================================\n";

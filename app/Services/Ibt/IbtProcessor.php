@@ -752,6 +752,9 @@ class IbtProcessor
                         'source_lap' =>
                             $lap,
 
+                        'candidate_lap' =>
+                            $completed,
+
                         'source_completed' =>
                             $completed,
 
@@ -777,6 +780,85 @@ class IbtProcessor
     }
 
 
+
+    /**
+     * Lee el bloque SessionInfo del IBT como texto YAML.
+     *
+     * No interpreta ni transforma los valores del documento.
+     */
+    public function readSessionInfoText(string $filePath): string
+    {
+        $header = $this->readHeader($filePath);
+
+        $length = (int) $header['session_info_length'];
+        $offset = (int) $header['session_info_offset'];
+
+        if ($length <= 0) {
+            throw new RuntimeException(
+                'El IBT no contiene SessionInfo.'
+            );
+        }
+
+        $handle = fopen($filePath, 'rb');
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "No se pudo abrir el IBT: {$filePath}"
+            );
+        }
+
+        try {
+            return $this->readBytes(
+                $handle,
+                $offset,
+                $length
+            );
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    public function exportSessionInfoText(string $filePath): string
+    {
+        return $this->readSessionInfoText($filePath);
+    }
+
+
+    public function writeSessionInfoDebugJson(
+        string $filePath,
+        string $outputPath
+    ): string {
+        $sessionInfo = $this->readSessionInfoText($filePath);
+
+        $directory = dirname($outputPath);
+
+        if (
+            !is_dir($directory) &&
+            !mkdir($directory, 0775, true) &&
+            !is_dir($directory)
+        ) {
+            throw new RuntimeException(
+                "No se pudo crear el directorio: {$directory}"
+            );
+        }
+
+        $written = file_put_contents(
+            $outputPath,
+            $sessionInfo,
+            LOCK_EX
+        );
+
+        if ($written === false) {
+            throw new RuntimeException(
+                "No se pudo escribir SessionInfo: {$outputPath}"
+            );
+        }
+
+        return $outputPath;
+    }
+
+
+
     /**
      * Extrae los límites de sector desde SplitTimeInfo del texto
      * SessionInfo incluido en la cabecera del IBT.
@@ -786,27 +868,9 @@ class IbtProcessor
      */
     public function extractSectorBoundaries(string $filePath): array
     {
-        $header = $this->readHeader($filePath);
-        $length = (int) $header['session_info_length'];
-        $offset = (int) $header['session_info_offset'];
 
-        if ($length <= 0) {
-            throw new RuntimeException(
-                'El IBT no contiene SessionInfo para extraer los sectores.'
-            );
-        }
+        $sessionInfo = $this->readSessionInfoText($filePath);
 
-        $handle = fopen($filePath, 'rb');
-
-        if ($handle === false) {
-            throw new RuntimeException("No se pudo abrir el IBT: {$filePath}");
-        }
-
-        try {
-            $sessionInfo = $this->readBytes($handle, $offset, $length);
-        } finally {
-            fclose($handle);
-        }
 
         $splitStart = strpos($sessionInfo, 'SplitTimeInfo:');
 
@@ -1064,6 +1128,7 @@ class IbtProcessor
             $lapPayload = [
                 'lap' => $lapNumber,
                 'lap_time' => (float) $lap['lap_time'],
+                'candidate_lap' => $lap['candidate_lap'] ?? null,
                 'sectors' => $sectors[$lapNumber] ?? [],
             ];
 

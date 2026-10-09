@@ -77,6 +77,43 @@ class StintController extends Controller
 
         // 🔥 cálculos
         $laps = $stint->laps;
+
+
+        // Vueltas registradas en el JSON procesado del IBT.
+        $stintLapsCount = null;
+
+        $stintDate = $stint->created_at;
+
+        if ($stintDate) {
+            $stintDirectory = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id
+            );
+
+            $lapsJsonPath = $stintDirectory .
+                '/stint_' . $stint->id . '_laps.json';
+
+            if (is_file($lapsJsonPath)) {
+                $lapsJson = json_decode(
+                    file_get_contents($lapsJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE &&
+                    isset($lapsJson['laps']) &&
+                    is_array($lapsJson['laps'])
+                ) {
+                    $stintLapsCount = count($lapsJson['laps']);
+                }
+            }
+        }
+
+
+
+
         // --- Cálculos de Rendimiento ---
         $metrics = StintMetricsService::build($stint);
 
@@ -162,6 +199,7 @@ class StintController extends Controller
         return view('stints.show', compact(
         'stint',
         'laps',
+        'stintLapsCount',
         'setsUsed',
         'degradationBySet',
         'totalWear',

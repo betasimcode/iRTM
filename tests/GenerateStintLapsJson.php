@@ -23,10 +23,16 @@ $directory = storage_path(
 $ibt = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}.ibt";
 $output = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}_laps.json";
 
+
+$sessionInfoDebug = $directory . DIRECTORY_SEPARATOR . 'session-info-debug.txt';
+
+
 if (!is_file($ibt)) {
     fwrite(STDERR, "ERROR: IBT no encontrado: {$ibt}\n");
     exit(1);
 }
+
+
 
 echo "========================================\n";
 echo " iRTeam Manager - IBT JSON Generator\n";
@@ -43,6 +49,16 @@ try {
 
     echo "Generando JSON...\n";
     $payload = $processor->writeLapsJson($ibt, $output);
+
+
+    $processor->writeSessionInfoDebugJson(
+        $ibt,
+        $sessionInfoDebug
+    );
+
+    echo "SessionInfo exportado: {$sessionInfoDebug}\n";
+
+
 
     echo "\nJSON generado correctamente.\n";
     echo "Archivo: {$output}\n";
@@ -74,6 +90,19 @@ try {
             $sum = array_sum($sectorValues);
             echo sprintf("    SUMA SECTORES: %.6f | VUELTA: %.6f | DIF: %+.6f s\n", $sum, $lap['lap_time'], $sum - $lap['lap_time']);
         }
+
+    echo sprintf(
+        "Lap %d | Candidate %s | Time %.6f | Fuel start %.6f | Fuel end %.6f | Fuel used %.6f\n",
+        $lap['lap'],
+        $lap['candidate_lap'] ?? 'NO DISPONIBLE',
+        $lap['lap_time'],
+        $lap['fuel_start'] ?? 0,
+        $lap['fuel_end'] ?? 0,
+        $lap['fuel_used'] ?? 0
+    );
+
+
+
     }
 } catch (Throwable $e) {
     fwrite(STDERR, "ERROR: {$e->getMessage()}\n");

@@ -8,6 +8,7 @@ use App\Models\irLap;
 use App\Models\IrSession;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Stints\StintJsonMetricsService;
 use App\Services\Setup\SetupRepairService;
 use App\Services\Stints\StintMetricsService;
 use App\Services\Stints\StintQueryService;
@@ -164,39 +165,17 @@ class StintController extends Controller
         }
 
 
+
         // =========================================================
-        // RITMO MEDIO: FILTRO DEL 107 %
+        // MÉTRICAS DE RITMO DESDE EL JSON DEL IBT
         // =========================================================
 
-        $competitiveLapTimes = collect($lapsJson['laps'] ?? [])
-            ->filter(function ($lap) {
-                return is_array($lap)
-                    && isset($lap['lap_time'])
-                    && is_numeric($lap['lap_time'])
-                    && (float) $lap['lap_time'] > 5;
-            })
-            ->map(fn ($lap) => (float) $lap['lap_time'])
-            ->filter(fn ($time) => $time > 0)
-            ->values();
+        $lapMetrics = app(StintJsonMetricsService::class)->calculate(
+            $lapsJson['laps'] ?? []
+        );
 
-        $jsonAvgLap107 = null;
-
-        if ($competitiveLapTimes->isNotEmpty()) {
-            $referenceLap = $competitiveLapTimes->min();
-            $threshold = $referenceLap * 1.07;
-
-            $filteredLapTimes = $competitiveLapTimes
-                ->filter(fn ($time) => $time <= $threshold);
-
-            if ($filteredLapTimes->isNotEmpty()) {
-                $jsonAvgLap107 = $filteredLapTimes->avg();
-            }
-
-        $jsonBestLap = $competitiveLapTimes->isNotEmpty()
-        ? $competitiveLapTimes->min()
-        : null;
-
-        }
+        $jsonAvgLap107 = $lapMetrics['avg_lap_107'];
+        $jsonBestLap = $lapMetrics['best_lap'];
 
         // --- Cálculos de Rendimiento ---
         $metrics = StintMetricsService::build($stint);
@@ -289,6 +268,7 @@ class StintController extends Controller
         'jsonLapsByLap',
         'jsonAvgLap107',
         'jsonBestLap',
+        'lapMetrics',
         'setsUsed',
         'degradationBySet',
         'totalWear',

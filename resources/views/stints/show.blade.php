@@ -34,24 +34,6 @@
             }
         }
     }
-
-    $validLapTimes = [];
-
-    foreach ($jsonLaps as $jsonLap) {
-        $lapTime = $jsonLap['lap_time'] ?? null;
-
-        if (is_numeric($lapTime) && (float) $lapTime > 0) {
-            $validLapTimes[] = (float) $lapTime;
-        }
-    }
-
-    $jsonLapCount = count($validLapTimes);
-
-    $jsonAvgLap = $jsonLapCount > 0
-        ? array_sum($validLapTimes) / $jsonLapCount
-        : null;
-
-    $jsonDuration = array_sum($validLapTimes);
 @endphp
 
 {{-- INFO CARD --}}
@@ -228,7 +210,7 @@
 
                 {{-- Vueltas --}}
                 <td class="py-3 text-indigo-400 font-semibold">
-                    {{ $jsonLapCount }}
+                    {{ $lapMetrics['valid_lap_count'] }}
                 </td>
 
                 {{-- Duración --}}
@@ -236,9 +218,9 @@
                     {{ round($stint->duration_seconds / 60, 1) }} {{ __('ui.min') }}
                 </td>
 
-                {{-- Ritmo --}}
-                <td class="text-[var(--lap-avg)]  font-semibold font-mono-timing">
-                    {{ $jsonAvgLap !== null ? lapTime($jsonAvgLap) : '—' }}
+                {{-- Ritmo medio competitivo: filtro del 107 % calculado en el controlador --}}
+                <td class="text-[var(--lap-avg)] font-semibold font-mono-timing">
+                    {{ $jsonAvgLap107 !== null ? lapTime($jsonAvgLap107) : '—' }}
                 </td>
 
                 {{-- Consumo medio por vuelta --}}
@@ -417,45 +399,37 @@
 
             <tbody class="divide-y divide-[var(--div)]">
 
-            @php
-                // Mejor vuelta: utilizar los tiempos del JSON IBT cuando estén disponibles.
-                $jsonBestLap = collect($jsonLapsByLap ?? [])
-                    ->pluck('lap_time')
-                    ->filter(fn ($time) => is_numeric($time) && (float) $time > 0)
-                    ->map(fn ($time) => (float) $time)
-                    ->min();
 
-                // Compatibilidad con stints sin tiempos válidos en el JSON.
-                $bestLap = $jsonBestLap ?? $laps
-                    ->filter(fn ($lap) => is_numeric($lap->lap_time) && $lap->lap_time > 0)
-                    ->min('lap_time');
+@php
+    $bestLap = collect($jsonLaps)
+        ->pluck('lap_time')
+        ->filter(fn ($time) => is_numeric($time) && (float) $time > 0)
+        ->map(fn ($time) => (float) $time)
+        ->min();
 
-                $bestSectors = [];
+    $bestSectors = [];
 
-                for ($i = 1; $i <= $maxSectors; $i++) {
-                    $sectorKey = 'S' . $i;
+    for ($i = 1; $i <= $maxSectors; $i++) {
+        $sectorKey = 'S' . $i;
 
-                    $bestSectors[$i - 1] = $jsonLaps
-                        ->map(fn ($lap) => $lap['sectors'][$sectorKey] ?? null)
-                        ->filter(fn ($time) => is_numeric($time) && $time > 0)
-                        ->min();
-                }
-            @endphp
+        $bestSectors[$i - 1] = $jsonLaps
+            ->map(fn ($lap) => $lap['sectors'][$sectorKey] ?? null)
+            ->filter(fn ($time) => is_numeric($time) && $time > 0)
+            ->min();
+    }
+@endphp
 
-                @foreach($laps as $lap)
+
+                @foreach($jsonLaps as $jsonLap)
 
                 @php
-                    $jsonLap = $jsonLapsByLap[(string) $lap->lap_number] ?? null;
+                    $displayLap = $jsonLap['candidate_lap']
+                        ?? $jsonLap['lap']
+                        ?? null;
 
-                    $displayLap = is_array($jsonLap)
-                        ? ($jsonLap['candidate_lap'] ?? null)
-                        : null;
-
-                    $displayLapTime = is_array($jsonLap)
-                        ? ($jsonLap['lap_time'] ?? null)
-                        : null;
-
+                    $displayLapTime = $jsonLap['lap_time'] ?? null;
                 @endphp
+
 
                 @if (
                         !is_numeric($displayLapTime)
@@ -485,13 +459,20 @@
                             open = true;
                             lap = @json([
                                 "lap" => $displayLap,
-                                "lap_time" => (float) $lap->lap_time,
-                                "sectors" => $lap->sectors->map(fn($s) => [
-                                "sector_time" => (float) $s->sector_time
-                                ])->values()
+                                "lap_time" => is_numeric($displayLapTime)
+                                    ? (float) $displayLapTime
+                                    : null,
+                                "sectors" => collect($jsonLap['sectors'] ?? [])
+                                    ->map(fn ($time) => [
+                                        "sector_time" => is_numeric($time)
+                                            ? (float) $time
+                                            : null
+                                    ])
+                                    ->values()
                             ])
-                        '
-                    >
+
+                            '
+                        >
 
                     <span class="
                             font-mono-timing
@@ -532,7 +513,7 @@
                 <td class="flex flex-row px-6 py-4">
 
                     @php
-                        $jsonLap = $jsonLapsByLap[(string) $lap->lap_number] ?? null;
+
 
                         $fuelConsumed = isset($jsonLap['fuel_used'])
                             && is_numeric($jsonLap['fuel_used'])
@@ -586,7 +567,7 @@
                 {{-- LAP TRACK TEMP --}}
                 <td class="px-6 py-4">
                     @php
-                        $jsonLap = $jsonLapsByLap[(string) $lap->lap_number] ?? null;
+
 
                         $trackTemp = isset($jsonLap['weather']['TrackTemp'])
                             && is_numeric($jsonLap['weather']['TrackTemp'])
@@ -601,7 +582,7 @@
                 {{-- LAP WEATHER  --}}
 
                 @php
-                    $jsonLap = $jsonLapsByLap[(string) $lap->lap_number] ?? null;
+
                     $weather = $jsonLap['weather'] ?? [];
 
                     // Precipitación: el IBT entrega un valor entre 0 y 1.
@@ -681,7 +662,7 @@
                     <td class="flex px-6 py-4 w-48">
 
                         @php
-                            $jsonLap = $jsonLapsByLap[(string) $lap->lap_number] ?? null;
+
                             $weather = $jsonLap['weather'] ?? [];
 
                             $windDirRaw = $weather['WindDir'] ?? null;

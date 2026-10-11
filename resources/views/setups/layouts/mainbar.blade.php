@@ -1,3 +1,52 @@
+    @php
+    $jsonLaps = [];
+
+    $stintDate = $stint->created_at ?? null;
+
+    if ($stintDate && $stint->user_id && $stint->id) {
+        $lapsJsonPath = storage_path(
+            'app/private/telemetry/' .
+            $stintDate->format('Y/m') .
+            '/user_' . $stint->user_id .
+            '/stint_' . $stint->id .
+            '/stint_' . $stint->id . '_laps.json'
+        );
+
+        if (is_file($lapsJsonPath)) {
+            $decoded = json_decode(
+                file_get_contents($lapsJsonPath),
+                true
+            );
+
+            if (
+                json_last_error() === JSON_ERROR_NONE
+                && isset($decoded['laps'])
+                && is_array($decoded['laps'])
+            ) {
+                $jsonLaps = $decoded['laps'];
+            }
+        }
+    }
+
+    $validLapTimes = [];
+
+    foreach ($jsonLaps as $jsonLap) {
+        $lapTime = $jsonLap['lap_time'] ?? null;
+
+        if (is_numeric($lapTime) && (float) $lapTime > 0) {
+            $validLapTimes[] = (float) $lapTime;
+        }
+    }
+
+    $jsonLapCount = count($validLapTimes);
+
+    $jsonAvgLap = $jsonLapCount > 0
+        ? array_sum($validLapTimes) / $jsonLapCount
+        : null;
+
+    $jsonDuration = array_sum($validLapTimes);
+@endphp
+
     <div class="grid-cols-3 pb-3 align-middle items-center bg-[var(--bg)] rounded-xl border border-[var(--border)] mb-5 px-5 pt-3">
                  {{-- BOTONES --}}
         <div class="flex gap-2 width:100%">
@@ -172,7 +221,7 @@
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M14 7H15.9992C19.3129 7 21.9992 9.68629 21.9992 13C21.9992 16.3137 19.3129 19 15.9992 19H8C4.68629 19 2 16.3137 2 13C2 9.68629 4.68629 7 8 7H10M7 4L10 7M10 7L7 10" stroke="CurrentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
                     </div>
                     <div class="flex text-center items-center pl-1 pt-0.5">
-                        {{ $stint->laps->count() }}
+                        {{ $jsonLapCount }}
                     </div>
                 </td>
 
@@ -193,7 +242,7 @@
                 <svg fill="currentColor" width="25" height="25" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4,8.39l2,2.09L8.39,7.76l2.69,2.75,4.7-5.89L14.22,3.38l-3.3,4.11L8.29,4.81,6,7.52l-1.91-2L.29,9.29l1.42,1.42ZM0,12.3v1.4H16V12.3Z"></path> </g></svg>
                 </div>
                 <div class="flex text-center items-center pl-1 pt-0.5">
-                        {{ lapTime($stint->avg_lap) }}
+                        {{ $jsonAvgLap !== null ? lapTime($jsonAvgLap) : '—' }}
                     </div>
                 </td>
 

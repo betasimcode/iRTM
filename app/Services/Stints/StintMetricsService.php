@@ -10,12 +10,64 @@ class StintMetricsService
     {
         $laps = $stint->laps;
 
+        // CONSUMO MEDIO: JSON IBT como fuente prioritaria.
+        $avgFuel = null;
+
+        $stintDate = $stint->created_at;
+
+        if ($stintDate) {
+            $lapsJsonPath = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id .
+                '/stint_' . $stint->id . '_laps.json'
+            );
+
+            if (is_file($lapsJsonPath)) {
+                $decoded = json_decode(
+                    file_get_contents($lapsJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && isset($decoded['laps'])
+                    && is_array($decoded['laps'])
+                ) {
+                    $fuelValues = [];
+
+                    foreach ($decoded['laps'] as $jsonLap) {
+                        $fuelUsed = $jsonLap['fuel_used'] ?? null;
+
+                        if (
+                            is_numeric($fuelUsed)
+                            && (float) $fuelUsed > 0
+                        ) {
+                            $fuelValues[] = (float) $fuelUsed;
+                        }
+                    }
+
+                    if (count($fuelValues) > 0) {
+                        $avgFuel = array_sum($fuelValues)
+                            / count($fuelValues);
+                    }
+                }
+            }
+        }
+
+        // Compatibilidad con stints antiguos sin JSON válido.
+        if ($avgFuel === null) {
+            $avgFuel = $laps->avg('fuel_consumed');
+        }
+
+
         $metrics = [
 
             // PERFORMANCE
             'avg_lap' => $laps->avg('lap_time'),
             'best_lap' => $laps->min('lap_time'),
-            'avg_fuel' => $laps->avg('fuel_consumed'),
+            'avg_fuel' => $avgFuel,
 
             // INCIDENTS
             'total_incidents' => $laps->sum('incident_count'),

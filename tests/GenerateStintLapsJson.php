@@ -22,7 +22,7 @@ $directory = storage_path(
 
 $ibt = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}.ibt";
 $output = $directory . DIRECTORY_SEPARATOR . "stint_{$stintId}_laps.json";
-
+$sessionOutput = $directory . DIRECTORY_SEPARATOR . 'session.json';
 
 $sessionInfoDebug = $directory . DIRECTORY_SEPARATOR . 'session-info-debug.txt';
 
@@ -57,7 +57,12 @@ try {
     );
 
     echo "SessionInfo exportado: {$sessionInfoDebug}\n";
+    $sessionPayload = $processor->writeSessionJson(
+        $ibt,
+        $sessionOutput
+    );
 
+    echo "Session JSON generado: {$sessionOutput}\n";
 
 
     echo "\nJSON generado correctamente.\n";
@@ -65,6 +70,7 @@ try {
     echo 'Vueltas procesadas: ' . ($payload['summary']['timed_laps'] ?? 0) . "\n";
     echo 'Fuel por vuelta: ' . ($payload['summary']['fuel_per_lap'] ?? 'N/A') . "\n";
     echo 'Incidentes: ' . ($payload['summary']['incidents'] ?? 0) . "\n\n";
+
 
     foreach ($payload['laps'] as $lap) {
         echo sprintf(

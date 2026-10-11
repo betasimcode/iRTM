@@ -26,6 +26,49 @@
 
 @layer components {
 
+    /* Interactive visual language: compact racing-console controls with clear semantic color. */
+    .ui-button {
+        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors duration-150;
+        background: var(--btn-app);
+        color: var(--text);
+        border-color: var(--border);
+    }
+
+    .ui-button:hover { background: var(--btn-app-hov); }
+    .ui-button:focus-visible,
+    .icon-action:focus-visible {
+        @apply outline-none ring-2 ring-offset-2;
+        --tw-ring-color: var(--text-title);
+        --tw-ring-offset-color: var(--base);
+    }
+
+    .ui-button--primary {
+        background: var(--btn-confirm);
+        color: var(--btn-text);
+        border-color: transparent;
+    }
+    .ui-button--primary:hover { background: var(--btn-confirm-h); }
+
+    .ui-button--danger {
+        background: var(--btn-cancel);
+        color: var(--btn-text);
+        border-color: transparent;
+    }
+    .ui-button--danger:hover { background: var(--btn-cancel-h); }
+
+    .icon-action {
+        @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent transition-colors duration-150;
+        color: var(--text-soft);
+    }
+    .icon-action:hover { background: var(--btn-app); color: var(--text-title); }
+    .icon-action--danger:hover { color: var(--danger, #ef4444); }
+
+    .ui-icon { @apply h-5 w-5 shrink-0; }
+
+    .ui-icon-button {
+        @apply h-9 w-9 rounded-lg p-0 text-[var(--text-soft)] hover:bg-[var(--btn-app)] hover:text-[var(--text-title)] focus-visible:ring-2 focus-visible:ring-[var(--text-title)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base)];
+    }
+
     .sidebar-link {
         @apply flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:bg-[var(--hover)] hover:text-[var(--text-h)] transition;
     }
@@ -427,6 +470,7 @@
     --card-title: #2e374a;
     --card-hover: #13171f;
     --div: #38393b;
+    --photo:#a6a6a6;
 
     /* TEXT */
     --text: #bebebe;
@@ -526,7 +570,7 @@
     /* STATES */
     --success: #22c55e;
     --warning: #f59e0b;
-    --danger: #ef4444;
+    --danger: #cf6868;
     --info: #3b82f6;
 
     /* TELEMETRY */
@@ -666,7 +710,7 @@
     --ROOKIE: #FC0706;
 
     /* STATES */
-    --success: #22c55e;
+    --success: #339858;
     --warning: #f59e0b;
     --danger: #ef4444;
     --info: #3b82f6;
@@ -941,7 +985,7 @@
     /* STATES */
     --success: #22c55e;
     --warning: #f59e0b;
-    --danger: #ef4444;
+    --danger: #ec6363;
     --info: #3b82f6;
 
     /* TELEMETRY */

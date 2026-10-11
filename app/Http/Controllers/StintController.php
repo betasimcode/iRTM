@@ -81,7 +81,7 @@ class StintController extends Controller
 
         // Vueltas registradas en el JSON procesado del IBT.
         $stintLapsCount = null;
-
+        $lapsJson = null;
         $stintDate = $stint->created_at;
 
         if ($stintDate) {
@@ -94,6 +94,58 @@ class StintController extends Controller
 
             $lapsJsonPath = $stintDirectory .
                 '/stint_' . $stint->id . '_laps.json';
+
+            $sessionJsonPath = $stintDirectory . '/session.json';
+            $sessionJson = null;
+
+            if (is_file($sessionJsonPath)) {
+                $decodedSession = json_decode(
+                    file_get_contents($sessionJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && is_array($decodedSession)
+                ) {
+                    $sessionJson = $decodedSession;
+                }
+            }
+
+
+            $lapsJson = null;
+            $stintLapsCount = null;
+            $lapsJson = null;
+            $jsonLapsByLap = [];
+
+            if (is_file($lapsJsonPath)) {
+                $decodedLaps = json_decode(
+                    file_get_contents($lapsJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && isset($decodedLaps['laps'])
+                    && is_array($decodedLaps['laps'])
+                ) {
+                    $lapsJson = $decodedLaps;
+                    $stintLapsCount = count($lapsJson['laps']);
+
+                    foreach ($lapsJson['laps'] as $jsonLap) {
+                        if (
+                            !is_array($jsonLap)
+                            || !isset($jsonLap['lap'])
+                        ) {
+                            continue;
+                        }
+
+                        $jsonLapsByLap[(string) $jsonLap['lap']] = $jsonLap;
+                    }
+                }
+            }
+
+
 
             if (is_file($lapsJsonPath)) {
                 $lapsJson = json_decode(
@@ -112,7 +164,39 @@ class StintController extends Controller
         }
 
 
+        // =========================================================
+        // RITMO MEDIO: FILTRO DEL 107 %
+        // =========================================================
 
+        $competitiveLapTimes = collect($lapsJson['laps'] ?? [])
+            ->filter(function ($lap) {
+                return is_array($lap)
+                    && isset($lap['lap_time'])
+                    && is_numeric($lap['lap_time'])
+                    && (float) $lap['lap_time'] > 5;
+            })
+            ->map(fn ($lap) => (float) $lap['lap_time'])
+            ->filter(fn ($time) => $time > 0)
+            ->values();
+
+        $jsonAvgLap107 = null;
+
+        if ($competitiveLapTimes->isNotEmpty()) {
+            $referenceLap = $competitiveLapTimes->min();
+            $threshold = $referenceLap * 1.07;
+
+            $filteredLapTimes = $competitiveLapTimes
+                ->filter(fn ($time) => $time <= $threshold);
+
+            if ($filteredLapTimes->isNotEmpty()) {
+                $jsonAvgLap107 = $filteredLapTimes->avg();
+            }
+
+        $jsonBestLap = $competitiveLapTimes->isNotEmpty()
+        ? $competitiveLapTimes->min()
+        : null;
+
+        }
 
         // --- Cálculos de Rendimiento ---
         $metrics = StintMetricsService::build($stint);
@@ -198,8 +282,13 @@ class StintController extends Controller
 
         return view('stints.show', compact(
         'stint',
+        'sessionJson',
         'laps',
         'stintLapsCount',
+        'lapsJson',
+        'jsonLapsByLap',
+        'jsonAvgLap107',
+        'jsonBestLap',
         'setsUsed',
         'degradationBySet',
         'totalWear',

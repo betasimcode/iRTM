@@ -3,6 +3,7 @@
 namespace App\Services\Ibt;
 
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 class IbtProcessor
 {
@@ -550,7 +551,11 @@ class IbtProcessor
             'LapLastLapTime',
             'LapBestLapTime',
             'LapBestLap',
+            'OnPitRoad',
         ];
+
+        // Marcador identificativo: números de vuelta con muestras en pit road.
+        $pitLapNumbers = [];
 
         $previousCompleted = null;
         $previousLastLapTime = null;
@@ -589,6 +594,12 @@ class IbtProcessor
 
             $completed =
                 (int) ($record['LapCompleted'] ?? 0);
+
+            $onPitRoad = (bool) ($record['OnPitRoad'] ?? false);
+
+            if ($onPitRoad && $lap > 0) {
+                $pitLapNumbers[$lap] = true;
+            }
 
             if ($completed === 4294967295) {
                 $completed = -1;
@@ -669,7 +680,21 @@ class IbtProcessor
                     ) > 0.000001
                 );
 
+
+
             if ($newLapTime) {
+                logger()->debug('IBT lap time association decision', [
+                    'index' => $index,
+                    'session_time' => $sessionTime,
+                    'lap' => $lap,
+                    'completed' => $completed,
+                    'previous_completed' => $previousCompleted,
+                    'last_lap_time' => $lastLapTime,
+                    'previous_last_lap_time' => $previousLastLapTime,
+                    'reset_active' => $resetActive,
+                    'reset_base_completed' => $resetBaseCompleted,
+                    'pending_laps' => $pendingLaps,
+                ]);
 
                 $associatedLap = null;
 
@@ -776,6 +801,14 @@ class IbtProcessor
             }
         }
 
+        // Clasificar al final para incluir muestras de pit road que aparezcan
+        // después de que la vuelta cronometrada haya sido detectada.
+        foreach ($laps as &$lapData) {
+            $lapNumber = (int) ($lapData['lap'] ?? 0);
+            $lapData['is_pit_lap'] = isset($pitLapNumbers[$lapNumber]);
+        }
+        unset($lapData);
+
         return $laps;
     }
 
@@ -856,6 +889,441 @@ class IbtProcessor
 
         return $outputPath;
     }
+
+
+    /**
+     * Genera session.json con los metadatos de sesión extraídos del IBT.
+     *
+     * No modifica ni interviene en la extracción de vueltas o sectores.
+     */
+    public function writeSessionJson(
+        string $filePath,
+        string $outputPath
+    ): array {
+        $sessionInfoText = $this->readSessionInfoText($filePath);
+
+        // SessionInfo puede contener caracteres ISO-8859-1.
+        if (!mb_check_encoding($sessionInfoText, 'UTF-8')) {
+            $sessionInfoText = mb_convert_encoding(
+                $sessionInfoText,
+                'UTF-8',
+                'ISO-8859-1'
+            );
+        }
+
+        try {
+            $data = Yaml::parse($sessionInfoText);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                'No se pudo interpretar el SessionInfo del IBT: '
+                . $e->getMessage(),
+                0,
+                $e
+            );
+        }
+
+        if (!is_array($data)) {
+            throw new RuntimeException(
+                'El SessionInfo del IBT no contiene una estructura YAML válida.'
+            );
+        }
+
+        $weekend = $data['WeekendInfo'] ?? [];
+        $sessionInfo = $data['SessionInfo'] ?? [];
+        $driverInfo = $data['DriverInfo'] ?? [];
+        $carSetup = $data['CarSetup'] ?? [];
+
+        /*
+        * Normaliza cadenas vacías.
+        */
+        $text = static function (mixed $value): ?string {
+            if (!is_string($value) && !is_numeric($value)) {
+                return null;
+            }
+
+            $value = trim((string) $value);
+
+            return $value === '' ? null : $value;
+        };
+
+        /*
+        * Extrae el componente numérico de valores como:
+        * "4.8615 km", "26.16 C", "29.5 L" o "93 %".
+        *
+        * No realiza conversiones de unidades.
+        */
+        $number = static function (mixed $value): int|float|null {
+            if (is_int($value) || is_float($value)) {
+                return $value;
+            }
+
+            if (!is_string($value)) {
+                return null;
+            }
+
+            if (preg_match(
+                '/^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))/u',
+                trim($value),
+                $matches
+            )) {
+                return str_contains($matches[1], '.')
+                    ? (float) $matches[1]
+                    : (int) $matches[1];
+            }
+
+            return null;
+        };
+
+        $integer = static function (mixed $value) use ($number): ?int {
+            $value = $number($value);
+
+            return $value === null ? null : (int) $value;
+        };
+
+        $boolean = static function (mixed $value): ?bool {
+            if ($value === null || $value === '') {
+                return null;
+            }
+
+            return (bool) ((int) $value);
+        };
+
+        /*
+        * Selecciona la sesión activa del IBT.
+        */
+        $sessions = $sessionInfo['Sessions'] ?? [];
+        $currentSessionNum = $integer(
+            $sessionInfo['CurrentSessionNum'] ?? null
+        );
+
+        $currentSession = [];
+
+        if (is_array($sessions)) {
+            if (
+                $currentSessionNum !== null
+                && isset($sessions[$currentSessionNum])
+                && is_array($sessions[$currentSessionNum])
+            ) {
+                $currentSession = $sessions[$currentSessionNum];
+            } elseif ($sessions !== []) {
+                $firstSession = reset($sessions);
+
+                if (is_array($firstSession)) {
+                    $currentSession = $firstSession;
+                }
+            }
+        }
+
+        /*
+        * Identifica al piloto propio mediante DriverCarIdx.
+        * No presupone que sea el primer piloto de la lista.
+        */
+        $driverCarIdx = $integer(
+            $driverInfo['DriverCarIdx'] ?? null
+        );
+
+        $driverUserId = $integer(
+            $driverInfo['DriverUserID'] ?? null
+        );
+
+        $driver = null;
+        $drivers = $driverInfo['Drivers'] ?? [];
+
+        if (is_array($drivers)) {
+            foreach ($drivers as $candidate) {
+                if (!is_array($candidate)) {
+                    continue;
+                }
+
+                $candidateCarIdx = $integer(
+                    $candidate['CarIdx'] ?? null
+                );
+
+                if (
+                    $driverCarIdx === null
+                    || $candidateCarIdx !== $driverCarIdx
+                ) {
+                    continue;
+                }
+
+                $candidateUserId = $integer(
+                    $candidate['UserID'] ?? null
+                );
+
+                if (
+                    $driverUserId !== null
+                    && $candidateUserId !== null
+                    && $candidateUserId !== $driverUserId
+                ) {
+                    continue;
+                }
+
+                $driver = $candidate;
+                break;
+            }
+        }
+
+        /*
+        * Busca el resultado del piloto en la sesión activa.
+        */
+        $result = null;
+        $positions = $currentSession['ResultsPositions'] ?? [];
+
+        if ($driverCarIdx !== null && is_array($positions)) {
+            foreach ($positions as $position) {
+                if (!is_array($position)) {
+                    continue;
+                }
+
+                if (
+                    $integer($position['CarIdx'] ?? null)
+                    !== $driverCarIdx
+                ) {
+                    continue;
+                }
+
+                $result = [
+                    'position' => $integer(
+                        $position['Position'] ?? null
+                    ),
+                    'fastest_time_seconds' => $number(
+                        $position['FastestTime'] ?? null
+                    ),
+                    'laps_complete' => $integer(
+                        $position['LapsComplete'] ?? null
+                    ),
+                ];
+
+                break;
+            }
+        }
+
+        /*
+        * Combustible inicial indicado en CarSetup.
+        */
+        $rearSetup = $carSetup['Rear'] ?? [];
+
+        $setupFuel = is_array($rearSetup)
+            ? $number($rearSetup['FuelLevel'] ?? null)
+            : null;
+
+        /*
+        * Construcción del JSON normalizado.
+        */
+        $payload = [
+            'format_version' => 1,
+
+            'source' => [
+                'filename' => basename($filePath),
+            ],
+
+            'track' => [
+                'id' => $integer($weekend['TrackID'] ?? null),
+                'name' => $text($weekend['TrackName'] ?? null),
+                'display_name' => $text(
+                    $weekend['TrackDisplayName'] ?? null
+                ),
+                'display_short_name' => $text(
+                    $weekend['TrackDisplayShortName'] ?? null
+                ),
+                'config_name' => $text(
+                    $weekend['TrackConfigName'] ?? null
+                ),
+                'length_km' => $number(
+                    $weekend['TrackLength'] ?? null
+                ),
+                'length_official_km' => $number(
+                    $weekend['TrackLengthOfficial'] ?? null
+                ),
+                'city' => $text($weekend['TrackCity'] ?? null),
+                'state' => $text($weekend['TrackState'] ?? null),
+                'country' => $text($weekend['TrackCountry'] ?? null),
+                'altitude_m' => $number(
+                    $weekend['TrackAltitude'] ?? null
+                ),
+                'latitude' => $number(
+                    $weekend['TrackLatitude'] ?? null
+                ),
+                'longitude' => $number(
+                    $weekend['TrackLongitude'] ?? null
+                ),
+                'turns' => $integer(
+                    $weekend['TrackNumTurns'] ?? null
+                ),
+                'pit_speed_limit_kph' => $number(
+                    $weekend['TrackPitSpeedLimit'] ?? null
+                ),
+                'track_type' => $text(
+                    $weekend['TrackType'] ?? null
+                ),
+                'direction' => $text(
+                    $weekend['TrackDirection'] ?? null
+                ),
+            ],
+
+            'session' => [
+                'id' => $integer($weekend['SessionID'] ?? null),
+                'subsession_id' => $integer(
+                    $weekend['SubSessionID'] ?? null
+                ),
+                'series_id' => $integer(
+                    $weekend['SeriesID'] ?? null
+                ),
+                'season_id' => $integer(
+                    $weekend['SeasonID'] ?? null
+                ),
+                'event_type' => $text(
+                    $weekend['EventType'] ?? null
+                ),
+                'type' => $text(
+                    $currentSession['SessionType'] ?? null
+                ),
+                'name' => $text(
+                    $currentSession['SessionName'] ?? null
+                ),
+                'duration_seconds' => $number(
+                    $currentSession['SessionTime'] ?? null
+                ),
+                'track_rubber_state' => $text(
+                    $currentSession['SessionTrackRubberState'] ?? null
+                ),
+                'official' => $boolean(
+                    $weekend['Official'] ?? null
+                ),
+                'race_week' => $integer(
+                    $weekend['RaceWeek'] ?? null
+                ),
+                'track_dynamic' => $boolean(
+                    $weekend['TrackDynamicTrack'] ?? null
+                ),
+                'current_session_num' => $currentSessionNum,
+            ],
+
+            'driver' => [
+                'iracing_user_id' => $driverUserId,
+                'car_idx' => $driverCarIdx,
+                'name' => $text($driver['UserName'] ?? null),
+                'car_number' => $text($driver['CarNumber'] ?? null),
+                'irating' => $integer($driver['IRating'] ?? null),
+                'incident_count' => $integer(
+                    $driverInfo['DriverIncidentCount'] ?? null
+                ),
+                'setup_name' => $text(
+                    $driverInfo['DriverSetupName'] ?? null
+                ),
+                'setup_modified' => $boolean(
+                    $driverInfo['DriverSetupIsModified'] ?? null
+                ),
+                'setup_passed_tech' => $boolean(
+                    $driverInfo['DriverSetupPassedTech'] ?? null
+                ),
+            ],
+
+            'car' => [
+                'id' => $integer($driver['CarID'] ?? null),
+                'path' => $text($driver['CarPath'] ?? null),
+                'name' => $text($driver['CarScreenName'] ?? null),
+                'short_name' => $text(
+                    $driver['CarScreenNameShort'] ?? null
+                ),
+                'class_name' => $text(
+                    $driver['CarClassShortName'] ?? null
+                ),
+                'max_fuel_liters' => $number(
+                    $driverInfo['DriverCarFuelMaxLtr'] ?? null
+                ),
+                'forward_gears' => $integer(
+                    $driverInfo['DriverCarGearNumForward'] ?? null
+                ),
+                'gearbox_type' => $text(
+                    $driverInfo['DriverGearboxType'] ?? null
+                ),
+            ],
+
+            'conditions' => [
+                'weather_type' => $text(
+                    $weekend['TrackWeatherType'] ?? null
+                ),
+                'skies' => $text($weekend['TrackSkies'] ?? null),
+                'track_surface_temp_c' => $number(
+                    $weekend['TrackSurfaceTemp'] ?? null
+                ),
+                'track_surface_temp_crew_c' => $number(
+                    $weekend['TrackSurfaceTempCrew'] ?? null
+                ),
+                'track_air_temp_c' => $number(
+                    $weekend['TrackAirTemp'] ?? null
+                ),
+                'track_air_pressure_hg' => $number(
+                    $weekend['TrackAirPressure'] ?? null
+                ),
+                'track_air_density_kg_m3' => $number(
+                    $weekend['TrackAirDensity'] ?? null
+                ),
+                'track_wind_speed_m_s' => $number(
+                    $weekend['TrackWindVel'] ?? null
+                ),
+                'track_wind_direction_rad' => $number(
+                    $weekend['TrackWindDir'] ?? null
+                ),
+                'track_relative_humidity_pct' => $number(
+                    $weekend['TrackRelativeHumidity'] ?? null
+                ),
+                'track_fog_pct' => $number(
+                    $weekend['TrackFogLevel'] ?? null
+                ),
+                'track_precipitation_pct' => $number(
+                    $weekend['TrackPrecipitation'] ?? null
+                ),
+            ],
+
+            'setup' => [
+                'update_count' => $integer(
+                    $carSetup['UpdateCount'] ?? null
+                ),
+                'fuel_level_liters' => $setupFuel,
+            ],
+
+            'result' => $result,
+        ];
+
+        $directory = dirname($outputPath);
+
+        if (
+            !is_dir($directory)
+            && !mkdir($directory, 0775, true)
+            && !is_dir($directory)
+        ) {
+            throw new RuntimeException(
+                "No se pudo crear el directorio: {$directory}"
+            );
+        }
+
+        try {
+            $json = json_encode(
+                $payload,
+                JSON_PRETTY_PRINT
+                    | JSON_UNESCAPED_UNICODE
+                    | JSON_UNESCAPED_SLASHES
+                    | JSON_THROW_ON_ERROR
+            );
+        } catch (\JsonException $e) {
+            throw new RuntimeException(
+                'No se pudo codificar session.json: ' . $e->getMessage(),
+                0,
+                $e
+            );
+        }
+
+        if (file_put_contents($outputPath, $json . PHP_EOL, LOCK_EX) === false) {
+            throw new RuntimeException(
+                "No se pudo escribir session.json: {$outputPath}"
+            );
+        }
+
+        return $payload;
+    }
+
 
 
 
@@ -964,13 +1432,22 @@ class IbtProcessor
         $previous = null;
         $crossings = [];
         $finishTimes = [];
-
+        $firstLapStartTime = null;
         $variables = ['SessionTime', 'Lap', 'LapDistPct'];
 
         foreach ($this->streamRecords($filePath, $variables) as $index => $record) {
             $lap = (int) ($record['Lap'] ?? 0);
             $dist = (float) ($record['LapDistPct'] ?? 0.0);
             $time = (float) ($record['SessionTime'] ?? 0.0);
+
+            if (
+                $firstLapStartTime === null
+                && $lap === 1
+                && $dist >= 0.0
+                && $dist <= $firstInteriorBoundary
+            ) {
+                $firstLapStartTime = $time;
+            }
 
             if ($previous === null) {
                 $previous = ['lap' => $lap, 'dist' => $dist, 'time' => $time];
@@ -1020,6 +1497,18 @@ class IbtProcessor
 
             // Cruce de meta: el instante corresponde al final de la vuelta anterior.
             if ($prevLap > 0 && $finishResetCandidate) {
+                    logger()->debug('IBT lap boundary', [
+                        'prevLap' => $prevLap,
+                        'lap' => $lap,
+                        'prevDist' => $prevDist,
+                        'dist' => $dist,
+                        'prevTime' => $prevTime,
+                        'time' => $time,
+                        'finishTimeKey' => $prevLap,
+                    ]);
+                }
+
+            if ($prevLap > 0 && $finishResetCandidate) {
                 $distanceDelta = (1.0 - $prevDist) + $dist;
 
                 if ($distanceDelta > 0.0 && !isset($finishTimes[$prevLap])) {
@@ -1039,23 +1528,38 @@ class IbtProcessor
 
         $result = [];
 
+        $firstAvailableLap = $lapNumbers[0] ?? null;
+
         foreach ($lapNumbers as $lapNumber) {
             $lapSectors = [];
 
+            $isFirstAvailableLap = (int) $lapNumber === (int) $firstAvailableLap;
 
-        for ($sector = 1; $sector <= $sectorCount; $sector++) {
-            // Los cruces interiores están etiquetados con la vuelta siguiente.
-            $crossingLap = (int) $lapNumber + 1;
-
-            if ($sector === 1) {
-                $start = $finishTimes[$lapNumber] ?? null;
-                $end = $crossings[$crossingLap][1] ?? null;
-            } elseif ($sector === $sectorCount) {
-                $start = $crossings[$crossingLap][$sectorCount - 1] ?? null;
-                $end = $finishTimes[$lapNumber + 1] ?? null;
+            for ($sector = 1; $sector <= $sectorCount; $sector++) {
+            if ($lapNumber === 1) {
+                // Primera vuelta: comienza en la primera muestra disponible.
+                if ($sector === 1) {
+                    $start = $firstLapStartTime;
+                    $end = $crossings[1][1] ?? null;
+                } elseif ($sector === $sectorCount) {
+                    $start = $crossings[1][$sectorCount - 1] ?? null;
+                    $end = $finishTimes[1] ?? null;
+                } else {
+                    $start = $crossings[1][$sector - 1] ?? null;
+                    $end = $crossings[1][$sector] ?? null;
+                }
             } else {
-                $start = $crossings[$crossingLap][$sector - 1] ?? null;
-                $end = $crossings[$crossingLap][$sector] ?? null;
+                // Vueltas posteriores: usar los cruces de esa misma vuelta.
+                if ($sector === 1) {
+                    $start = $finishTimes[$lapNumber - 1] ?? null;
+                    $end = $crossings[$lapNumber][1] ?? null;
+                } elseif ($sector === $sectorCount) {
+                    $start = $crossings[$lapNumber][$sectorCount - 1] ?? null;
+                    $end = $finishTimes[$lapNumber] ?? null;
+                } else {
+                    $start = $crossings[$lapNumber][$sector - 1] ?? null;
+                    $end = $crossings[$lapNumber][$sector] ?? null;
+                }
             }
 
             $lapSectors['S' . $sector] =
@@ -1067,6 +1571,17 @@ class IbtProcessor
 
             $result[(int) $lapNumber] = $lapSectors;
         }
+
+        logger()->debug('IBT sector extraction keys', [
+            'crossings' => array_keys($crossings),
+            'finishTimes' => array_keys($finishTimes),
+            'result' => array_keys($result),
+            'crossings_lap_4' => $crossings[4] ?? null,
+            'crossings_lap_5' => $crossings[5] ?? null,
+            'finish_time_4' => $finishTimes[4] ?? null,
+            'finish_time_5' => $finishTimes[5] ?? null,
+        ]);
+
 
         return $result;
     }
@@ -1125,11 +1640,19 @@ class IbtProcessor
         foreach ($laps as $lap) {
             $lapNumber = (int) $lap['lap'];
 
+            // extractLapSectors() indexa los sectores con el valor nativo
+            // de Lap; tras ciertos resets, este coincide con candidate_lap,
+            // no con el índice interno usado para la vuelta cronometrada.
+            $sectorLapNumber = (int) (
+                $lap['candidate_lap'] ?? $lapNumber
+            );
+
             $lapPayload = [
                 'lap' => $lapNumber,
                 'lap_time' => (float) $lap['lap_time'],
                 'candidate_lap' => $lap['candidate_lap'] ?? null,
-                'sectors' => $sectors[$lapNumber] ?? [],
+                'is_pit_lap' => (bool) ($lap['is_pit_lap'] ?? false),
+                'sectors' => $sectors[$sectorLapNumber] ?? [],
             ];
 
             while (
@@ -1159,6 +1682,16 @@ class IbtProcessor
                 $lapPayload['fuel_used'] =
                     $fuel[$lapNumber]['fuel_used'];
             }
+
+            logger()->debug('IBT lap-sector association', [
+                'lap' => $lapNumber,
+                'candidate_lap' => $lap['candidate_lap'] ?? null,
+                'sector_lap' => $sectorLapNumber,
+                'lap_time' => $lap['lap_time'] ?? null,
+                'sectors' => $sectors[$sectorLapNumber] ?? null,
+                'previous_sectors' => $sectors[$sectorLapNumber - 1] ?? null,
+                'next_sectors' => $sectors[$sectorLapNumber + 1] ?? null,
+            ]);
 
             $lapPayload['incidents'] =
                 $incidents[$lapNumber] ?? [];
@@ -1194,6 +1727,8 @@ class IbtProcessor
                     (int) ($incident['count'] ?? 0);
             }
         }
+
+
 
         $payload = [
             'format_version' => 1,
@@ -1452,6 +1987,7 @@ class IbtProcessor
     ): array {
         $variables = [
             'Lap',
+            'TrackTemp',
             'TrackWetness',
             'Skies',
             'WindVel',
@@ -1521,6 +2057,7 @@ class IbtProcessor
             $humidityCount = 0;
 
             $stable = [
+                'TrackTemp' => null,
                 'TrackWetness' => null,
                 'Skies' => null,
                 'Precipitation' => null,
@@ -1535,6 +2072,13 @@ class IbtProcessor
                     $variables
                 ) as $record
             ) {
+                if (
+                    $stable['TrackTemp'] === null &&
+                    isset($record['TrackTemp']) &&
+                    is_numeric($record['TrackTemp'])
+                ) {
+                    $stable['TrackTemp'] = (float) $record['TrackTemp'];
+                }
                 if (
                     $stable['TrackWetness'] === null &&
                     isset($record['TrackWetness'])
@@ -1621,6 +2165,10 @@ class IbtProcessor
                 'lap' => $range['lap'],
 
                 'weather' => [
+
+                    'TrackTemp' =>
+                        $stable['TrackTemp'],
+
                     'TrackWetness' =>
                         $stable['TrackWetness'],
 
@@ -1686,7 +2234,7 @@ class IbtProcessor
                 ),
 
             self::VAR_TYPE_BOOL =>
-                $this->readIntValue(
+                $this->readBoolValue(
                     $record,
                     $offset,
                     $count
@@ -1703,6 +2251,21 @@ class IbtProcessor
         };
     }
 
+
+    private function readBoolValue(
+        string $record,
+        int $offset,
+        int $count
+    ): bool|array {
+        $values = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $byte = unpack('C', substr($record, $offset + $i, 1));
+            $values[] = ($byte[1] ?? 0) !== 0;
+        }
+
+        return $count === 1 ? $values[0] : $values;
+    }
 
     private function readIntValue(
         string $record,

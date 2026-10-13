@@ -902,10 +902,12 @@ public function store(Request $request)
                     . DIRECTORY_SEPARATOR
                     . 'laps';
 
+                $telemetryLaps = $processor->extractLaps($ibtAbsolutePath);
+
                 $lapTelemetryResult = $processor->writeLapTelemetryJson(
                     $ibtAbsolutePath,
                     $lapTelemetryDirectory,
-                    $lapsPayload['laps'] ?? []
+                    $telemetryLaps
                 );
 
                 $generatedCandidateLaps = array_map(

@@ -1640,6 +1640,10 @@ class IbtProcessor
         foreach ($laps as $lap) {
             $lapNumber = (int) $lap['lap'];
 
+            $associationLapNumber = (int) (
+                $lap['candidate_lap'] ?? $lapNumber
+            );
+
             // extractLapSectors() indexa los sectores con el valor nativo
             // de Lap; tras ciertos resets, este coincide con candidate_lap,
             // no con el índice interno usado para la vuelta cronometrada.
@@ -1656,32 +1660,32 @@ class IbtProcessor
             ];
 
             while (
-                isset($weather[$weatherIndex]) &&
-                (int) $weather[$weatherIndex]['lap'] < $lapNumber
-            ) {
-                $weatherIndex++;
-            }
+                    isset($weather[$weatherIndex]) &&
+                    (int) $weather[$weatherIndex]['lap'] < $associationLapNumber
+                ) {
+                    $weatherIndex++;
+                }
 
-            if (
-                isset($weather[$weatherIndex]) &&
-                (int) $weather[$weatherIndex]['lap'] === $lapNumber
-            ) {
-                $lapPayload['weather'] =
-                    $weather[$weatherIndex]['weather'];
+                if (
+                    isset($weather[$weatherIndex]) &&
+                    (int) $weather[$weatherIndex]['lap'] === $associationLapNumber
+                ) {
+                    $lapPayload['weather'] =
+                        $weather[$weatherIndex]['weather'];
 
-                $weatherIndex++;
-            }
+                    $weatherIndex++;
+                }
 
-            if (isset($fuel[$lapNumber])) {
-                $lapPayload['fuel_start'] =
-                    $fuel[$lapNumber]['fuel_start'];
+            if (isset($fuel[$associationLapNumber])) {
+                    $lapPayload['fuel_start'] =
+                        $fuel[$associationLapNumber]['fuel_start'];
 
-                $lapPayload['fuel_end'] =
-                    $fuel[$lapNumber]['fuel_end'];
+                    $lapPayload['fuel_end'] =
+                        $fuel[$associationLapNumber]['fuel_end'];
 
-                $lapPayload['fuel_used'] =
-                    $fuel[$lapNumber]['fuel_used'];
-            }
+                    $lapPayload['fuel_used'] =
+                        $fuel[$associationLapNumber]['fuel_used'];
+                }
 
             logger()->debug('IBT lap-sector association', [
                 'lap' => $lapNumber,
@@ -1694,7 +1698,7 @@ class IbtProcessor
             ]);
 
             $lapPayload['incidents'] =
-                $incidents[$lapNumber] ?? [];
+                $incidents[$associationLapNumber] ?? [];
 
             $processedLaps[] = $lapPayload;
         }

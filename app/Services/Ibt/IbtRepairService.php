@@ -51,10 +51,12 @@ class IbtRepairService
                 $lapsJsonPath
             );
 
+            $telemetryLaps = $processor->extractLaps($ibtPath);
+
             $lapTelemetryResult = $processor->writeLapTelemetryJson(
                 $ibtPath,
                 $lapTelemetryDirectory,
-                $lapsPayload['laps'] ?? []
+                $telemetryLaps
             );
 
             Log::info('IBT REPAIR LAP DIAGNOSTICS', [

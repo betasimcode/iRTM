@@ -74,6 +74,9 @@ Route::group([
         Route::get('/telemetry/lab', [TelemetryLabController::class, 'index'])
             ->name('telemetry.lab');
 
+        Route::view('/telemetry/map-calibration', 'telemetry.map-calibration')
+            ->name('telemetry.map-calibration');
+
         Route::get('/telemetry/lap', [TelemetryLapController::class, 'index'])
             ->name('telemetry.lap');
 

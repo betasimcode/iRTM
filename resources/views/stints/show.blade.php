@@ -213,9 +213,15 @@
                     {{ $lapMetrics['valid_lap_count'] }}
                 </td>
 
-                {{-- Duración --}}
-                <td class="text-[var(--text)] font-semibold font-mono-timing">
-                    {{ round($stint->duration_seconds / 60, 1) }} {{ __('ui.min') }}
+                {{-- Duración: abrir análisis --}}
+                <td class="text-[var(--text)] font-semibold font-mono-timing cursor-pointer hover:text-[var(--accent)] transition"
+                    title="{{ __('ui.analysis') }}"
+                    role="button"
+                    tabindex="0"
+                    @click="$dispatch('open-stint-analysis')"
+                    @keydown.enter="$dispatch('open-stint-analysis')"
+                    @keydown.space.prevent="$dispatch('open-stint-analysis')">
+                    {{ gmdate('H:i:s', (int) ($jsonDuration ?? 0)) }}
                 </td>
 
                 {{-- Ritmo medio competitivo: filtro del 107 % calculado en el controlador --}}
@@ -232,17 +238,75 @@
 
                 {{-- Clima --}}
                 <td class="text-[var(--text)] font-semibold">
-                    @if($stint->current_sky == 0)
-                        ☀️ {{ __('ui.clear') }}
-                    @elseif($stint->current_sky == 1)
-                        🌤 {{ __('ui.pcloudy') }}
-                    @elseif($stint->current_sky == 2)
-                        ⛅ {{ __('ui.mcloudy') }}
-                    @elseif($stint->current_sky == 3)
-                        ☁️ {{ __('ui.overcast') }}
-                    @else
-                        -
-                    @endif
+                   <div
+                        x-data="{ weatherOpen: false }"
+                        @mouseenter="weatherOpen = true"
+                        @mouseleave="weatherOpen = false"
+                        @keydown.escape.window="weatherOpen = false"
+                        class="relative"
+                    >
+                        {{-- Disparador: sustituye aquí el SVG meteorológico actual --}}
+                        <button
+                            type="button"
+                            :aria-expanded="weatherOpen.toString()"
+                            aria-label="Consultar condiciones meteorológicas"
+                            title="Condiciones meteorológicas"
+                            class="items-center justify-center rounded-lg p-2 text-[var(--text)]">
+                            {{-- Conserva aquí el SVG del icono meteorológico --}}
+                            <svg
+                                class="hover:text-[var(--value-info)]"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <circle cx="12" cy="12" r="4"/>
+                                <path d="M12 2v2"/>
+                                <path d="M12 20v2"/>
+                                <path d="m4.93 4.93 1.42 1.42"/>
+                                <path d="m17.65 17.65 1.42 1.42"/>
+                                <path d="M2 12h2"/>
+                                <path d="M20 12h2"/>
+                                <path d="m6.35 17.65-1.42 1.42"/>
+                                <path d="m19.07 4.93-1.42 1.42"/>
+                            </svg>
+                        </button>
+
+                        {{-- Popup meteorológico --}}
+                        <div
+                            x-cloak
+                            x-show="weatherOpen"
+                            x-transition
+                            class="absolute -right-32 top-12 z-50 mt-2
+                                w-[min(90vw,820px)] rounded-xl
+                                border border-[var(--value-info)]
+                                bg-[var(--card)] p-4 shadow-xl"
+                        >
+                            <div class="mb-3 flex items-center justify-between gap-3">
+                                <h3 class="font-semibold text-[var(--text)]">
+                                    Condiciones meteorológicas
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    @click="weatherOpen = false"
+                                    aria-label="Cerrar condiciones meteorológicas"
+                                    class="rounded-md p-1 text-[var(--text)]
+                                        hover:bg-[var(--border)]"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            @include('stints.partials.weather', ['weather' => $weather])
+                        </div>
+                    </div>
                 </td>
 
 
@@ -297,8 +361,18 @@
                 </x-ui.button>
             </form>
             @endif
-            {{-- 🔗 BOTÓN ANÁLISIS --}}
-            <x-ui.button variant="option" size="xs" title="{{ __('ui.analysis') }}" aria-label="{{ __('ui.analysis') }}" class="ui-icon-button" href="{{ route('stints.analysis', [$stint]) }}">
+
+
+            {{-- BOTÓN ANÁLISIS --}}
+            <x-ui.button
+                type="button"
+                variant="option"
+                size="xs"
+                title="{{ __('ui.analysis') }}"
+                aria-label="{{ __('ui.analysis') }}"
+                class="ui-icon-button"
+                @click="$dispatch('open-stint-analysis')"
+            >
                 <x-ui-icon name="chart" />
             </x-ui.button>
 
@@ -833,7 +907,108 @@
 </div>
 
 
+{{-- MODAL DE ANÁLISIS DEL STINT --}}
+<div class="w-4/6"
+    x-data="{
+        open: false,
+        loading: false,
+        html: '',
+        error: '',
 
+        async openAnalysis() {
+            this.open = true;
+            this.loading = true;
+            this.error = '';
+            this.html = '';
+
+            try {
+                const response = await fetch(
+                    @js(route('stints.analysis', $stint)),
+                    {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                this.html = await response.text();
+            } catch (e) {
+                this.error = 'No se ha podido cargar el análisis.';
+                console.error('Error cargando análisis del stint:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        close() {
+            this.open = false;
+        }
+    }"
+    @open-stint-analysis.window="openAnalysis()"
+    @keydown.escape.window="close()"
+    x-cloak
+>
+    <div
+        x-show="open"
+        x-transition.opacity
+        class="fixed inset-0 z-[100] flex items-center justify-center
+               bg-black/70 p-3 sm:p-6"
+        @click.self="close()"
+        style="display: none;"
+    >
+        <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="{{ __('ui.analysis') }}"
+            class="max-w-6xl max-h-[90vh] overflow-hidden
+                   rounded-xl border border-[var(--border)]
+                   bg-[var(--card)] shadow-2xl flex flex-col"
+        >
+            {{-- Cabecera --}}
+            <header
+                class="flex items-center justify-between gap-4
+                       border-b border-[var(--border)] px-5 py-4"
+            >
+                <h2 class="text-lg font-semibold text-[var(--text-title)]">
+                    {{ __('ui.analysis') }}
+                </h2>
+
+                <button
+                    type="button"
+                    @click="close()"
+                    class="rounded-lg p-2 text-[var(--text-muted)]
+                           hover:bg-[var(--bg)] hover:text-[var(--text-title)]"
+                    aria-label="Cerrar análisis"
+                >
+                    <span aria-hidden="true">✕</span>
+                </button>
+            </header>
+
+            {{-- Contenido desplazable --}}
+            <div class="overflow-y-auto p-4 sm:p-6">
+                <div x-show="loading" class="py-10 text-center text-sm">
+                    Cargando análisis…
+                </div>
+
+                <div
+                    x-show="error"
+                    x-text="error"
+                    class="py-8 text-center text-red-400"
+                ></div>
+
+                <div
+                    x-show="!loading && !error && html"
+                    x-html="html"
+                ></div>
+            </div>
+        </section>
+    </div>
+</div>
 
 
 @endsection

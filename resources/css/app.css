@@ -18,6 +18,10 @@
     font-style: normal;
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* .font-microsport {
     font-family: 'microsport';
     src: url(../fonts/microsport.ttf) format('ttf');

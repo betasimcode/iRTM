@@ -13,18 +13,11 @@ class StintQueryService
     public static function base()
     {
         return Stint::query()
-
-            ->valid()
-
             ->with([
                 'user.team',
                 'track',
                 'session',
-            ])
-
-            ->withCount('laps')
-
-            ->withAvg('laps', 'lap_time');
+            ]);
     }
 
     // =====================================================

@@ -128,6 +128,7 @@ class IrStintController extends Controller
             ], 404);
         }
 
+
         $validLapCount = $stint->laps()
             ->where('lap_number', '!=', 0)
             ->where('lap_time', '>', 5)
@@ -135,22 +136,24 @@ class IrStintController extends Controller
 
         Log::info('🔎 STINT VALIDATION', [
             'stint_id' => $stint->id,
-            'valid_laps' => $validLapCount,
+            'valid_laps_db' => $validLapCount,
         ]);
 
         if ($validLapCount === 0) {
-            Log::info('🗑️ DISCARDING INVALID STINT', [
+            // Las vueltas todavía pueden estar pendientes de extraer del IBT.
+            // No eliminar el stint antes de que llegue processIbt().
+            Log::info('⏳ STINT PENDING IBT PROCESSING', [
                 'stint_id' => $stint->id,
+                'reason' => 'No hay vueltas en ir_laps; se validará tras procesar el IBT.',
             ]);
-
-            $stint->delete();
 
             return response()->json([
                 'success' => true,
                 'stint_id' => $stint->id,
                 'valid_laps' => 0,
-                'valid' => false,
-                'discarded' => true,
+                'valid' => true,
+                'pending_ibt_validation' => true,
+                'discarded' => false,
             ]);
         }
 
@@ -159,8 +162,10 @@ class IrStintController extends Controller
             'stint_id' => $stint->id,
             'valid_laps' => $validLapCount,
             'valid' => true,
+            'pending_ibt_validation' => false,
             'discarded' => false,
         ]);
+
             }
 
 }

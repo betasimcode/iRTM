@@ -18,6 +18,8 @@
 
                 <thead class="bg-[var(--bg)] text-[var(--text-h)] uppercase text-xs tracking-wider">
                     <tr>
+                        <th class="px-4 py-3 text-left">{{ __('ui.id') }}</th>
+                        <th class="px-4 py-3 text-left">{{ __('ui.status') }}</th>
                         <th class="px-4 py-3 text-left">{{ __('ui.driver') }}</th>
                         <th class="px-4 py-3 text-left">{{ __('ui.car') }}</th>
                         <th class="px-4 py-3 text-left">{{ __('ui.subsession') }}</th>
@@ -38,6 +40,23 @@
                         <tr
                             onclick="window.location='{{ route('stints.show', [$stint]) }}'"
                             class="hover:bg-[var(--card-hover)] transition cursor-pointer">
+
+                            <td class="px-4 py-4 text-[var(--text)]">
+                            {{ $stint->id }}
+                            </td>
+
+                            <td class="px-4 py-4 text-[var(--text)]">
+                            @if ($stint->status === 'validated')
+                                <span class="text-xs text-emerald-500">
+                                    Validado
+                                </span>
+                            @else
+                                <span class="text-xs text-amber-500">
+                                    Pendiente de validación
+                                </span>
+                            @endif
+                            </td>
+
 
                             <td class="px-4 py-4 text-[var(--text)]">
                                 {{ $stint->user?->iracing_name ?? '—' }}
@@ -70,15 +89,19 @@
                             </td>
 
                             <td class="px-6 py-4 text-[var(--text)] font-medium">
-                                {{ $stint->laps->count() }}
+                                {{ $stint->json_lap_count }}
                             </td>
 
-                            <td class="px-6 py-4  text-[var(--lap-avg)] font-mono-timing font-medium">
-                                {{ lapTime($stint->avg_lap,3) }} s
+                            <td class="px-6 py-4 text-[var(--lap-avg)] font-mono-timing font-medium">
+                                {{ $stint->json_avg_lap !== null
+                                    ? lapTime($stint->json_avg_lap, 3) . ' s'
+                                    : '—' }}
                             </td>
 
                             <td class="px-6 py-4 text-[var(--fuel)] font-medium">
-                                {{ number_format($stint->avg_fuel,3) }} L/lap
+                                {{ $stint->json_avg_fuel !== null
+                                    ? number_format($stint->json_avg_fuel, 3) . ' L/lap'
+                                    : '—' }}
                             </td>
 
                         </tr>

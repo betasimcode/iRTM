@@ -21,8 +21,8 @@
         {{-- FRONT AERO --}}
         <div class="grid grid-cols-5 gap-2">
             <div x-show="view==='all'">
-                <x-setup.tyre-telemetry-card 
-                title="FL Tyre Telemetry" 
+                <x-setup.tyre-telemetry-card
+                title="FL Tyre Telemetry"
                 :data="$telemetry['fl']"
                 :wear="$telemetryWear['fl']"
                 position="fl"/>
@@ -36,8 +36,8 @@
                 <x-setup.card title="" :items="$zones['telemetry_FR']" type="telemetry"/>
             </div>
             <div x-show="view==='all'">
-                <x-setup.tyre-telemetry-card 
-                title="FL Tyre Telemetry" 
+                <x-setup.tyre-telemetry-card
+                title="FL Tyre Telemetry"
                 :data="$telemetry['fr']"
                 :wear="$telemetryWear['fr']"
                 position="fr"/>
@@ -46,11 +46,11 @@
 
         {{-- FRONT --}}
         <div class="grid grid-cols-5 gap-2">
-            
+
             <div x-show="view==='all' || view==='tyre'">
                 <x-setup.card title="FL Tyre" :items="$zones['fl_tyre']" type="tyre"/>
             </div>
-            
+
             <div x-show="view==='all' || view==='susp'">
                 <x-setup.card title="FL Susp" :items="$zones['fl_susp']" type="susp"/>
             </div>
@@ -80,15 +80,15 @@
                 <x-setup.card title="config" :items="$zones['config']" type="config"/>
             </div>
             <div>
-                
+
             </div>
         </div>
 
         {{-- CENTER --}}
         <div class="grid grid-cols-5 gap-2">
             <div x-show="view==='all'">
-                <x-setup.tyre-telemetry-card 
-                title="RL Tyre Telemetry" 
+                <x-setup.tyre-telemetry-card
+                title="RL Tyre Telemetry"
                 :data="$telemetry['rl']"
                 :wear="$telemetryWear['rl']"
                 position="rl"/>
@@ -103,8 +103,8 @@
                 <x-setup.card title="RR Susp" :items="$zones['rr_susp']" type="susp"/>
             </div>
             <div x-show="view==='all'">
-                <x-setup.tyre-telemetry-card 
-                title="RR Tyre Telemetry" 
+                <x-setup.tyre-telemetry-card
+                title="RR Tyre Telemetry"
                 :data="$telemetry['rr']"
                 :wear="$telemetryWear['rr']"
                 position="rr"/>
@@ -124,19 +124,19 @@
                 <div x-show="view==='all' || view==='tyre'">
                 <x-setup.card title="RR Tyre" :items="$zones['rr_tyre']" type="tyre"/></div>
         </div>
-    
+
 
         {{-- telemetry --}}
         <div class="grid grid-cols-5 gap-2" x-show="view==='telemetry'">
-            <div><x-setup.tyre-telemetry-card 
-                title="FL Tyre Telemetry" 
+            <div><x-setup.tyre-telemetry-card
+                title="FL Tyre Telemetry"
                 :data="$telemetry['fl']"
                 :wear="$telemetryWear['fl']"
                 position="fl"/></div>
             <div><x-setup.card title="" :items="$zones['telemetry_FL']" type="telemetry"/></div>
             <div><x-setup.card title="" :items="$zones['telemetry_FR']" type="telemetry"/></div>
-            <div><x-setup.tyre-telemetry-card 
-                title="FR Tyre Telemetry" 
+            <div><x-setup.tyre-telemetry-card
+                title="FR Tyre Telemetry"
                 :data="$telemetry['fr']"
                 :wear="$telemetryWear['fr']"
                 position="fr"/></div>
@@ -144,15 +144,15 @@
         </div>
 
         <div class="grid grid-cols-5 gap-2" x-show="view==='telemetry'">
-            <div><x-setup.tyre-telemetry-card 
-                title="RL Tyre Telemetry" 
+            <div><x-setup.tyre-telemetry-card
+                title="RL Tyre Telemetry"
                 :data="$telemetry['rl']"
                 :wear="$telemetryWear['rl']"
                 position="rl"/></div>
             <div><x-setup.card title="" :items="$zones['telemetry_RL']" type="telemetry"/></div>
             <div><x-setup.card title="" :items="$zones['telemetry_RR']" type="telemetry"/></div>
-            <div><x-setup.tyre-telemetry-card 
-                title="RR Tyre Telemetry" 
+            <div><x-setup.tyre-telemetry-card
+                title="RR Tyre Telemetry"
                 :data="$telemetry['rr']"
                 :wear="$telemetryWear['rr']"
                 position="rr"/></div>
@@ -160,6 +160,6 @@
         </div>
 
 
-        
+
     </div>
 </div>

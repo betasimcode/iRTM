@@ -28,23 +28,11 @@
         }
     }
 
-    $validLapTimes = [];
+    $lapMetrics = app(
+        \App\Services\Stints\StintJsonMetricsService::class
+    )->calculate($jsonLaps);
 
-    foreach ($jsonLaps as $jsonLap) {
-        $lapTime = $jsonLap['lap_time'] ?? null;
-
-        if (is_numeric($lapTime) && (float) $lapTime > 0) {
-            $validLapTimes[] = (float) $lapTime;
-        }
-    }
-
-    $jsonLapCount = count($validLapTimes);
-
-    $jsonAvgLap = $jsonLapCount > 0
-        ? array_sum($validLapTimes) / $jsonLapCount
-        : null;
-
-    $jsonDuration = array_sum($validLapTimes);
+    $bestLap = $lapMetrics['best_lap'];
 @endphp
 
     <div class="grid-cols-3 pb-3 align-middle items-center bg-[var(--bg)] rounded-xl border border-[var(--border)] mb-5 px-5 pt-3">
@@ -221,7 +209,7 @@
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M14 7H15.9992C19.3129 7 21.9992 9.68629 21.9992 13C21.9992 16.3137 19.3129 19 15.9992 19H8C4.68629 19 2 16.3137 2 13C2 9.68629 4.68629 7 8 7H10M7 4L10 7M10 7L7 10" stroke="CurrentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
                     </div>
                     <div class="flex text-center items-center pl-1 pt-0.5">
-                        {{ $jsonLapCount }}
+                        {{ $lapMetrics['valid_lap_count'] }}
                     </div>
                 </td>
 
@@ -231,7 +219,7 @@
                     <svg fill="CurrentColor" width="23" height="23" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCurrentColorarrier" stroke-width="0"></g><g id="SVGRepo_tracerCurrentColorarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCurrentColorarrier"><path d="M10 20a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-7.59V4h2v5.59l3.95 3.95-1.41 1.41L9 10.41z"></path></g></svg>
                     </div>
                     <div class="flex text-center items-center pl-1 pt-0.5">
-                        {{ round($stint->duration_seconds / 60, 1) }}
+                        {{ gmdate('H:i:s', (int) ($jsonDuration ?? 0)) }}
                     </div>
                 </td>
 
@@ -242,7 +230,7 @@
                 <svg fill="currentColor" width="25" height="25" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4,8.39l2,2.09L8.39,7.76l2.69,2.75,4.7-5.89L14.22,3.38l-3.3,4.11L8.29,4.81,6,7.52l-1.91-2L.29,9.29l1.42,1.42ZM0,12.3v1.4H16V12.3Z"></path> </g></svg>
                 </div>
                 <div class="flex text-center items-center pl-1 pt-0.5">
-                        {{ $jsonAvgLap !== null ? lapTime($jsonAvgLap) : '—' }}
+                        {{ $avgLap !== null ? lapTime($avgLap) : '—' }}
                     </div>
                 </td>
 
@@ -252,81 +240,77 @@
                 </td>
 
                 {{-- Clima --}}
-                <td title="
-                @if($bestLap->sky == 0)
-                        {{ __('ui.clear') }}
-                    @elseif($bestLap->sky == 1)
-                        {{ __('ui.pcloudy') }}
-                    @elseif($bestLap->sky == 2)
-                        {{ __('ui.mcloudy') }}
-                    @elseif($bestLap->sky == 3)
-                        {{ __('ui.overcast') }}
-                    @else
-                        {{ __('ui.storm') }}
-                    @endif
-                " class="flex items-center  bg-[var(--card)] mx-1 rounded-lg border border-[var(--border)]  text-[var(--text)] font-semibold font-mono-timing px-3">
-                    <div class="flex pr-1">
-                    @if($bestLap->sky == 0)
-                        <svg height="25" width="25" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.984 511.984" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path style="fill:#F6BB42;" d="M255.992,85.333c-5.891,0-10.656-4.781-10.656-10.671V10.664C245.336,4.773,250.102,0,255.992,0 c5.906,0,10.672,4.773,10.672,10.664v63.998C266.664,80.552,261.898,85.333,255.992,85.333z"></path> <path style="fill:#F6BB42;" d="M255.992,511.984C255.992,511.984,256.008,511.984,255.992,511.984 c-5.875,0-10.656-4.781-10.656-10.656v-63.997c0-5.906,4.781-10.688,10.672-10.688l0,0c5.891,0,10.656,4.781,10.656,10.688v63.997 C266.664,507.203,261.898,511.984,255.992,511.984z"></path> </g> <g> <path style="fill:#FFCE54;" d="M135.324,135.316c-4.172,4.164-10.922,4.164-15.078,0L74.982,90.06 c-4.156-4.164-4.156-10.914,0-15.078c4.172-4.172,10.922-4.172,15.094,0l45.248,45.248 C139.496,124.394,139.496,131.152,135.324,135.316z"></path> <path style="fill:#FFCE54;" d="M437.018,437.003L437.018,437.003c-4.172,4.172-10.922,4.172-15.094,0l-45.249-45.25 c-4.172-4.172-4.172-10.921,0-15.077l0,0c4.172-4.172,10.922-4.172,15.094,0l45.249,45.249 C441.174,426.081,441.174,432.831,437.018,437.003z"></path> </g> <g> <path style="fill:#F6BB42;" d="M85.342,255.992c0,5.891-4.781,10.664-10.672,10.664H10.672c-5.891,0-10.656-4.773-10.672-10.664 c0-5.891,4.781-10.664,10.672-10.664H74.67C80.56,245.328,85.342,250.101,85.342,255.992z"></path> <path style="fill:#F6BB42;" d="M511.984,255.992L511.984,255.992c0,5.891-4.766,10.664-10.656,10.664h-63.997 c-5.891,0-10.672-4.773-10.672-10.664l0,0c0-5.891,4.781-10.664,10.672-10.664h63.997 C507.219,245.328,511.984,250.101,511.984,255.992z"></path> </g> <g> <path style="fill:#FFCE54;" d="M135.324,376.676c4.172,4.156,4.172,10.905,0,15.077l-45.248,45.25 c-4.172,4.172-10.922,4.172-15.094,0c-4.156-4.172-4.156-10.922,0-15.078l45.264-45.249 C124.402,372.504,131.152,372.504,135.324,376.676z"></path> <path style="fill:#FFCE54;" d="M437.018,74.974C437.018,74.982,437.018,74.974,437.018,74.974c4.155,4.171,4.155,10.921,0,15.085 l-45.265,45.256c-4.156,4.164-10.906,4.164-15.078,0l0,0c-4.172-4.164-4.172-10.922,0-15.086l45.249-45.256 C426.096,70.81,432.846,70.81,437.018,74.974z"></path> <path style="fill:#FFCE54;" d="M255.992,394.643c-76.45,0-138.651-62.186-138.651-138.651c0-76.458,62.201-138.66,138.651-138.66 c76.467,0,138.668,62.202,138.668,138.66C394.66,332.458,332.459,394.643,255.992,394.643z"></path> </g> <path style="fill:#F6BB42;" d="M255.992,106.661c-82.466,0-149.323,66.857-149.323,149.331c0,82.466,66.857,149.339,149.323,149.339 c82.482,0,149.34-66.873,149.34-149.339C405.332,173.518,338.474,106.661,255.992,106.661z M346.505,346.489 c-24.171,24.187-56.311,37.498-90.513,37.498c-34.187,0-66.326-13.312-90.497-37.498c-24.171-24.155-37.499-56.311-37.499-90.497 s13.328-66.334,37.499-90.505c24.171-24.178,56.311-37.491,90.497-37.491c34.202,0,66.342,13.313,90.513,37.491 c24.171,24.171,37.483,56.319,37.483,90.505C383.988,290.179,370.676,322.334,346.505,346.489z"></path> </g></svg>                        </div>
-                    @elseif($bestLap->sky == 1)
-                        <svg height="25" width="25" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.985 511.985" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#FFCE54;" d="M170.667,330.661c-52.936,0-95.997-43.076-95.997-95.997c0-52.936,43.062-95.996,95.997-95.996 s95.997,43.061,95.997,95.996C266.664,287.585,223.602,330.661,170.667,330.661z"></path> <path style="fill:#F6BB42;" d="M170.667,127.996c-58.904,0-106.669,47.748-106.669,106.668c0,58.905,47.765,106.653,106.669,106.653 s106.669-47.748,106.669-106.653C277.336,175.744,229.571,127.996,170.667,127.996z M231.009,294.991 c-16.124,16.124-37.546,24.999-60.342,24.999s-44.218-8.875-60.342-24.999c-16.108-16.109-24.999-37.546-24.999-60.327 c0-22.796,8.891-44.232,24.999-60.342c16.124-16.124,37.546-24.999,60.342-24.999s44.218,8.875,60.342,24.999 c16.108,16.109,24.983,37.546,24.983,60.342C255.992,257.445,247.117,278.882,231.009,294.991z"></path> <g> <path style="fill:#FFCE54;" d="M72.623,317.631l-22.64,22.624c-4.156,4.156-4.156,10.906,0,15.078 c2.094,2.078,4.813,3.125,7.547,3.125c2.733,0,5.468-1.047,7.546-3.125l22.625-22.625c4.172-4.172,4.172-10.921,0-15.077 C83.529,313.459,76.779,313.459,72.623,317.631z"></path> <path style="fill:#FFCE54;" d="M291.335,113.98c-4.156-4.156-10.906-4.156-15.077,0l-22.625,22.625 c-4.172,4.172-4.172,10.921,0,15.093c2.078,2.078,4.813,3.125,7.547,3.125c2.719,0,5.453-1.047,7.531-3.125l22.624-22.624 C295.507,124.902,295.507,118.152,291.335,113.98z"></path> </g> <path style="fill:#F6BB42;" d="M170.667,63.998c-5.891,0-10.672,4.781-10.672,10.672v31.999c0,5.89,4.781,10.655,10.672,10.655 s10.671-4.766,10.671-10.655V74.67C181.338,68.779,176.557,63.998,170.667,63.998z"></path> <path style="fill:#FFCE54;" d="M72.623,151.698c2.078,2.078,4.813,3.125,7.531,3.125c2.734,0,5.469-1.047,7.547-3.125 c4.172-4.172,4.172-10.921,0-15.093L65.076,113.98c-4.172-4.156-10.921-4.156-15.093,0c-4.156,4.172-4.156,10.922,0,15.094 L72.623,151.698z"></path> <path style="fill:#F6BB42;" d="M53.343,234.664c0-5.891-4.781-10.671-10.672-10.671H10.672C4.781,223.993,0,228.773,0,234.664 s4.781,10.656,10.672,10.656h31.999C48.561,245.32,53.343,240.555,53.343,234.664z"></path> <path style="fill:#CCD1D9;" d="M382.66,189.338c-37.28,0-70.872,15.78-94.466,41.014c-12.655-14.562-31.296-23.78-52.107-23.78 c-38.093,0-68.967,30.89-68.967,68.983c0,0.578,0,1.141,0.016,1.718c-39.358,7.984-68.998,42.78-68.998,84.498 c0,47.607,38.608,86.216,86.216,86.216h198.307c71.435,0,129.324-57.905,129.324-129.324 C511.984,247.226,454.095,189.338,382.66,189.338z"></path> <path style="fill:#AAB2BC;" d="M462.813,217.165c17.438,22.046,27.844,49.89,27.844,80.154c0,71.435-57.904,129.34-129.325,129.34 H163.026c-18.358,0-35.374-5.75-49.357-15.531c15.593,22.281,41.437,36.858,70.685,36.858h198.307 c71.435,0,129.324-57.905,129.324-129.324C511.984,277.507,492.766,240.851,462.813,217.165z"></path> </g></svg>
-                    @elseif($bestLap->sky == 2)
-                        <svg height="25" width="25" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.985 511.985" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#d3d6d9;" d="M382.645,168.665c-37.28,0-70.856,15.781-94.466,41.015c-12.64-14.562-31.296-23.772-52.092-23.772 c-38.101,0-68.982,30.882-68.982,68.975c0,0.578,0.016,1.148,0.023,1.719c-39.358,7.984-68.99,42.78-68.99,84.497 c0,47.607,38.601,86.217,86.216,86.217h198.291c71.435,0,129.34-57.89,129.34-129.324 C511.985,226.562,454.08,168.665,382.645,168.665z"></path> <path style="fill:#949DA8;" d="M462.814,196.501c17.422,22.038,27.828,49.881,27.828,80.162 c0,71.419-57.904,129.323-129.325,129.323H163.019c-18.358,0-35.374-5.75-49.357-15.531c15.585,22.281,41.437,36.859,70.692,36.859 h198.291c71.435,0,129.34-57.89,129.34-129.324C511.985,256.843,492.767,220.187,462.814,196.501z"></path> <path style="fill:#f2f2f2;" d="M284.523,84.668c-37.288,0-70.872,15.773-94.481,41.015c-12.64-14.563-31.295-23.772-52.1-23.772 c-38.093,0-68.975,30.882-68.975,68.974c0,0.57,0.008,1.148,0.023,1.719C29.625,180.588,0,215.384,0,257.102 c0,47.608,38.601,86.216,86.217,86.216h198.306c71.42,0,129.31-57.904,129.31-129.324 C413.833,142.565,355.943,84.668,284.523,84.668z"></path> <path style="fill:#CCD1D9;" d="M364.677,112.503c17.422,22.031,27.844,49.881,27.844,80.154c0,71.428-57.904,129.332-129.34,129.332 H64.882c-18.358,0-35.373-5.75-49.357-15.53c15.586,22.279,41.437,36.857,70.693,36.857h198.305 c71.42,0,129.31-57.904,129.31-129.324C413.833,172.845,394.614,136.19,364.677,112.503z"></path> </g></svg>
-                        @elseif($bestLap->sky == 3)
-                        <svg height="25" width="25" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.985 511.985" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#AAB2BC;" d="M382.645,168.665c-37.28,0-70.856,15.781-94.466,41.015c-12.64-14.562-31.296-23.772-52.092-23.772 c-38.101,0-68.982,30.882-68.982,68.975c0,0.578,0.016,1.148,0.023,1.719c-39.358,7.984-68.99,42.78-68.99,84.497 c0,47.607,38.601,86.217,86.216,86.217h198.291c71.435,0,129.34-57.89,129.34-129.324 C511.985,226.562,454.08,168.665,382.645,168.665z"></path> <path style="fill:#949DA8;" d="M462.814,196.501c17.422,22.038,27.828,49.881,27.828,80.162 c0,71.419-57.904,129.323-129.325,129.323H163.019c-18.358,0-35.374-5.75-49.357-15.531c15.585,22.281,41.437,36.859,70.692,36.859 h198.291c71.435,0,129.34-57.89,129.34-129.324C511.985,256.843,492.767,220.187,462.814,196.501z"></path> <path style="fill:#c5c9ce;" d="M284.523,84.668c-37.288,0-70.872,15.773-94.481,41.015c-12.64-14.563-31.295-23.772-52.1-23.772 c-38.093,0-68.975,30.882-68.975,68.974c0,0.57,0.008,1.148,0.023,1.719C29.625,180.588,0,215.384,0,257.102 c0,47.608,38.601,86.216,86.217,86.216h198.306c71.42,0,129.31-57.904,129.31-129.324 C413.833,142.565,355.943,84.668,284.523,84.668z"></path> <path style="fill:#b4b9c0;" d="M364.677,112.503c17.422,22.031,27.844,49.881,27.844,80.154c0,71.428-57.904,129.332-129.34,129.332 H64.882c-18.358,0-35.373-5.75-49.357-15.53c15.586,22.279,41.437,36.857,70.693,36.857h198.305 c71.42,0,129.31-57.904,129.31-129.324C413.833,172.845,394.614,136.19,364.677,112.503z"></path> </g></svg>
-                    @else
-                        <svg height="25" width="25" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.984 511.984" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#AAB2BC;" d="M351.989,10.66c-46.123,0-87.669,19.523-116.871,50.749c-15.64-18.023-38.718-29.414-64.451-29.414 c-47.14,0-85.325,38.202-85.325,85.333c0,0.711,0,1.422,0.031,2.125C36.655,129.328,0,172.373,0,223.989 c0,58.904,47.749,106.652,106.669,106.652h245.32c88.372,0,159.995-71.622,159.995-159.987 C511.984,82.298,440.361,10.66,351.989,10.66z"></path> <path style="fill:#949DA8;" d="M453.954,47.362c22.922,27.687,36.703,63.217,36.703,101.966 c0,88.356-71.638,160.002-159.995,160.002H85.342c-24.031,0-46.187-7.937-63.998-21.343c19.452,25.905,50.436,42.654,85.325,42.654 h245.32c88.372,0,159.995-71.622,159.995-159.987C511.984,121.047,489.407,76.705,453.954,47.362z"></path> <polygon style="fill:#F6BB42;" points="255.992,309.377 255.992,181.326 170.667,373.375 234.665,373.375 234.665,501.324 319.991,309.377 "></polygon> </g></svg>
-                    @endif
-                    </div>
+                <td class="flex items-center  bg-[var(--card)] mx-1 rounded-lg border border-[var(--border)]  text-[var(--text)] font-semibold font-mono-timing px-3">
 
-                </td>
+                    <div
+                        x-data="{ weatherOpen: false }"
+                        @mouseenter="weatherOpen = true"
+                        @mouseleave="weatherOpen = false"
+                        @keydown.escape.window="weatherOpen = false"
+                        class="relative"
+                    >
+                        {{-- Disparador: sustituye aquí el SVG meteorológico actual --}}
+                        <button
+                            type="button"
+                            :aria-expanded="weatherOpen.toString()"
+                            aria-label="Consultar condiciones meteorológicas"
+                            title="Condiciones meteorológicas"
+                            class="flex items-center justify-center rounded-lg
+                                text-[var(--text)] transition">
+                            {{-- Conserva aquí el SVG del icono meteorológico --}}
+                            <svg
+                                class="hover:text-[var(--value-info)]"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <circle cx="12" cy="12" r="4"/>
+                                <path d="M12 2v2"/>
+                                <path d="M12 20v2"/>
+                                <path d="m4.93 4.93 1.42 1.42"/>
+                                <path d="m17.65 17.65 1.42 1.42"/>
+                                <path d="M2 12h2"/>
+                                <path d="M20 12h2"/>
+                                <path d="m6.35 17.65-1.42 1.42"/>
+                                <path d="m19.07 4.93-1.42 1.42"/>
+                            </svg>
+                        </button>
 
-                {{-- Estado pista --}}
-                <td title="
-                @if($stint->current_track_state == 0)
-                   {{ __('ui.dry') }} Track
+                        {{-- Popup meteorológico --}}
+                        <div
+                            x-cloak
+                            x-show="weatherOpen"
+                            x-transition
+                            class="absolute right-0 top-12 z-50 mt-2
+                                w-[min(90vw,820px)] rounded-xl
+                                border border-[var(--value-info)]
+                                bg-[var(--card)] p-4 shadow-xl"
+                        >
+                            <div class="mb-3 flex items-center justify-between gap-3">
+                                <h3 class="font-semibold text-[var(--text)]">
+                                    Condiciones meteorológicas
+                                </h3>
 
-                    @elseif($stint->current_track_state == 1)
-                    {{ __('ui.inuse') }} Track
+                                <button
+                                    type="button"
+                                    @click="weatherOpen = false"
+                                    aria-label="Cerrar condiciones meteorológicas"
+                                    class="rounded-md p-1 text-[var(--text)]
+                                        hover:bg-[var(--border)]"
+                                >
+                                    ✕
+                                </button>
+                            </div>
 
-                    @elseif($stint->current_track_state == 2)
-                    {{ __('ui.wet') }} Track
-
-                    @elseif($stint->current_track_state == 3)
-                    {{ __('ui.verywet') }} Track
-
-                    @elseif($stint->current_track_state == 4)
-                   {{ __('ui.flooded') }} Track
-
-
-                    @else
-                        -
-                    @endif "
-                    class="flex items-center mx-1 bg-[var(--card)] rounded-lg border border-[var(--border)] text-[var(--text)] font-semibold font-mono-timing pl-3 pr-2">
-                    <div class="flex pr-1">
-                    @if($stint->current_track_state == 0)
-
-                        <svg width="18" height="18" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--twemoji" preserveAspectRatio="xMidYMid meet" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="#b5b5b5" d="M36 32a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v28z"></path></g></svg>
-
-                    @elseif($stint->current_track_state == 1)
-
-                    <svg width="18" height="18" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--twemoji" preserveAspectRatio="xMidYMid meet" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="#5c5951" d="M36 32a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v28z"></path></g></svg>
-
-                    @elseif($stint->current_track_state == 2)
-
-                    <svg fill="#000000" width="20" height="20" viewBox="0 0 24.00 24.00" id="rainy" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color" stroke="#000000" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path id="secondary" d="M18,22a1,1,0,0,1-1-1V19a1,1,0,0,1,2,0v2A1,1,0,0,1,18,22Zm-8,0a1,1,0,0,1-1-1V19a1,1,0,0,1,2,0v2A1,1,0,0,1,10,22Zm4-1a1,1,0,0,1-1-1V19a1,1,0,0,1,2,0v1A1,1,0,0,1,14,21ZM6,21a1,1,0,0,1-1-1V19a1,1,0,0,1,2,0v1A1,1,0,0,1,6,21Z" style="fill: #2c7cba;"></path><path id="primary" d="M18.76,7.2a7,7,0,0,0-13.18-1A5,5,0,0,0,7,16H17.5a4.49,4.49,0,0,0,1.26-8.8Z" style="fill: #2c7cba;"></path></g></svg>
-
-                    @elseif($stint->current_track_state == 3)
-
-                    <svg fill="#000000" width="20" height="20" viewBox="0 0 24 24" id="rain" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path id="secondary" d="M18,22a1,1,0,0,1-1-1V17a1,1,0,0,1,2,0v4A1,1,0,0,1,18,22Zm-8,0a1,1,0,0,1-1-1V17a1,1,0,0,1,2,0v4A1,1,0,0,1,10,22Zm4-2a1,1,0,0,1-1-1V17a1,1,0,0,1,2,0v2A1,1,0,0,1,14,20ZM6,20a1,1,0,0,1-1-1V17a1,1,0,0,1,2,0v2A1,1,0,0,1,6,20Z" style="fill: #4098ce;"></path><path id="primary" d="M17,4a4.36,4.36,0,0,0-.51,0A6,6,0,0,0,12,2,6,6,0,0,0,6.35,6,4,4,0,1,0,6,14H17A5,5,0,0,0,17,4Z" style="fill: #4098ce;"></path></g></svg>
-
-                    @elseif($stint->current_track_state == 4)
-
-                    <svg width="20" height="20" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--twemoji" preserveAspectRatio="xMidYMid meet" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="#2c83ba" d="M36 32a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v28z"></path></g></svg>
-
-                    @else
-                        -
-                    @endif
+                            @include('stints.partials.weather', ['weather' => $weather])
+                        </div>
                     </div>
 
                 </td>
@@ -336,12 +320,9 @@
                     <div class="flex pr-3">
                        <svg fill="CurrentColor" height="25" width="25" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 488.7 488.7" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M145.512,284.7c0,7-5.6,12.8-12.7,12.8c-3.5,0-6.7-1.4-9-3.7c-2.3-2.3-3.7-5.5-3.7-9c0-7,5.6-12.8,12.7-12.8 C139.712,272,145.512,277.7,145.512,284.7z M154.012,348.2c-5,5-4.9,13,0,18l0,0c5,4.9,13.1,4.9,18-0.1c5-5,4.9-13.1-0.1-18 C167.012,343.2,158.913,343.2,154.012,348.2z M235.313,194.5c7,0,12.8-5.7,12.8-12.8s-5.7-12.8-12.8-12.8s-12.8,5.7-12.8,12.8 c0,3.5,1.4,6.7,3.7,9C228.613,193.1,231.813,194.5,235.313,194.5z M153.512,221.2c5,4.9,13.1,4.9,18-0.1l0.1-0.1 c0.1-0.1,0.1-0.1,0.2-0.2c5-5,5-13,0-18s-13.1-5-18,0c-0.1,0.1-0.1,0.1-0.2,0.2c-0.1,0.1-0.1,0.1-0.2,0.2 C148.512,208.1,148.512,216.2,153.512,221.2L153.512,221.2z M235.613,374.3c-7.1,0-12.7,5.7-12.7,12.8c0,3.5,1.4,6.7,3.7,9 s5.5,3.7,9.1,3.7c7,0,12.7-5.7,12.7-12.8C248.413,380,242.712,374.3,235.613,374.3z M299.112,347.8c-5,5-5,13.1,0,18 c5,5,13.1,5,18,0c5-5,4.9-13.1,0-18.1C312.112,342.8,304.013,342.8,299.112,347.8z M338.013,271.5c-7.1,0-12.8,5.7-12.8,12.8 c0,3.5,1.4,6.7,3.7,9c2.3,2.3,5.5,3.8,9,3.7c7.1,0,12.7-5.7,12.8-12.8C350.813,277.2,345.112,271.5,338.013,271.5z M235.913,488.7 c-112.5,0-204.1-91.6-204.1-204.1c0-104.4,78.9-190.7,180.2-202.6V51.1h-12.7c-6.4,0-11.5-5.2-11.5-11.5V11.5 c0-6.4,5.2-11.5,11.5-11.5h73.2c6.4,0,11.5,5.2,11.5,11.5v28.1c0,6.4-5.2,11.5-11.5,11.5h-12.7v30.8 c38.5,4.5,73.7,19.8,102.6,42.7l16.6-16.6l-1.5-1.5c-4.5-4.5-4.5-11.8,0-16.3l22.8-22.8c4.5-4.5,11.8-4.5,16.3,0l36.9,36.9 c4.5,4.5,4.5,11.8,0,16.3l-22.8,22.8c-4.5,4.5-11.8,4.5-16.3,0l-1.5-1.5l-16.6,16.6c27.4,34.7,43.7,78.5,43.7,126 C440.013,397.1,348.413,488.7,235.913,488.7z M392.612,284.6c0-86.4-70.3-156.7-156.7-156.7s-156.7,70.3-156.7,156.7 s70.2,156.7,156.7,156.7C322.313,441.3,392.612,371,392.612,284.6z M317.913,201.8c4.7,4.7,5,12.3,0.7,17.3l-52,60.9 c1.3,9.5-1.6,19.4-8.9,26.7c-12.3,12.3-32.3,12.3-44.7,0c-12.3-12.3-12.3-32.3,0-44.7c7.3-7.3,17.2-10.2,26.7-8.9l60.9-52 C305.712,196.8,313.212,197.1,317.913,201.8L317.913,201.8z M244.413,275.4c-5-5-13.1-5-18,0c-5,5-5,13.1,0,18c5,5,13.1,5,18,0 C249.413,288.4,249.413,280.4,244.413,275.4z"></path> </g> </g> </g></svg>
                     </vid>
-                    <div class="flex pl-2 text-center items-center text-base text-[var(--lap-best)] font-mono-timing">
-                        {{ laptime($stint->laps->min('lap_time')) }}
+                    <div class="flex pl-2 pt-0.5 text-sm font-semibold text-center items-center text-[var(--lap-best)] font-mono-timing">
+                        {{ $bestLap !== null ? laptime($bestLap) : '—' }}
                     </div>
-                </td>
-                <td>
-
                 </td>
 
             </tr>
@@ -354,14 +335,13 @@
     !$setup->track_id ||
     !$setup->car_id
 )
-
     <x-ui.button id="repair-setup-file-btn" data-setup-id="{{ $setup->id }}" class="hover:text-red-600" title="repair setup file" variant="optionbox" size="sm" @click="showAlerts = true">
         <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" width="25" height="25" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect x="224.236" y="84.672" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 251.8026 619.7746)" style="fill:#D7D5D9;" width="60.049" height="346.13"></rect> <path style="fill:#FF3F62;" d="M301.182,253.278l-47.095,47.095c-8.99,8.99-8.99,23.701,0,32.692l153.555,153.555 c8.99,8.99,23.702,8.99,32.692,0l47.095-47.095c8.99-8.99,8.99-23.701,0-32.692L333.874,253.278 C324.884,244.288,310.173,244.288,301.182,253.278z"></path> <polygon style="fill:#D7D5D9;" points="82.211,19.389 20.989,80.611 57.004,116.626 72.013,101.618 227.017,257.43 257.431,227.017 102.427,71.203 118.226,55.404 "></polygon> <g> <rect x="327.715" y="127.531" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 501.6223 516.2964)" style="opacity:0.3;fill:#3E3B43;enable-background:new ;" width="60.049" height="53.456"></rect> <rect x="129.012" y="331.181" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 21.903 715.0185)" style="opacity:0.3;fill:#3E3B43;enable-background:new ;" width="60.049" height="43.584"></rect> </g> <g> <path style="fill:#77757E;" d="M488.276,74.56l-50.32,50.32l-50.837-50.835l50.32-50.32l-12.132-12.132 c-15.457-15.457-40.519-15.457-55.976,0l-44.664,44.664c-15.457,15.457-15.457,40.519,0,55.976l75.099,75.099 c15.457,15.457,40.519,15.457,55.976,0l44.665-44.665c15.457-15.457,15.457-40.519,0-55.976L488.276,74.56z"></path> <path style="fill:#77757E;" d="M23.725,437.439l50.32-50.32l50.836,50.836l-50.32,50.32l12.132,12.132 c15.457,15.457,40.519,15.457,55.976,0l44.665-44.665c15.457-15.457,15.457-40.519,0-55.976l-75.099-75.099 c-15.457-15.457-40.519-15.457-55.976,0l-44.665,44.665c-15.457,15.457-15.457,40.519,0,55.976L23.725,437.439z"></path> </g> <path style="fill:#C70024;" d="M301.182,253.278l-47.095,47.095c-8.99,8.99-8.99,23.701,0,32.692l16.919,16.919l79.787-79.787 l-16.919-16.919C324.884,244.288,310.173,244.288,301.182,253.278z"></path> <g> <rect x="207.016" y="220.106" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 551.4321 228.509)" style="opacity:0.3;fill:#3E3B43;enable-background:new ;" width="42.748" height="16.708"></rect> <rect x="21.519" y="44.57" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 155.3011 62.1083)" style="opacity:0.07;fill:#3E3B43;enable-background:new ;" width="86.538" height="37.297"></rect> </g> <path style="fill:#FF728B;" d="M427.612,441.54L322.604,336.532c-4.069-4.069-4.069-10.668,0-14.738l0,0 c4.069-4.069,10.668-4.069,14.738,0L442.35,426.803c4.069,4.069,4.069,10.668,0,14.738l0,0 C438.281,445.61,431.682,445.61,427.612,441.54z"></path> </g></svg>
     </x-ui.button>
 
     @endif
 
-    <div class="w-1/3">
+    <div class="relative -right-32 ml-5 w-1/3">
 
             {{-- <button @click="view='drivetrain'" class="btn">DRIVE</button> --}}
 

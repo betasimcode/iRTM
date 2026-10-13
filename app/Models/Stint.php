@@ -40,7 +40,12 @@ class Stint extends Model {
 
     public function scopeValid($query)
     {
-        return $query->has('laps', '>=', 1);
+        return $query->where('status', 'validated');
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
     }
 
     public function getDurationSecondsAttribute()

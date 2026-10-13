@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use App\Models\Stint;
 use App\Models\Car;
+use App\Services\Stints\StintJsonMetricsService;
 use App\Services\SetupAlertEngine;
 use App\Models\Track;
 use App\Models\Setup;
@@ -38,10 +39,81 @@ class SetupController extends Controller
         $flags = $mapped['flags'] ?? [];
         $stint = $setup->stint;
 
+        // =========================================================
+        // CONDICIONES METEOROLÓGICAS DE LA SESIÓN
+        // =========================================================
 
-        // 🔥 métricas
-        $bestLap = $stint->laps->min('lap_time');
-        $avgLap  = $stint->laps->avg('lap_time');
+        $weather = [];
+
+        $stintDate = $stint->created_at;
+
+        if ($stintDate && $stint->user_id && $stint->id) {
+            $sessionJsonPath = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id .
+                '/session.json'
+            );
+
+            if (is_file($sessionJsonPath)) {
+                $sessionData = json_decode(
+                    file_get_contents($sessionJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && is_array($sessionData)
+                ) {
+                    $weather = $sessionData['conditions'] ?? [];
+                }
+            }
+        }
+
+        // =========================================================
+        // MÉTRICAS DE RITMO DESDE EL JSON DEL IBT
+        // =========================================================
+
+        $lapMetrics = [
+            'best_lap' => null,
+            'avg_lap_107' => null,
+            'valid_lap_count' => 0,
+            'competitive_lap_count' => 0,
+            'threshold_107' => null,
+            'valid_duration' => 0,
+        ];
+
+        $stintDate = $stint->created_at;
+
+        if ($stintDate && $stint->user_id && $stint->id) {
+            $lapsJsonPath = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id .
+                '/stint_' . $stint->id . '_laps.json'
+            );
+
+            if (is_file($lapsJsonPath)) {
+                $decodedLaps = json_decode(
+                    file_get_contents($lapsJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && isset($decodedLaps['laps'])
+                    && is_array($decodedLaps['laps'])
+                ) {
+                    $lapMetrics = app(StintJsonMetricsService::class)
+                        ->calculate($decodedLaps['laps']);
+                }
+            }
+        }
+        $jsonDuration = $lapMetrics['valid_duration'];
+        $avgLap = $lapMetrics['avg_lap_107'];
+        $bestLap = $lapMetrics['best_lap'];
 
         // 🔹 convertir valores
         $mappedValues = [];
@@ -130,19 +202,17 @@ class SetupController extends Controller
 
         $alerts = SetupAlertEngine::evaluate($mappedValues, $context);
 
-        $bestLap = $stint->laps
-        ->where('lap_time', '>', 0)
-        ->sortBy('lap_time')
-        ->first();
-
         return view('setups.show', compact(
             'setup',
             'zones',
             'activeZones',
             'flags', // 🔥 IMPORTANTE
             'stint',
+            'weather',
             'bestLap',
             'avgLap',
+            'lapMetrics',
+            'jsonDuration',
             'alerts',
             'telemetryAlerts',
             'telemetryWear',
@@ -383,8 +453,39 @@ class SetupController extends Controller
     private function generateSetupName(Setup $setup): string
     {
 
-        $stint = $setup->stint;
-        $bestLap = $stint->laps->min('lap_time');
+
+            $stint = $setup->stint;
+            $bestLap = null;
+
+            if ($stint && $stint->created_at && $stint->user_id && $stint->id) {
+                $lapsJsonPath = storage_path(
+                    'app/private/telemetry/' .
+                    $stint->created_at->format('Y/m') .
+                    '/user_' . $stint->user_id .
+                    '/stint_' . $stint->id .
+                    '/stint_' . $stint->id . '_laps.json'
+                );
+
+                if (is_file($lapsJsonPath)) {
+                    $decodedLaps = json_decode(
+                        file_get_contents($lapsJsonPath),
+                        true
+                    );
+
+                    if (
+                        json_last_error() === JSON_ERROR_NONE
+                        && isset($decodedLaps['laps'])
+                        && is_array($decodedLaps['laps'])
+                    ) {
+                        $lapMetrics = app(
+                            \App\Services\Stints\StintJsonMetricsService::class
+                        )->calculate($decodedLaps['laps']);
+
+                        $bestLap = $lapMetrics['best_lap'];
+                    }
+                }
+            }
+
 
 
         $date = $setup->created_at
@@ -419,7 +520,9 @@ class SetupController extends Controller
         $weather = $setup->setup_weather
             ?? 'DRY';
 
-        $time = str_replace([':','.'], '_', substr(laptime($bestLap), 0, 6));
+        $time = $bestLap !== null
+            ? str_replace([':', '.'], '_', substr(laptime($bestLap), 0, 6))
+            : 'NO_LAP';
 
 
 

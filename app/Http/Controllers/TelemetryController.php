@@ -15,6 +15,7 @@ use App\Models\Circuit;
 use App\Models\Telemetry;
 use App\Models\Stint;
 use Carbon\Carbon;
+use App\Services\Ibt\IbtProcessor;
 use App\Events\LapCompleted;
 use App\Models\TrackSector;
 use App\Models\IrSessionPhase;
@@ -692,9 +693,10 @@ public function store(Request $request)
 
                 if ($userId) {
 
-                    $year = now()->format('Y');
+                    $stintDate = $stint?->created_at ?? now();
 
-                    $month = now()->format('m');
+                    $year = $stintDate->format('Y');
+                    $month = $stintDate->format('m');
 
                     $destinationFolder =
 
@@ -852,6 +854,136 @@ public function store(Request $request)
 
 
 
+
+            $jsonProcessing = [
+                'generated' => false,
+                'laps_json' => null,
+                'session_json' => null,
+                'valid_laps' => 0,
+            ];
+
+            try {
+                if (!$stint || !$finalPath || !Storage::exists($finalPath)) {
+                    throw new \RuntimeException(
+                        'No se puede generar JSON: falta el stint o el IBT definitivo.'
+                    );
+                }
+
+                // Rutas definitivas del stint.
+                $directory = dirname(Storage::path($finalPath));
+
+                $ibtAbsolutePath = Storage::path($finalPath);
+                $lapsJsonPath = $directory
+                    . DIRECTORY_SEPARATOR
+                    . 'stint_' . $stint->id . '_laps.json';
+
+                $sessionJsonPath = $directory
+                    . DIRECTORY_SEPARATOR
+                    . 'session.json';
+
+                Log::info('IBT JSON PROCESSING START', [
+                    'stint_id' => $stint->id,
+                    'ibt' => $ibtAbsolutePath,
+                    'laps_json' => $lapsJsonPath,
+                    'session_json' => $sessionJsonPath,
+                ]);
+
+                /** @var \App\Services\Ibt\IbtProcessor $processor */
+                $processor = app(IbtProcessor::class);
+
+                // Genera vueltas, sectores, weather, fuel e incidents.
+                $lapsPayload = $processor->writeLapsJson(
+                    $ibtAbsolutePath,
+                    $lapsJsonPath
+                );
+
+                // Generar telemetría independiente por vuelta.
+                $lapTelemetryDirectory = $directory
+                    . DIRECTORY_SEPARATOR
+                    . 'laps';
+
+                $lapTelemetryResult = $processor->writeLapTelemetryJson(
+                    $ibtAbsolutePath,
+                    $lapTelemetryDirectory,
+                    $lapsPayload['laps'] ?? []
+                );
+
+                Log::info('IBT LAP TELEMETRY GENERATED', [
+                    'stint_id' => $stint->id,
+                    'directory' => $lapTelemetryResult['directory'],
+                    'generated' => $lapTelemetryResult['generated'],
+                ]);
+
+                // Genera los datos de sesión.
+                $processor->writeSessionJson(
+                    $ibtAbsolutePath,
+                    $sessionJsonPath
+                );
+
+                // No considerar generado el proceso si faltan los archivos.
+                if (!is_file($lapsJsonPath) || !is_file($sessionJsonPath)) {
+                    throw new \RuntimeException(
+                        'El procesador terminó, pero no se encontraron ambos JSON.'
+                    );
+                }
+
+                $validJsonLaps = collect($lapsPayload['laps'] ?? [])
+                    ->filter(function ($lap) {
+                        return isset($lap['lap_time'])
+                            && is_numeric($lap['lap_time'])
+                            && (float) $lap['lap_time'] > 5;
+                    })
+                    ->count();
+
+                // El procesamiento solo valida stints con vueltas válidas.
+                if ($validJsonLaps > 0) {
+                    $stint->update([
+                        'status' => 'validated',
+                    ]);
+
+                    Log::info('STINT VALIDATED', [
+                        'stint_id' => $stint->id,
+                        'valid_laps' => $validJsonLaps,
+                        'laps_json' => $lapsJsonPath,
+                        'session_json' => $sessionJsonPath,
+                    ]);
+                } else {
+                    // No declarar válido un stint sin vueltas cronometradas.
+                    $stint->update([
+                        'status' => 'pending',
+                    ]);
+
+                    Log::warning('STINT NOT VALIDATED: NO VALID LAPS', [
+                        'stint_id' => $stint->id,
+                        'valid_laps' => 0,
+                    ]);
+                }
+
+                $jsonProcessing = [
+                    'generated' => true,
+                    'laps_json' => basename($lapsJsonPath),
+                    'session_json' => basename($sessionJsonPath),
+                    'valid_laps' => $validJsonLaps,
+                ];
+
+                Log::info('IBT JSON PROCESSING COMPLETE', [
+                    'stint_id' => $stint->id,
+                    'valid_laps' => $validJsonLaps,
+                    'summary' => $lapsPayload['summary'] ?? [],
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('IBT JSON PROCESSING FAILED', [
+                    'stint_id' => $stintId,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]);
+
+                $jsonProcessing['error'] = $e->getMessage();
+            }
+
+
+
             // ==============================
             // 9. CREAR FASES (SIN DUPLICAR)
             // ==============================
@@ -893,7 +1025,8 @@ public function store(Request $request)
             return response()->json([
                 'status' => 'ok',
                 'subsession_id' => $subsessionId,
-                'session_type' => $sessionType
+                'session_type' => $sessionType,
+                'json_processing' => $jsonProcessing
             ]);
 
 

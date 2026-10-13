@@ -2197,6 +2197,369 @@ class IbtProcessor
     }
 
 
+    /**
+     * Extrae las muestras de velocidad y marcha de una vuelta nativa.
+     *
+     * Speed se convierte de m/s a km/h.
+     * El número de vuelta corresponde a la variable nativa Lap del IBT.
+     */
+    public function extractLapTelemetry(
+        string $filePath,
+        int $lapNumber
+    ): array {
+        if ($lapNumber < 1) {
+            return [];
+        }
+
+        $samples = [];
+
+        $variables = [
+            'Lap',
+            'LapDistPct',
+            'Speed',
+            'Gear',
+        ];
+
+        foreach ($this->streamRecords($filePath, $variables) as $record) {
+            if ((int) ($record['Lap'] ?? 0) !== $lapNumber) {
+                continue;
+            }
+
+            $distance = $record['LapDistPct'] ?? null;
+            $speed = $record['Speed'] ?? null;
+            $gear = $record['Gear'] ?? null;
+
+            if (
+                !is_numeric($distance) ||
+                !is_numeric($speed) ||
+                !is_numeric($gear)
+            ) {
+                continue;
+            }
+
+            $distance = (float) $distance;
+            $speed = (float) $speed;
+
+            if (
+                !is_finite($distance) ||
+                !is_finite($speed) ||
+                $distance < 0 ||
+                $distance > 1 ||
+                $speed < 0
+            ) {
+                continue;
+            }
+
+            $samples[] = [
+                'lap_dist_pct' => $distance,
+                'speed_kph' => round($speed * 3.6, 2),
+                'gear' => (int) $gear,
+            ];
+        }
+
+        usort(
+            $samples,
+            fn (array $a, array $b) =>
+                $a['lap_dist_pct'] <=> $b['lap_dist_pct']
+        );
+
+        return $samples;
+    }
+
+    /**
+     * Genera un JSON independiente de telemetría por vuelta.
+     *
+     * El IBT sigue siendo la fuente de verdad.
+     * Los JSON son artefactos derivados y regenerables.
+     */
+    public function writeLapTelemetryJson(
+        string $filePath,
+        string $outputDirectory,
+        array $laps
+    ): array {
+        if (!is_file($filePath)) {
+            throw new \RuntimeException(
+                "IBT no encontrado: {$filePath}"
+            );
+        }
+
+        /*
+         * Los tiempos de vuelta se publican unos registros después
+         * del cruce físico de meta. Por eso detectamos los cruces
+         * mediante LapDistPct y los asociamos después a record_index.
+         */
+        $finishCrossings = [];
+        $previousDistance = null;
+        $previousEligible = false;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                [
+                    'LapDistPct',
+                    'IsOnTrack',
+                    'OnPitRoad',
+                    'SessionTime',
+                ]
+            ) as $recordIndex => $record
+        ) {
+            $distance = $record['LapDistPct'] ?? null;
+
+            $eligible =
+                (bool) ($record['IsOnTrack'] ?? false) &&
+                !(bool) ($record['OnPitRoad'] ?? false) &&
+                is_numeric($distance) &&
+                is_finite((float) $distance) &&
+                (float) $distance >= 0.0 &&
+                (float) $distance <= 1.0;
+
+            if (!$eligible) {
+                $previousDistance = null;
+                $previousEligible = false;
+                continue;
+            }
+
+            $distance = (float) $distance;
+
+            if (
+                $previousEligible &&
+                $previousDistance !== null &&
+                $previousDistance >= 0.90 &&
+                $distance <= 0.10
+            ) {
+                $finishCrossings[] = [
+                    'record_index' => $recordIndex,
+                    'session_time' => (float) (
+                        $record['SessionTime'] ?? 0
+                    ),
+                ];
+            }
+
+            $previousDistance = $distance;
+            $previousEligible = true;
+        }
+
+        $timedLaps = [];
+
+        foreach ($laps as $lap) {
+            $recordIndex = $lap['record_index'] ?? null;
+            $lapNumber = (int) ($lap['lap'] ?? 0);
+
+            if (
+                $lapNumber > 0 &&
+                is_numeric($recordIndex) &&
+                (int) $recordIndex >= 0
+            ) {
+                $lap['_record_index'] = (int) $recordIndex;
+                $timedLaps[] = $lap;
+            }
+        }
+
+        usort(
+            $timedLaps,
+            fn (array $a, array $b) =>
+                $a['_record_index'] <=> $b['_record_index']
+        );
+
+        if (empty($timedLaps) || count($finishCrossings) < 2) {
+            return [
+                'generated' => 0,
+                'directory' => $outputDirectory,
+            ];
+        }
+
+        if (
+            !is_dir($outputDirectory) &&
+            !mkdir($outputDirectory, 0775, true) &&
+            !is_dir($outputDirectory)
+        ) {
+            throw new \RuntimeException(
+                "No se pudo crear el directorio: {$outputDirectory}"
+            );
+        }
+
+        $generated = 0;
+        $lastUsedCrossingPosition = -1;
+
+        foreach ($timedLaps as $lap) {
+            $lapNumber = (int) $lap['lap'];
+            $publicationIndex = (int) $lap['_record_index'];
+
+            /*
+             * Buscar el último cruce físico anterior (o coincidente)
+             * con la publicación del tiempo de esta vuelta.
+             */
+            $currentCrossingPosition = null;
+
+            foreach ($finishCrossings as $position => $crossing) {
+                if ($crossing['record_index'] <= $publicationIndex) {
+                    $currentCrossingPosition = $position;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (
+                $currentCrossingPosition === null ||
+                $currentCrossingPosition < 1 ||
+                $currentCrossingPosition <= $lastUsedCrossingPosition
+            ) {
+                continue;
+            }
+
+            $startIndex = (int) (
+                $finishCrossings[$currentCrossingPosition - 1]['record_index']
+            );
+
+            $finishIndex = (int) (
+                $finishCrossings[$currentCrossingPosition]['record_index']
+            );
+
+            if ($finishIndex <= $startIndex) {
+                continue;
+            }
+
+            $lastUsedCrossingPosition = $currentCrossingPosition;
+            $samples = [];
+
+            foreach (
+                $this->streamRecordsRange(
+                    $filePath,
+                    $startIndex,
+                    $finishIndex,
+                    [
+                        'SessionTime',
+                        'LapDistPct',
+                        'Speed',
+                        'Gear',
+                        'IsOnTrack',
+                        'OnPitRoad',
+                    ]
+                ) as $record
+            ) {
+                // Evitar incluir muestras de boxes dentro del intervalo.
+                if (
+                    !(bool) ($record['IsOnTrack'] ?? false) ||
+                    (bool) ($record['OnPitRoad'] ?? false)
+                ) {
+                    continue;
+                }
+
+                $distance = $record['LapDistPct'] ?? null;
+                $sessionTime = $record['SessionTime'] ?? null;
+                $speed = $record['Speed'] ?? null;
+                $gear = $record['Gear'] ?? null;
+
+                if (
+                    !is_numeric($distance) ||
+                    !is_numeric($sessionTime) ||
+                    !is_numeric($speed) ||
+                    !is_numeric($gear)
+                ) {
+                    continue;
+                }
+
+                $distance = (float) $distance;
+                $sessionTime = (float) $sessionTime;
+                $speed = (float) $speed;
+
+                if (
+                    !is_finite($distance) ||
+                    !is_finite($sessionTime) ||
+                    !is_finite($speed) ||
+                    $distance < 0 ||
+                    $distance > 1 ||
+                    $speed < 0
+                ) {
+                    continue;
+                }
+
+                $samples[] = [
+                    'lap_dist_pct' => $distance,
+                    'session_time' => round($sessionTime, 6),
+                    'speed_kph' => round($speed * 3.6, 2),
+                    'gear' => (int) $gear,
+                ];
+            }
+
+            if (empty($samples)) {
+                continue;
+            }
+
+            $speeds = array_column($samples, 'speed_kph');
+
+            $gearsObserved = array_values(array_unique(
+                array_column($samples, 'gear')
+            ));
+
+            sort($gearsObserved, SORT_NUMERIC);
+
+            $gearsUsed = array_values(array_filter(
+                $gearsObserved,
+                fn (int $gear) => $gear > 0
+            ));
+
+            $movingSpeeds = array_values(array_filter(
+                $speeds,
+                fn (float $speed) => $speed >= 5
+            ));
+
+            $payload = [
+                'format_version' => 2,
+                'lap' => $lapNumber,
+                'lap_time' => $lap['lap_time'] ?? null,
+                'is_pit_lap' => (bool) ($lap['is_pit_lap'] ?? false),
+                'sample_count' => count($samples),
+                'metrics' => [
+                    'speed_min_kph' => min($speeds),
+                    'speed_max_kph' => max($speeds),
+                    'speed_min_moving_kph' => empty($movingSpeeds)
+                        ? null
+                        : min($movingSpeeds),
+                    'gears_used' => $gearsUsed,
+                    'gears_observed' => $gearsObserved,
+                ],
+                'samples' => $samples,
+            ];
+
+            $outputPath = rtrim(
+                $outputDirectory,
+                DIRECTORY_SEPARATOR
+            ) . DIRECTORY_SEPARATOR . sprintf(
+                'lap_%03d.json',
+                $lapNumber
+            );
+
+            $json = json_encode(
+                $payload,
+                JSON_PRETTY_PRINT |
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES |
+                JSON_THROW_ON_ERROR
+            );
+
+            if (
+                file_put_contents(
+                    $outputPath,
+                    $json . PHP_EOL,
+                    LOCK_EX
+                ) === false
+            ) {
+                throw new \RuntimeException(
+                    "No se pudo escribir: {$outputPath}"
+                );
+            }
+
+            $generated++;
+        }
+
+        return [
+            'generated' => $generated,
+            'directory' => $outputDirectory,
+        ];
+    }
+
     private function readVariableValue(
         string $record,
         array $variable

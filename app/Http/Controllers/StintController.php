@@ -37,6 +37,49 @@ class StintController extends Controller
             //     ->orderBy('created_at', 'desc')
             //     ->paginate(15);
 
+
+        $metricsService = app(StintJsonMetricsService::class);
+
+        $stints->getCollection()->transform(function ($stint) use ($metricsService) {
+            $lapsJsonPath = storage_path(
+                'app/private/telemetry/' .
+                $stint->created_at->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id .
+                '/stint_' . $stint->id . '_laps.json'
+            );
+
+            $lapsData = [];
+
+            if (is_file($lapsJsonPath)) {
+                $decoded = json_decode(file_get_contents($lapsJsonPath), true);
+
+                if (is_array($decoded) && is_array($decoded['laps'] ?? null)) {
+                    $lapsData = $decoded['laps'];
+                }
+            }
+
+            $metrics = $metricsService->calculate($lapsData);
+
+            $validFuel = collect($lapsData)
+                ->filter(function ($lap) {
+                    return is_numeric($lap['lap_time'] ?? null)
+                        && (float) $lap['lap_time'] > 5
+                        && is_numeric($lap['fuel_used'] ?? null);
+                });
+
+            $stint->json_lap_count = $metrics['valid_lap_count'];
+            $stint->json_avg_lap = $metrics['avg_lap_107'];
+            $stint->json_best_lap = $metrics['best_lap'];
+            $stint->json_duration = $metrics['valid_duration'];
+            $stint->json_avg_fuel = $validFuel->isNotEmpty()
+                ? $validFuel->avg('fuel_used')
+                : null;
+
+            return $stint;
+        });
+
+
             return view('stints.index', compact('stints'));
 
         } catch (\Exception $e) {
@@ -113,6 +156,13 @@ class StintController extends Controller
                 }
             }
 
+            // =========================================================
+            // CONDICIONES METEOROLÓGICAS DE LA SESIÓN
+            // =========================================================
+
+            $weather = $sessionJson['conditions'] ?? [];
+
+
 
             $lapsJson = null;
             $stintLapsCount = null;
@@ -176,7 +226,7 @@ class StintController extends Controller
 
         $jsonAvgLap107 = $lapMetrics['avg_lap_107'];
         $jsonBestLap = $lapMetrics['best_lap'];
-
+        $jsonDuration = $lapMetrics['valid_duration'];
         // --- Cálculos de Rendimiento ---
         $metrics = StintMetricsService::build($stint);
 
@@ -262,12 +312,14 @@ class StintController extends Controller
         return view('stints.show', compact(
         'stint',
         'sessionJson',
+        'weather',
         'laps',
         'stintLapsCount',
         'lapsJson',
         'jsonLapsByLap',
         'jsonAvgLap107',
         'jsonBestLap',
+        'jsonDuration',
         'lapMetrics',
         'setsUsed',
         'degradationBySet',
@@ -280,14 +332,55 @@ class StintController extends Controller
     ));
     }
 
+
     public function ShowAnalysis(Stint $stint)
     {
-        $stint->load('laps');
+        $stint->load('tyres');
 
-        $laps = $stint->laps
-            ->where('lap_time', '>', 0)
-            ->where('is_pit_lap', false)
-            ->values();
+        // =========================================================
+        // VUELTAS DESDE EL JSON
+        // =========================================================
+
+        $laps = collect();
+
+        $stintDate = $stint->created_at;
+
+        if ($stintDate && $stint->user_id && $stint->id) {
+            $lapsJsonPath = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id .
+                '/stint_' . $stint->id . '_laps.json'
+            );
+
+            if (is_file($lapsJsonPath)) {
+                $decoded = json_decode(
+                    file_get_contents($lapsJsonPath),
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE
+                    && isset($decoded['laps'])
+                    && is_array($decoded['laps'])
+                ) {
+                    $laps = collect($decoded['laps'])
+                        ->filter(fn ($lap) =>
+                            is_array($lap)
+                            && is_numeric($lap['lap_time'] ?? null)
+                            && (float) $lap['lap_time'] > 5
+                            && !($lap['is_pit_lap'] ?? false)
+                        )
+                        ->map(fn ($lap) => (object) $lap)
+                        ->values();
+                }
+            }
+        }
+
+        // =========================================================
+        // MÉTRICAS DE RITMO
+        // =========================================================
 
         $bestLap = $laps->min('lap_time');
 
@@ -295,45 +388,62 @@ class StintController extends Controller
 
         if ($laps->count() >= 3) {
             $sorted = $laps->sortBy('lap_time')->values();
-            $topCount = max(3, intval($laps->count() * 0.3));
+
+            $topCount = max(
+                3,
+                (int) ($laps->count() * 0.3)
+            );
+
             $pace = $sorted->take($topCount)->avg('lap_time');
         }
 
+        // =========================================================
+        // CONSISTENCIA
+        // =========================================================
+
         $consistency = null;
 
-        if ($pace && $laps->count() >= 5) {
-            $variance = $laps->avg(fn($lap) =>
-                pow($lap->lap_time - $pace, 2)
+        if ($pace !== null && $laps->count() >= 5) {
+            $variance = $laps->avg(
+                fn ($lap) => pow($lap->lap_time - $pace, 2)
             );
+
             $consistency = sqrt($variance);
         }
 
+        // =========================================================
+        // VENTANA COMPETITIVA: 103 % DEL RITMO OBJETIVO
+        // =========================================================
+
         $competitiveEndLap = null;
 
-        if ($pace) {
+        if ($pace !== null) {
             $threshold = $pace * 1.03;
 
             foreach ($laps as $lap) {
                 if ($lap->lap_time > $threshold) {
-                    $competitiveEndLap = $lap->lap_number - 1;
+                    $competitiveEndLap = ($lap->lap ?? 0) - 1;
                     break;
                 }
             }
 
-            if (!$competitiveEndLap && $laps->count()) {
-                $competitiveEndLap = $laps->last()->lap_number;
+            if ($competitiveEndLap === null && $laps->isNotEmpty()) {
+                $competitiveEndLap = $laps->last()->lap ?? null;
             }
         }
+
+        // =========================================================
+        // NEUMÁTICOS: SE MANTIENE LA FUENTE ACTUAL (DB)
+        // =========================================================
 
         $telemetry = $stint->tyres;
 
         $start = $telemetry->firstWhere('snapshot_type', 'start');
-        $end   = $telemetry->firstWhere('snapshot_type', 'end');
+        $end = $telemetry->firstWhere('snapshot_type', 'end');
 
-        // =========================
-        // 🔴 WEAR
-        // =========================
         $wear = null;
+        $temps = null;
+        $tempDelta = null;
 
         if ($start && $end) {
             $wear = [
@@ -342,14 +452,7 @@ class StintController extends Controller
                 'rl' => round(($start->wear_rl - $end->wear_rl) * 100, 1),
                 'rr' => round(($start->wear_rr - $end->wear_rr) * 100, 1),
             ];
-        }
 
-        // =========================
-        // 🔵 TEMPS
-        // =========================
-        $temps = null;
-
-        if ($start && $end) {
             $temps = [
                 'fl' => round($end->temp_fl, 1),
                 'fr' => round($end->temp_fr, 1),
@@ -365,20 +468,19 @@ class StintController extends Controller
             ];
         }
 
-            return view('stints.analysis', [
-                'bestlap'=>$bestLap,
-                'stint' => $stint,
-                'laps' => $laps,
-                'pace' => $pace,
-                'consistency' => $consistency,
-                'competitiveEndLap' => $competitiveEndLap,
+        return view('stints.partials.analysis', [
+            'bestlap' => $bestLap,
+            'stint' => $stint,
+            'laps' => $laps,
+            'pace' => $pace,
+            'consistency' => $consistency,
+            'competitiveEndLap' => $competitiveEndLap,
+            'wear' => $wear,
+            'temps' => $temps,
+            'tempDelta' => $tempDelta,
+        ]);
+    }
 
-                // 🔥 CLAVE
-                'wear' => $wear,
-                'temps' => $temps,
-
-            ]);
-        }
 
 
         public function repairSetup(Stint $stint)

@@ -15,7 +15,7 @@
     </div>
 @endif
     <div x-data="{ view: 'all' }" class="space-y-4">
-
+@include('setups.layouts.mainbar')
         {{-- FRONT AERO --}}
         <div class="grid grid-cols-5 gap-2">
             <div x-show="view==='all'">

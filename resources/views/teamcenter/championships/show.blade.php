@@ -6,7 +6,7 @@
 @section('teamcenter-main')
 
 <div
-    class="max-w-7xl mx-auto px-4 py-0"
+    class="max-w-7xl mx-auto mt-6 px-4 py-0"
     x-data="{
         activeTool: null,
         toolContent: '',

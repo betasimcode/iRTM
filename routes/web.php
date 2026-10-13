@@ -15,6 +15,7 @@ use App\Http\Controllers\SetupSheetController;
 use App\Http\Controllers\SeasonParserController;
 use App\Http\Controllers\TelemetryController;
 use App\Http\Controllers\TelemetryLabController;
+use App\Http\Controllers\TelemetryLapController;
 use App\Http\Controllers\IracingSyncController;
 use App\Http\Controllers\StintController;
 use App\Http\Controllers\SessionStintController;
@@ -73,6 +74,8 @@ Route::group([
         Route::get('/telemetry/lab', [TelemetryLabController::class, 'index'])
             ->name('telemetry.lab');
 
+        Route::get('/telemetry/lap', [TelemetryLapController::class, 'index'])
+            ->name('telemetry.lap');
 
         Route::get('/profile', [ProfileController::class, 'edit'])
             ->name('profile.edit');

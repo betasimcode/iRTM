@@ -5,6 +5,20 @@
 
 @section('content')
 
+
+@if (session('success'))
+    <div class="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if (session('error'))
+    <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+        {{ session('error') }}
+    </div>
+@endif
+
+
     @php
     $jsonLaps = [];
 
@@ -361,6 +375,30 @@
                 </x-ui.button>
             </form>
             @endif
+
+
+
+            {{-- REPROCESAR IBT --}}
+            <form
+                action="{{ route('stints.repair-ibt', $stint) }}"
+                method="POST"
+                onsubmit="return confirm(
+                    '¿Quieres reprocesar el IBT de este stint?'
+                )"
+            >
+                @csrf
+
+                <x-ui.button
+                    type="submit"
+                    variant="option"
+                    size="xs"
+                    title="Reprocesar telemetría IBT"
+                    aria-label="Reprocesar telemetría IBT"
+                    class="ui-icon-button"
+                >
+                    <x-ui-icon name="refresh-cw" />
+                </x-ui.button>
+            </form>
 
 
             {{-- BOTÓN ANÁLISIS --}}

@@ -483,14 +483,47 @@ class StintController extends Controller
 
 
 
-        public function repairSetup(Stint $stint)
+    public function repairSetup(Stint $stint)
         {
             $result = SetupRepairService::repair($stint);
 
             dd($result);
         }
 
+    public function repairIbt(Stint $stint)
+    {
+        try {
+            $result = app(
+                \App\Services\Ibt\IbtRepairService::class
+            )->repair($stint);
 
+            \Log::info('IBT REPAIR REQUESTED', [
+                'stint_id' => $stint->id,
+                'result' => $result,
+            ]);
+
+            return redirect()
+                ->route('stints.show', $stint)
+                ->with(
+                    'success',
+                    'Solicitud de reprocesamiento IBT enviada correctamente.'
+                );
+
+        } catch (\Throwable $e) {
+            \Log::error('IBT REPAIR FAILED', [
+                'stint_id' => $stint->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('stints.show', $stint)
+                ->with(
+                    'error',
+                    'No se pudo reprocesar el IBT: '
+                    . $e->getMessage()
+                );
+        }
+    }
 
 
 

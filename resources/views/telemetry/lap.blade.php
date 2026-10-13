@@ -78,35 +78,35 @@
                 @disabled(!$stint || count($laps) === 0)
             >
                 @forelse ($laps as $lap)
-                    <option
-                        value="{{ $lap['lap'] }}"
-                        @selected(
-                            (int) ($selectedLapNumber ?? 0)
-                            === (int) $lap['lap']
-                        )
-                    >
-                        Vuelta {{ $lap['lap'] }}
-                        — {{ isset($lap['lap_time'])
-                            ? gmdate(
-                                'i:s.',
-                                (int) $lap['lap_time']
-                            ) . str_pad(
-                                (string) (
-                                    (int) (
-                                        ($lap['lap_time']
-                                        - floor($lap['lap_time']))
-                                        * 1000
-                                    )
+                @php
+                    $lapNumber = (int) (
+                        $lap['candidate_lap'] ?? $lap['lap'] ?? 0
+                    );
+                @endphp
+
+                <option
+                    value="{{ $lapNumber }}"
+                    @selected(
+                        (int) ($selectedLapNumber ?? 0) === $lapNumber
+                    )
+                >
+                    Vuelta {{ $lapNumber }}
+                    — {{ isset($lap['lap_time'])
+                        ? gmdate('i:s.', (int) $lap['lap_time'])
+                            . str_pad(
+                                (string) (int) (
+                                    ($lap['lap_time'] - floor($lap['lap_time']))
+                                    * 1000
                                 ),
                                 3,
                                 '0',
                                 STR_PAD_LEFT
                             )
-                            : '--:--.---' }}
-                    </option>
-                @empty
-                    <option value="">Sin vueltas disponibles</option>
-                @endforelse
+                        : '--:--.---' }}
+                </option>
+            @empty
+                <option value="">Sin vueltas disponibles</option>
+            @endforelse
             </select>
         </div>
 
@@ -153,7 +153,7 @@
             <div class="rounded-lg bg-[var(--bg)] p-3">
                 <p class="text-xs text-[var(--text-muted)]">Vuelta</p>
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
-                    {{ $selectedLapNumber ?? '—' }}
+                    {{ $selectedLap['candidate_lap'] ?? $selectedLap['lap'] ?? '—' }}
                 </p>
             </div>
 

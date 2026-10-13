@@ -2198,39 +2198,125 @@ class IbtProcessor
 
 
     /**
-     * Extrae las muestras de velocidad y marcha de una vuelta nativa.
+     * Extrae las muestras de velocidad y marcha de una vuelta identificada
+     * por candidate_lap, usando los cruces físicos de meta como límites.
      *
+     * Esto mantiene la misma asociación de vueltas que writeLapTelemetryJson().
      * Speed se convierte de m/s a km/h.
-     * El número de vuelta corresponde a la variable nativa Lap del IBT.
      */
     public function extractLapTelemetry(
         string $filePath,
         int $lapNumber
     ): array {
-        if ($lapNumber < 1) {
+        if ($lapNumber < 1 || !is_file($filePath)) {
+            return [];
+        }
+
+        // Localizar el registro de vuelta por la numeración oficial de iRacing.
+        $targetLap = null;
+
+        foreach ($this->extractLaps($filePath) as $lap) {
+            $candidateLap = (int) ($lap['candidate_lap'] ?? 0);
+
+            if ($candidateLap === $lapNumber) {
+                $targetLap = $lap;
+                break;
+            }
+        }
+
+        if (!is_array($targetLap) || !is_numeric($targetLap['record_index'] ?? null)) {
+            return [];
+        }
+
+        $publicationIndex = (int) $targetLap['record_index'];
+        $finishCrossings = [];
+        $previousDistance = null;
+        $previousEligible = false;
+
+        foreach (
+            $this->streamRecords(
+                $filePath,
+                ['LapDistPct', 'IsOnTrack', 'OnPitRoad', 'SessionTime']
+            ) as $recordIndex => $record
+        ) {
+            $distance = $record['LapDistPct'] ?? null;
+            $eligible =
+                (bool) ($record['IsOnTrack'] ?? false) &&
+                !(bool) ($record['OnPitRoad'] ?? false) &&
+                is_numeric($distance) &&
+                is_finite((float) $distance) &&
+                (float) $distance >= 0.0 &&
+                (float) $distance <= 1.0;
+
+            if (!$eligible) {
+                $previousDistance = null;
+                $previousEligible = false;
+                continue;
+            }
+
+            $distance = (float) $distance;
+
+            if (
+                $previousEligible &&
+                $previousDistance !== null &&
+                $previousDistance >= 0.90 &&
+                $distance <= 0.10
+            ) {
+                $finishCrossings[] = (int) $recordIndex;
+            }
+
+            $previousDistance = $distance;
+            $previousEligible = true;
+        }
+
+        // El tiempo de vuelta se publica después del cruce físico de meta.
+        $currentCrossingPosition = null;
+
+        foreach ($finishCrossings as $position => $crossingIndex) {
+            if ($crossingIndex <= $publicationIndex) {
+                $currentCrossingPosition = $position;
+                continue;
+            }
+
+            break;
+        }
+
+        if ($currentCrossingPosition === null || $currentCrossingPosition < 1) {
+            return [];
+        }
+
+        $startIndex = $finishCrossings[$currentCrossingPosition - 1];
+        $finishIndex = $finishCrossings[$currentCrossingPosition];
+
+        if ($finishIndex <= $startIndex) {
             return [];
         }
 
         $samples = [];
 
-        $variables = [
-            'Lap',
-            'LapDistPct',
-            'Speed',
-            'Gear',
-        ];
-
-        foreach ($this->streamRecords($filePath, $variables) as $record) {
-            if ((int) ($record['Lap'] ?? 0) !== $lapNumber) {
+        foreach (
+            $this->streamRecordsRange(
+                $filePath,
+                $startIndex,
+                $finishIndex,
+                ['SessionTime', 'LapDistPct', 'Speed', 'Gear', 'IsOnTrack', 'OnPitRoad']
+            ) as $record
+        ) {
+            if (
+                !(bool) ($record['IsOnTrack'] ?? false) ||
+                (bool) ($record['OnPitRoad'] ?? false)
+            ) {
                 continue;
             }
 
             $distance = $record['LapDistPct'] ?? null;
+            $sessionTime = $record['SessionTime'] ?? null;
             $speed = $record['Speed'] ?? null;
             $gear = $record['Gear'] ?? null;
 
             if (
                 !is_numeric($distance) ||
+                !is_numeric($sessionTime) ||
                 !is_numeric($speed) ||
                 !is_numeric($gear)
             ) {
@@ -2238,30 +2324,27 @@ class IbtProcessor
             }
 
             $distance = (float) $distance;
+            $sessionTime = (float) $sessionTime;
             $speed = (float) $speed;
 
             if (
                 !is_finite($distance) ||
+                !is_finite($sessionTime) ||
                 !is_finite($speed) ||
-                $distance < 0 ||
-                $distance > 1 ||
-                $speed < 0
+                $distance < 0.0 ||
+                $distance > 1.0 ||
+                $speed < 0.0
             ) {
                 continue;
             }
 
             $samples[] = [
                 'lap_dist_pct' => $distance,
+                'session_time' => $sessionTime,
                 'speed_kph' => round($speed * 3.6, 2),
                 'gear' => (int) $gear,
             ];
         }
-
-        usort(
-            $samples,
-            fn (array $a, array $b) =>
-                $a['lap_dist_pct'] <=> $b['lap_dist_pct']
-        );
 
         return $samples;
     }
@@ -2343,10 +2426,12 @@ class IbtProcessor
 
         foreach ($laps as $lap) {
             $recordIndex = $lap['record_index'] ?? null;
-            $lapNumber = (int) ($lap['lap'] ?? 0);
+            // candidate_lap es la numeración oficial de iRacing.
+            // lap se conserva como índice interno de alineación.
+            $candidateLap = (int) ($lap['candidate_lap'] ?? 0);
 
             if (
-                $lapNumber > 0 &&
+                $candidateLap > 0 &&
                 is_numeric($recordIndex) &&
                 (int) $recordIndex >= 0
             ) {
@@ -2382,7 +2467,8 @@ class IbtProcessor
         $lastUsedCrossingPosition = -1;
 
         foreach ($timedLaps as $lap) {
-            $lapNumber = (int) $lap['lap'];
+            $lapNumber = (int) ($lap['candidate_lap'] ?? 0);
+            $internalLap = (int) ($lap['lap'] ?? 0);
             $publicationIndex = (int) $lap['_record_index'];
 
             /*
@@ -2507,7 +2593,9 @@ class IbtProcessor
 
             $payload = [
                 'format_version' => 2,
-                'lap' => $lapNumber,
+                // Mantener lap como índice interno y exponer la numeración oficial aparte.
+                'lap' => $internalLap,
+                'candidate_lap' => $lapNumber,
                 'lap_time' => $lap['lap_time'] ?? null,
                 'is_pit_lap' => (bool) ($lap['is_pit_lap'] ?? false),
                 'sample_count' => count($samples),

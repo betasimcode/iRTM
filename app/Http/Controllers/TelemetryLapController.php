@@ -74,16 +74,32 @@ class TelemetryLapController extends Controller
                 }
             }
 
-            $requestedLap = $request->integer('lap');
+        $requestedLap = $request->integer('lap');
 
-            if ($requestedLap > 0) {
-                foreach ($laps as $lap) {
-                    if ((int) ($lap['lap'] ?? 0) === $requestedLap) {
-                        $selectedLap = $lap;
-                        break;
-                    }
+        if ($requestedLap > 0) {
+            foreach ($laps as $lap) {
+                $lapNumber = (int) (
+                    $lap['candidate_lap'] ?? $lap['lap'] ?? 0
+                );
+
+                if ($lapNumber === $requestedLap) {
+                    $selectedLap = $lap;
+                    break;
                 }
             }
+        }
+
+        if ($selectedLap === null && count($laps) > 0) {
+            $selectedLap = $laps[array_key_last($laps)];
+        }
+
+        $selectedLapNumber = $selectedLap
+            ? (int) (
+                $selectedLap['candidate_lap']
+                ?? $selectedLap['lap']
+                ?? 0
+            )
+            : null;
 
             // Si no se solicita una vuelta concreta, seleccionar
             // la última vuelta disponible en el JSON.

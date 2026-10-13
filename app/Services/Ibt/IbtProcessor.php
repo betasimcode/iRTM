@@ -2446,9 +2446,21 @@ class IbtProcessor
                 $a['_record_index'] <=> $b['_record_index']
         );
 
+        $generatedLaps = [];
+        $skippedLaps = [];
+
         if (empty($timedLaps) || count($finishCrossings) < 2) {
+            foreach ($timedLaps as $lap) {
+                $skippedLaps[] = [
+                    'candidate_lap' => (int) $lap['candidate_lap'],
+                    'reason' => 'insufficient_finish_crossings',
+                ];
+            }
+
             return [
                 'generated' => 0,
+                'generated_laps' => [],
+                'skipped_laps' => $skippedLaps,
                 'directory' => $outputDirectory,
             ];
         }
@@ -2487,12 +2499,17 @@ class IbtProcessor
             }
 
             if (
-                $currentCrossingPosition === null ||
-                $currentCrossingPosition < 1 ||
-                $currentCrossingPosition <= $lastUsedCrossingPosition
-            ) {
-                continue;
-            }
+                    $currentCrossingPosition === null ||
+                    $currentCrossingPosition < 1 ||
+                    $currentCrossingPosition <= $lastUsedCrossingPosition
+                ) {
+                    $skippedLaps[] = [
+                        'candidate_lap' => $lapNumber,
+                        'reason' => 'no_matching_crossing',
+                    ];
+
+                    continue;
+                }
 
             $startIndex = (int) (
                 $finishCrossings[$currentCrossingPosition - 1]['record_index']
@@ -2502,7 +2519,12 @@ class IbtProcessor
                 $finishCrossings[$currentCrossingPosition]['record_index']
             );
 
-            if ($finishIndex <= $startIndex) {
+            if (empty($samples)) {
+                $skippedLaps[] = [
+                    'candidate_lap' => $lapNumber,
+                    'reason' => 'no_valid_samples',
+                ];
+
                 continue;
             }
 
@@ -2640,10 +2662,13 @@ class IbtProcessor
             }
 
             $generated++;
+            $generatedLaps[] = $lapNumber;
         }
 
         return [
             'generated' => $generated,
+            'generated_laps' => $generatedLaps,
+            'skipped_laps' => $skippedLaps,
             'directory' => $outputDirectory,
         ];
     }

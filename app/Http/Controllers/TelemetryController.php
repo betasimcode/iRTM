@@ -908,6 +908,65 @@ public function store(Request $request)
                     $lapsPayload['laps'] ?? []
                 );
 
+                $generatedCandidateLaps = array_map(
+                    'intval',
+                    $lapTelemetryResult['generated_laps'] ?? []
+                );
+
+                $expectedCandidateLaps = collect($lapsPayload['laps'] ?? [])
+                    ->filter(function ($lap) {
+                        return isset($lap['candidate_lap'])
+                            && (int) $lap['candidate_lap'] > 0
+                            && isset($lap['lap_time'])
+                            && is_numeric($lap['lap_time'])
+                            && (float) $lap['lap_time'] > 5
+                            && !(bool) ($lap['is_pit_lap'] ?? false);
+                    })
+                    ->pluck('candidate_lap')
+                    ->map(fn ($lap) => (int) $lap)
+                    ->unique()
+                    ->values();
+
+                $missingTelemetryLaps = [];
+
+                foreach ($expectedCandidateLaps as $candidateLap) {
+                    $filename = sprintf('lap_%03d.json', $candidateLap);
+
+                    $path = $lapTelemetryDirectory
+                        . DIRECTORY_SEPARATOR
+                        . $filename;
+
+                    if (
+                        !in_array($candidateLap, $generatedCandidateLaps, true) ||
+                        !is_file($path) ||
+                        filesize($path) === 0
+                    ) {
+                        $missingTelemetryLaps[] = $candidateLap;
+                        continue;
+                    }
+
+                    $lapJson = json_decode(
+                        file_get_contents($path),
+                        true
+                    );
+
+                    if (
+                        !is_array($lapJson) ||
+                        (int) ($lapJson['candidate_lap'] ?? 0) !== $candidateLap ||
+                        empty($lapJson['samples'])
+                    ) {
+                        $missingTelemetryLaps[] = $candidateLap;
+                    }
+                }
+
+                if (!empty($missingTelemetryLaps)) {
+                    throw new \RuntimeException(
+                        'Telemetría incompleta. Vueltas sin JSON válido: '
+                        . implode(', ', array_unique($missingTelemetryLaps))
+                    );
+                }
+
+
                 Log::info('IBT LAP TELEMETRY GENERATED', [
                     'stint_id' => $stint->id,
                     'directory' => $lapTelemetryResult['directory'],
@@ -979,7 +1038,19 @@ public function store(Request $request)
                     'line' => $e->getLine(),
                 ]);
 
-                $jsonProcessing['error'] = $e->getMessage();
+                if ($stint) {
+                    $stint->update([
+                        'status' => 'pending',
+                    ]);
+                }
+
+                $jsonProcessing = [
+                    'generated' => false,
+                    'laps_json' => null,
+                    'session_json' => null,
+                    'valid_laps' => 0,
+                    'error' => $e->getMessage(),
+                ];
             }
 
 

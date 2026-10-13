@@ -552,6 +552,10 @@ class IbtProcessor
             'LapBestLapTime',
             'LapBestLap',
             'OnPitRoad',
+            'Lat',
+            'Lon',
+            'Alt',
+            'Yaw',
         ];
 
         // Marcador identificativo: números de vuelta con muestras en pit road.
@@ -2317,6 +2321,10 @@ class IbtProcessor
             $sessionTime = $record['SessionTime'] ?? null;
             $speed = $record['Speed'] ?? null;
             $gear = $record['Gear'] ?? null;
+            $lat = $record['Lat'] ?? null;
+            $lon = $record['Lon'] ?? null;
+            $alt = $record['Alt'] ?? null;
+            $yaw = $record['Yaw'] ?? null;
 
             if (
                 !is_numeric($distance) ||
@@ -2347,6 +2355,24 @@ class IbtProcessor
                 'session_time' => $sessionTime,
                 'speed_kph' => round($speed * 3.6, 2),
                 'gear' => (int) $gear,
+                'position' => [
+                    'lat' => is_numeric($lat) && is_finite((float) $lat)
+                        ? (float) $lat
+                        : null,
+
+                    'lon' => is_numeric($lon) && is_finite((float) $lon)
+                        ? (float) $lon
+                        : null,
+
+                    'alt' => is_numeric($alt) && is_finite((float) $alt)
+                        ? (float) $alt
+                        : null,
+                ],
+
+                'yaw' => is_numeric($yaw) && is_finite((float) $yaw)
+                    ? (float) $yaw
+                    : null,
+
             ];
         }
 

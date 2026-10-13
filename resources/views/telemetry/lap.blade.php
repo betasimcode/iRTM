@@ -129,25 +129,6 @@
         class="rounded-xl border border-[var(--border)]
                bg-[var(--card)] p-4 sm:p-5"
     >
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-                <p class="text-xs uppercase tracking-widest
-                          text-[var(--text-muted)]">
-                    iRTM / Telemetry
-                </p>
-
-                <h1 class="text-xl font-semibold text-[var(--text-title)]">
-                    Análisis de vuelta
-                </h1>
-            </div>
-
-            <span
-                class="rounded-md border border-[var(--border)]
-                       px-3 py-1 text-xs text-[var(--text-muted)]"
-            >
-                Sin vuelta seleccionada
-            </span>
-        </div>
 
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             <div class="rounded-lg bg-[var(--bg)] p-3">
@@ -377,47 +358,48 @@
                 </span>
             </header>
 
-            {{-- Superficie reservada al mapa SVG --}}
-            <div
-                class="flex flex-1 items-center justify-center
-                       bg-[var(--bg)] p-4 sm:p-6"
+
+{{-- MAPA SVG DEL CIRCUITO --}}
+<div
+    class="flex flex-1 items-center justify-center
+           bg-[var(--bg)] p-4 sm:p-6"
+>
+    @php
+        $trackMapId = $stint?->track_id;
+
+        $trackMapPath = $trackMapId
+            ? public_path("telemetry/tracks/{$trackMapId}.svg")
+            : null;
+    @endphp
+
+    @if ($trackMapPath && file_exists($trackMapPath))
+        <div class="w-full max-w-4xl">
+            <object
+                id="telemetry-track-map"
+                data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
+                type="image/svg+xml"
+                class="block w-full h-auto"
+                style="min-height: 320px;"
+                aria-label="Mapa del circuito"
             >
-                <div class="w-full max-w-xl text-center">
-                    <div
-                        class="mx-auto mb-4 flex h-20 w-20 items-center
-                               justify-center rounded-full
-                               border border-[var(--border)]"
-                    >
-                        <svg
-                            viewBox="0 0 48 48"
-                            class="h-10 w-10 text-[var(--text-muted)]"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                d="M8 30 L8 17 Q8 12 14 12
-                                   L23 12 Q29 12 29 18
-                                   L29 25 Q29 30 35 30
-                                   L40 30"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-dasharray="3 3"
-                            />
-                            <circle cx="8" cy="30" r="3"/>
-                        </svg>
-                    </div>
+                <p class="p-4 text-sm text-[var(--text-muted)]">
+                    No se ha podido cargar el mapa del circuito.
+                </p>
+            </object>
+        </div>
+    @else
+        <div class="py-12 text-center">
+            <p class="font-medium text-[var(--text-title)]">
+                Mapa del circuito no disponible
+            </p>
 
-                    <h3 class="font-medium text-[var(--text-title)]">
-                        Mapa del circuito
-                    </h3>
+            <p class="mt-2 text-sm text-[var(--text-muted)]">
+                No se ha encontrado el SVG correspondiente a este circuito.
+            </p>
+        </div>
+    @endif
+</div>
 
-                    <p class="mt-2 text-sm text-[var(--text-muted)]">
-                        Pendiente de integrar las coordenadas del circuito
-                        y la posición del coche.
-                    </p>
-                </div>
-            </div>
 
             {{-- CONTROLES DEL MAPA --}}
             <footer

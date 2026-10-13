@@ -2529,7 +2529,7 @@ class IbtProcessor
             }
 
             $lastUsedCrossingPosition = $currentCrossingPosition;
-            $samples = [];
+                        $samples = [];
 
             foreach (
                 $this->streamRecordsRange(
@@ -2546,7 +2546,6 @@ class IbtProcessor
                     ]
                 ) as $record
             ) {
-                // Evitar incluir muestras de boxes dentro del intervalo.
                 if (
                     !(bool) ($record['IsOnTrack'] ?? false) ||
                     (bool) ($record['OnPitRoad'] ?? false)
@@ -2592,8 +2591,15 @@ class IbtProcessor
             }
 
             if (empty($samples)) {
+                $skippedLaps[] = [
+                    'candidate_lap' => $lapNumber,
+                    'reason' => 'no_valid_samples',
+                ];
+
                 continue;
             }
+
+            $lastUsedCrossingPosition = $currentCrossingPosition;
 
             $speeds = array_column($samples, 'speed_kph');
 

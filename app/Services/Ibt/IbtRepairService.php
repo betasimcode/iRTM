@@ -3,7 +3,7 @@
 namespace App\Services\Ibt;
 
 use App\Models\Stint;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -17,36 +17,157 @@ class IbtRepairService
 
         if (!$ibt) {
             throw new RuntimeException(
-                'No existe un archivo IBT registrado para este stint.'
+                'No existe un IBT registrado para este stint.'
             );
         }
 
-        $disk = Storage::disk('local');
+        $ibtPath = Storage::path($ibt->filepath);
 
-        if (!$disk->exists($ibt->filepath)) {
+        if (!is_file($ibtPath)) {
             throw new RuntimeException(
-                'El archivo IBT no existe en el almacenamiento.'
+                'No se encuentra el IBT en: ' . $ibtPath
             );
         }
 
-        $filepath = $disk->path($ibt->filepath);
+        $directory = dirname($ibtPath);
 
-        $response = Http::timeout(180)
-            ->post('http://127.0.0.1:32000/process-ibt', [
-                'filepath' => $filepath,
+        $lapsJsonPath = $directory
+            . DIRECTORY_SEPARATOR
+            . 'stint_' . $stint->id . '_laps.json';
+
+        $sessionJsonPath = $directory
+            . DIRECTORY_SEPARATOR
+            . 'session.json';
+
+        $lapTelemetryDirectory = $directory
+            . DIRECTORY_SEPARATOR
+            . 'laps';
+
+        try {
+            $processor = app(IbtProcessor::class);
+
+            $lapsPayload = $processor->writeLapsJson(
+                $ibtPath,
+                $lapsJsonPath
+            );
+
+            $lapTelemetryResult = $processor->writeLapTelemetryJson(
+                $ibtPath,
+                $lapTelemetryDirectory,
+                $lapsPayload['laps'] ?? []
+            );
+
+            $generatedLaps = array_map(
+                'intval',
+                $lapTelemetryResult['generated_laps'] ?? []
+            );
+
+            $expectedLaps = collect($lapsPayload['laps'] ?? [])
+                ->filter(fn ($lap) =>
+                    isset($lap['candidate_lap'], $lap['lap_time'])
+                    && (int) $lap['candidate_lap'] > 0
+                    && is_numeric($lap['lap_time'])
+                    && (float) $lap['lap_time'] > 5
+                    && !(bool) ($lap['is_pit_lap'] ?? false)
+                )
+                ->pluck('candidate_lap')
+                ->map(fn ($lap) => (int) $lap)
+                ->unique()
+                ->values();
+
+            $missing = [];
+
+            foreach ($expectedLaps as $lapNumber) {
+                $filename = sprintf(
+                    'lap_%03d.json',
+                    $lapNumber
+                );
+
+                $path = $lapTelemetryDirectory
+                    . DIRECTORY_SEPARATOR
+                    . $filename;
+
+                if (
+                    !in_array($lapNumber, $generatedLaps, true)
+                    || !is_file($path)
+                    || filesize($path) === 0
+                ) {
+                    $missing[] = $lapNumber;
+                    continue;
+                }
+
+                $json = json_decode(
+                    file_get_contents($path),
+                    true
+                );
+
+                if (
+                    !is_array($json)
+                    || (int) ($json['candidate_lap'] ?? 0)
+                        !== $lapNumber
+                    || empty($json['samples'])
+                ) {
+                    $missing[] = $lapNumber;
+                }
+            }
+
+            if ($missing) {
+                throw new RuntimeException(
+                    'Telemetría incompleta. Vueltas: '
+                    . implode(', ', array_unique($missing))
+                );
+            }
+
+            $processor->writeSessionJson(
+                $ibtPath,
+                $sessionJsonPath
+            );
+
+            if (
+                !is_file($lapsJsonPath)
+                || !is_file($sessionJsonPath)
+            ) {
+                throw new RuntimeException(
+                    'No se han generado los JSON principales.'
+                );
+            }
+
+            $validLaps = $expectedLaps->count();
+
+            if ($validLaps === 0) {
+                throw new RuntimeException(
+                    'El IBT no contiene vueltas cronometradas válidas.'
+                );
+            }
+
+            $stint->update([
+                'status' => 'validated',
             ]);
 
-        if (!$response->successful()) {
-            throw new RuntimeException(
-                'El reprocesamiento IBT ha fallado. HTTP '
-                . $response->status()
-            );
-        }
+            Log::info('IBT REPAIR COMPLETED', [
+                'stint_id' => $stint->id,
+                'valid_laps' => $validLaps,
+                'generated_telemetry_laps' => count($generatedLaps),
+            ]);
 
-        return [
-            'status' => 'ok',
-            'stint_id' => $stint->id,
-            'response' => $response->json(),
-        ];
+            return [
+                'status' => 'ok',
+                'stint_id' => $stint->id,
+                'valid_laps' => $validLaps,
+                'generated_telemetry_laps' => count($generatedLaps),
+            ];
+
+        } catch (\Throwable $e) {
+            $stint->update([
+                'status' => 'pending',
+            ]);
+
+            Log::error('IBT REPAIR FAILED', [
+                'stint_id' => $stint->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }

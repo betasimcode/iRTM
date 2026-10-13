@@ -57,6 +57,12 @@ class IbtRepairService
                 $lapsPayload['laps'] ?? []
             );
 
+            Log::info('IBT REPAIR LAP DIAGNOSTICS', [
+                'stint_id' => $stint->id,
+                'generated_laps' => $lapTelemetryResult['generated_laps'] ?? [],
+                'skipped_laps' => $lapTelemetryResult['skipped_laps'] ?? [],
+            ]);
+
             $generatedLaps = array_map(
                 'intval',
                 $lapTelemetryResult['generated_laps'] ?? []

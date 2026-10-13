@@ -2355,6 +2355,7 @@ class IbtProcessor
      * El IBT sigue siendo la fuente de verdad.
      * Los JSON son artefactos derivados y regenerables.
      */
+
     public function writeLapTelemetryJson(
         string $filePath,
         string $outputDirectory,
@@ -2367,10 +2368,10 @@ class IbtProcessor
         }
 
         /*
-         * Los tiempos de vuelta se publican unos registros después
-         * del cruce físico de meta. Por eso detectamos los cruces
-         * mediante LapDistPct y los asociamos después a record_index.
-         */
+        * Detectar cruces físicos de meta mediante LapDistPct.
+        * El tiempo oficial se publica algunos registros después
+        * del cruce, por lo que se asocia usando record_index.
+        */
         $finishCrossings = [];
         $previousDistance = null;
         $previousEligible = false;
@@ -2411,7 +2412,7 @@ class IbtProcessor
                 $distance <= 0.10
             ) {
                 $finishCrossings[] = [
-                    'record_index' => $recordIndex,
+                    'record_index' => (int) $recordIndex,
                     'session_time' => (float) (
                         $record['SessionTime'] ?? 0
                     ),
@@ -2422,12 +2423,14 @@ class IbtProcessor
             $previousEligible = true;
         }
 
+        /*
+        * Preparar las vueltas que tienen un tiempo publicado
+        * y un record_index válido.
+        */
         $timedLaps = [];
 
         foreach ($laps as $lap) {
             $recordIndex = $lap['record_index'] ?? null;
-            // candidate_lap es la numeración oficial de iRacing.
-            // lap se conserva como índice interno de alineación.
             $candidateLap = (int) ($lap['candidate_lap'] ?? 0);
 
             if (
@@ -2449,7 +2452,10 @@ class IbtProcessor
         $generatedLaps = [];
         $skippedLaps = [];
 
-        if (empty($timedLaps) || count($finishCrossings) < 2) {
+        if (
+            empty($timedLaps) ||
+            count($finishCrossings) < 2
+        ) {
             foreach ($timedLaps as $lap) {
                 $skippedLaps[] = [
                     'candidate_lap' => (int) $lap['candidate_lap'],
@@ -2484,9 +2490,9 @@ class IbtProcessor
             $publicationIndex = (int) $lap['_record_index'];
 
             /*
-             * Buscar el último cruce físico anterior (o coincidente)
-             * con la publicación del tiempo de esta vuelta.
-             */
+            * Buscar el último cruce de meta anterior
+            * o coincidente con la publicación del tiempo.
+            */
             $currentCrossingPosition = null;
 
             foreach ($finishCrossings as $position => $crossing) {
@@ -2499,37 +2505,50 @@ class IbtProcessor
             }
 
             if (
-                    $currentCrossingPosition === null ||
-                    $currentCrossingPosition < 1 ||
-                    $currentCrossingPosition <= $lastUsedCrossingPosition
-                ) {
-                    $skippedLaps[] = [
-                        'candidate_lap' => $lapNumber,
-                        'reason' => 'no_matching_crossing',
-                    ];
-
-                    continue;
-                }
-
-            $startIndex = (int) (
-                $finishCrossings[$currentCrossingPosition - 1]['record_index']
-            );
-
-            $finishIndex = (int) (
-                $finishCrossings[$currentCrossingPosition]['record_index']
-            );
-
-            if (empty($samples)) {
+                $currentCrossingPosition === null ||
+                $currentCrossingPosition < 1 ||
+                $currentCrossingPosition <= $lastUsedCrossingPosition
+            ) {
                 $skippedLaps[] = [
                     'candidate_lap' => $lapNumber,
-                    'reason' => 'no_valid_samples',
+                    'reason' => 'no_matching_crossing',
+                    'publication_index' => $publicationIndex,
+                    'crossing_position' => $currentCrossingPosition,
                 ];
 
                 continue;
             }
 
-            $lastUsedCrossingPosition = $currentCrossingPosition;
-                        $samples = [];
+            $startIndex = (int) (
+                $finishCrossings[
+                    $currentCrossingPosition - 1
+                ]['record_index']
+            );
+
+            $finishIndex = (int) (
+                $finishCrossings[
+                    $currentCrossingPosition
+                ]['record_index']
+            );
+
+            if ($finishIndex <= $startIndex) {
+                $skippedLaps[] = [
+                    'candidate_lap' => $lapNumber,
+                    'reason' => 'invalid_crossing_interval',
+                    'start_index' => $startIndex,
+                    'finish_index' => $finishIndex,
+                ];
+
+                continue;
+            }
+
+            /*
+            * Recopilar muestras de la vuelta.
+            * No reservar el cruce hasta comprobar que las muestras
+            * son válidas; así una vuelta descartada no bloquea
+            * la asociación de las siguientes.
+            */
+            $samples = [];
 
             foreach (
                 $this->streamRecordsRange(
@@ -2575,9 +2594,9 @@ class IbtProcessor
                     !is_finite($distance) ||
                     !is_finite($sessionTime) ||
                     !is_finite($speed) ||
-                    $distance < 0 ||
-                    $distance > 1 ||
-                    $speed < 0
+                    $distance < 0.0 ||
+                    $distance > 1.0 ||
+                    $speed < 0.0
                 ) {
                     continue;
                 }
@@ -2594,11 +2613,14 @@ class IbtProcessor
                 $skippedLaps[] = [
                     'candidate_lap' => $lapNumber,
                     'reason' => 'no_valid_samples',
+                    'start_index' => $startIndex,
+                    'finish_index' => $finishIndex,
                 ];
 
                 continue;
             }
 
+            // Reservar el cruce únicamente tras generar muestras válidas.
             $lastUsedCrossingPosition = $currentCrossingPosition;
 
             $speeds = array_column($samples, 'speed_kph');
@@ -2621,11 +2643,12 @@ class IbtProcessor
 
             $payload = [
                 'format_version' => 2,
-                // Mantener lap como índice interno y exponer la numeración oficial aparte.
                 'lap' => $internalLap,
                 'candidate_lap' => $lapNumber,
                 'lap_time' => $lap['lap_time'] ?? null,
-                'is_pit_lap' => (bool) ($lap['is_pit_lap'] ?? false),
+                'is_pit_lap' => (bool) (
+                    $lap['is_pit_lap'] ?? false
+                ),
                 'sample_count' => count($samples),
                 'metrics' => [
                     'speed_min_kph' => min($speeds),
@@ -2678,6 +2701,7 @@ class IbtProcessor
             'directory' => $outputDirectory,
         ];
     }
+
 
     private function readVariableValue(
         string $record,

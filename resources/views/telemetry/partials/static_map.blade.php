@@ -1,83 +1,73 @@
-<div
 
-    class="flex flex-1 items-center justify-center
+@php
+    $trackMapId = $stint?->track_id;
+    $trackMapPath = $trackMapId
+        ? public_path("telemetry/tracks/{$trackMapId}.svg")
+        : null;
+@endphp
 
-           bg-[var(--bg)] p-4 sm:p-6"
-
->
-
-    @php
-
-        $trackMapId = $stint?->track_id;
-
-
-
-        $trackMapPath = $trackMapId
-
-            ? public_path("telemetry/tracks/{$trackMapId}.svg")
-
-            : null;
-
-    @endphp
-
-
-
+<div class="flex flex-1 flex-col gap-2 bg-[var(--bg)] p-4 sm:p-6">
     @if ($trackMapPath && file_exists($trackMapPath))
+        <div class="flex flex-wrap items-center justify-end gap-2"
+             aria-label="Controles de navegación del mapa">
+            <button type="button"
+                id="telemetry-map-zoom-out"
+                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]"
+                aria-label="Alejar mapa">−</button>
 
-        <div
+            <output id="telemetry-map-zoom-level"
+                class="min-w-14 text-center font-mono text-xs text-[var(--text-muted)]"
+                aria-live="polite">100%</output>
 
-            id="telemetry-track-canvas"
+            <button type="button"
+                id="telemetry-map-zoom-in"
+                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]"
+                aria-label="Acercar mapa">+</button>
 
-            class="relative w-full max-w-4xl"
+            <button type="button"
+                id="telemetry-map-reset"
+                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
+                Restablecer vista
+            </button>
 
+            <span class="text-xs text-[var(--text-muted)]">
+                Rueda: zoom · Arrastrar: mover
+            </span>
+        </div>
+
+        <div id="telemetry-track-viewport"
+            class="relative w-full overflow-hidden rounded-lg"
+            style="height: 480px; min-height: 320px; cursor: grab; touch-action: none;"
             data-track-id="{{ $trackMapId }}"
+            aria-label="Mapa del circuito. Usa la rueda para acercar y arrastra para desplazarte.">
 
-        >
+            <div id="telemetry-track-canvas"
+                class="absolute inset-0"
+                style="transform-origin: 0 0;">
 
-            {{-- ELEMENTO 1: SVG ESTÁTICO. NO MODIFICAR --}}
-<object
-    id="telemetry-track-map"
-    data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
-    type="image/svg+xml"
-    class="relative z-0 block w-full"
-    style="height: 480px; min-height: 320px;"
-    aria-label="Mapa del circuito"
->
-    <p class="p-4 text-sm text-[var(--text-muted)]">
-        No se ha podido cargar el mapa del circuito.
-    </p>
-</object>
+                <object id="telemetry-track-map"
+                    data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
+                    type="image/svg+xml"
+                    class="pointer-events-none absolute inset-0 z-0 block h-full w-full"
+                    aria-label="Mapa estático del circuito">
+                    <p class="p-4 text-sm text-[var(--text-muted)]">
+                        No se ha podido cargar el mapa del circuito.
+                    </p>
+                </object>
 
-{{-- ELEMENTO 2: CAPA GPS DINÁMICA E INDEPENDIENTE --}}
-<canvas
-    id="telemetry-lap-overlay"
-    class="pointer-events-none absolute inset-0 z-10 block"
-    style="width: 100%; height: 100%;"
-    aria-label="Trazada GPS de la vuelta"
-></canvas>
-
+                <canvas id="telemetry-lap-overlay"
+                    class="pointer-events-none absolute inset-0 z-10 block h-full w-full"
+                    aria-label="Trazada GPS de la vuelta"></canvas>
+            </div>
         </div>
-
     @else
-
         <div class="py-12 text-center">
-
             <p class="font-medium text-[var(--text-title)]">
-
                 Mapa del circuito no disponible
-
             </p>
-
-
-
             <p class="mt-2 text-sm text-[var(--text-muted)]">
-
                 No se ha encontrado el SVG correspondiente a este circuito.
-
             </p>
-
         </div>
-
     @endif
-
 </div>

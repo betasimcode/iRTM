@@ -855,14 +855,15 @@ public function store(Request $request)
 
 
 
-
             $jsonProcessing = [
                 'generated' => false,
+                'phase' => 'initialization',
                 'session_json' => null,
                 'laps_json' => null,
                 'telemetry_directory' => null,
                 'valid_laps' => 0,
-                'phase' => 'initialization',
+                'generated_telemetry_laps' => 0,
+                'skipped_telemetry_laps' => [],
             ];
 
             try {
@@ -874,28 +875,21 @@ public function store(Request $request)
 
                 $directory = dirname(Storage::path($finalPath));
                 $ibtAbsolutePath = Storage::path($finalPath);
-
-                $sessionJsonPath = $directory
-                    . DIRECTORY_SEPARATOR
-                    . 'session.json';
-
-                $lapsJsonPath = $directory
-                    . DIRECTORY_SEPARATOR
+                $sessionJsonPath = $directory . DIRECTORY_SEPARATOR . 'session.json';
+                $lapsJsonPath = $directory . DIRECTORY_SEPARATOR
                     . 'stint_' . $stint->id . '_laps.json';
-
-                $lapTelemetryDirectory = $directory
-                    . DIRECTORY_SEPARATOR
-                    . 'laps';
+                $lapTelemetryDirectory = $directory . DIRECTORY_SEPARATOR . 'laps';
 
                 /** @var \App\Services\Ibt\IbtProcessor $processor */
                 $processor = app(IbtProcessor::class);
 
                 /*
                 |--------------------------------------------------------------------------
-                | FASE 1: DATOS ESTÁTICOS DE SESIÓN
+                | FASE 1: DATOS ESTÁTICOS
                 |--------------------------------------------------------------------------
+                | La sesión y los límites del circuito deben existir antes de procesar
+                | vueltas, sectores o telemetría detallada.
                 */
-
                 $jsonProcessing['phase'] = 'session';
 
                 Log::info('IBT SESSION JSON START', [
@@ -904,7 +898,7 @@ public function store(Request $request)
                     'session_json' => $sessionJsonPath,
                 ]);
 
-                $processor->writeSessionJson(
+                $sessionData = $processor->writeSessionJson(
                     $ibtAbsolutePath,
                     $sessionJsonPath
                 );
@@ -916,24 +910,37 @@ public function store(Request $request)
                 }
 
                 $sessionJsonContent = file_get_contents($sessionJsonPath);
-                $sessionData = json_decode(
-                    $sessionJsonContent,
-                    true
-                );
+                $decodedSession = is_string($sessionJsonContent)
+                    ? json_decode($sessionJsonContent, true)
+                    : null;
 
-                if (
-                    !is_array($sessionData)
-                    || json_last_error() !== JSON_ERROR_NONE
-                ) {
+                if (!is_array($decodedSession) || json_last_error() !== JSON_ERROR_NONE) {
                     throw new \RuntimeException(
                         'Fase 1 fallida: session.json no contiene JSON válido.'
+                    );
+                }
+
+                $trackIdFromSession = data_get($decodedSession, 'track.id');
+                $sectorBoundaries = data_get($decodedSession, 'sectors.boundaries_pct', []);
+
+                if (!is_numeric($trackIdFromSession) || (int) $trackIdFromSession <= 0) {
+                    throw new \RuntimeException(
+                        'Fase 1 fallida: session.json no contiene un track.id válido.'
+                    );
+                }
+
+                if (!is_array($sectorBoundaries) || count($sectorBoundaries) < 3) {
+                    throw new \RuntimeException(
+                        'Fase 1 fallida: session.json no contiene límites de sector suficientes.'
                     );
                 }
 
                 Log::info('IBT SESSION JSON COMPLETE', [
                     'stint_id' => $stint->id,
                     'session_json' => $sessionJsonPath,
-                    'top_level_keys' => array_keys($sessionData),
+                    'track_id' => (int) $trackIdFromSession,
+                    'sector_boundaries_count' => count($sectorBoundaries),
+                    'sector_boundaries_pct' => $sectorBoundaries,
                 ]);
 
                 /*
@@ -941,7 +948,6 @@ public function store(Request $request)
                 | FASE 2: VUELTAS Y SECTORES
                 |--------------------------------------------------------------------------
                 */
-
                 $jsonProcessing['phase'] = 'laps';
 
                 Log::info('IBT LAPS JSON START', [
@@ -960,13 +966,16 @@ public function store(Request $request)
                     );
                 }
 
-                $validJsonLaps = collect($lapsPayload['laps'] ?? [])
+                $validLaps = collect($lapsPayload['laps'] ?? [])
                     ->filter(function ($lap) {
                         return isset($lap['lap_time'])
                             && is_numeric($lap['lap_time'])
                             && (float) $lap['lap_time'] > 5;
                     })
-                    ->count();
+                    ->values();
+
+                $validJsonLaps = $validLaps->count();
+                $jsonProcessing['valid_laps'] = $validJsonLaps;
 
                 Log::info('IBT LAPS JSON COMPLETE', [
                     'stint_id' => $stint->id,
@@ -975,12 +984,17 @@ public function store(Request $request)
                     'summary' => $lapsPayload['summary'] ?? [],
                 ]);
 
+                if ($validJsonLaps <= 0) {
+                    throw new \RuntimeException(
+                        'Fase 2 fallida: no hay vueltas cronometradas válidas.'
+                    );
+                }
+
                 /*
                 |--------------------------------------------------------------------------
                 | FASE 3: TELEMETRÍA DETALLADA POR VUELTA
                 |--------------------------------------------------------------------------
                 */
-
                 $jsonProcessing['phase'] = 'lap_telemetry';
 
                 Log::info('IBT LAP TELEMETRY START', [
@@ -994,51 +1008,79 @@ public function store(Request $request)
                     $lapsPayload['laps'] ?? []
                 );
 
+                $generatedLapNumbers = $lapTelemetryResult['generated_laps'] ?? [];
+                $skippedLapDetails = $lapTelemetryResult['skipped_laps'] ?? [];
+                $generatedCount = (int) ($lapTelemetryResult['generated'] ?? count($generatedLapNumbers));
+
+                $jsonProcessing['generated_telemetry_laps'] = $generatedCount;
+                $jsonProcessing['skipped_telemetry_laps'] = $skippedLapDetails;
+
                 Log::info('IBT LAP TELEMETRY COMPLETE', [
                     'stint_id' => $stint->id,
                     'directory' => $lapTelemetryResult['directory'] ?? $lapTelemetryDirectory,
-                    'generated' => $lapTelemetryResult['generated'] ?? [],
-                    'skipped' => $lapTelemetryResult['skipped'] ?? [],
+                    'generated_count' => $generatedCount,
+                    'generated_laps' => $generatedLapNumbers,
+                    'skipped_laps' => $skippedLapDetails,
                 ]);
 
-                /*
-                |--------------------------------------------------------------------------
-                | VALIDACIÓN FINAL
-                |--------------------------------------------------------------------------
-                */
+                if (!empty($skippedLapDetails)) {
+                    throw new \RuntimeException(
+                        'Fase 3 incompleta: hay vueltas sin JSON de telemetría. '
+                        . 'Revisar skipped_laps en el log.'
+                    );
+                }
+
+                $expectedLapNumbers = $validLaps
+                    ->map(function ($lap) {
+                        return (int) ($lap['candidate_lap'] ?? $lap['lap'] ?? 0);
+                    })
+                    ->filter(fn ($lapNumber) => $lapNumber > 0)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $generatedLapNumbers = array_values(array_unique(array_map(
+                    'intval',
+                    $generatedLapNumbers
+                )));
+
+                $missingTelemetryLaps = array_values(array_diff(
+                    $expectedLapNumbers,
+                    $generatedLapNumbers
+                ));
+
+                if ($generatedCount <= 0 || !empty($missingTelemetryLaps)) {
+                    $jsonProcessing['missing_telemetry_laps'] = $missingTelemetryLaps;
+
+                    throw new \RuntimeException(
+                        'Fase 3 incompleta: faltan JSON de telemetría para las vueltas: '
+                        . implode(', ', $missingTelemetryLaps)
+                    );
+                }
 
                 if (!is_file($sessionJsonPath) || !is_file($lapsJsonPath)) {
                     throw new \RuntimeException(
-                        'Validación final fallida: faltan los JSON de sesión o vueltas.'
+                        'Validación final fallida: faltan session.json o el JSON de vueltas.'
                     );
                 }
 
-                if ($validJsonLaps <= 0) {
-                    $stint->update([
-                        'status' => 'pending',
-                    ]);
+                $stint->update(['status' => 'validated']);
 
-                    throw new \RuntimeException(
-                        'No se puede validar el stint: no hay vueltas cronometradas válidas.'
-                    );
-                }
-
-                $stint->update([
-                    'status' => 'validated',
-                ]);
-
-                $jsonProcessing = [
+                $jsonProcessing = array_merge($jsonProcessing, [
                     'generated' => true,
                     'phase' => 'complete',
                     'session_json' => basename($sessionJsonPath),
                     'laps_json' => basename($lapsJsonPath),
                     'telemetry_directory' => basename($lapTelemetryDirectory),
                     'valid_laps' => $validJsonLaps,
-                ];
+                    'generated_telemetry_laps' => $generatedCount,
+                    'skipped_telemetry_laps' => [],
+                ]);
 
                 Log::info('IBT JSON PROCESSING COMPLETE', [
                     'stint_id' => $stint->id,
                     'valid_laps' => $validJsonLaps,
+                    'generated_telemetry_laps' => $generatedCount,
                     'session_json' => $sessionJsonPath,
                     'laps_json' => $lapsJsonPath,
                     'telemetry_directory' => $lapTelemetryDirectory,
@@ -1046,9 +1088,7 @@ public function store(Request $request)
 
             } catch (\Throwable $e) {
                 if ($stint) {
-                    $stint->update([
-                        'status' => 'pending',
-                    ]);
+                    $stint->update(['status' => 'pending']);
                 }
 
                 Log::error('IBT JSON PROCESSING FAILED', [
@@ -1057,28 +1097,12 @@ public function store(Request $request)
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
+                    'skipped_telemetry_laps' => $jsonProcessing['skipped_telemetry_laps'] ?? [],
                 ]);
 
                 $jsonProcessing['generated'] = false;
                 $jsonProcessing['error'] = $e->getMessage();
             }
-
-
-                if ($stint) {
-                    $stint->update([
-                        'status' => 'pending',
-                    ]);
-                }
-
-                $jsonProcessing = [
-                    'generated' => false,
-                    'laps_json' => null,
-                    'session_json' => null,
-                    'valid_laps' => 0,
-                    'error' => $e->getMessage(),
-                ];
-            }
-
 
 
             // ==============================

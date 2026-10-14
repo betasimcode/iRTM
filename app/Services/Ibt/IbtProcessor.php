@@ -2346,7 +2346,18 @@ class IbtProcessor
                 $filePath,
                 $startIndex,
                 $finishIndex,
-                ['SessionTime', 'LapDistPct', 'Speed', 'Gear', 'IsOnTrack', 'OnPitRoad']
+                [
+                    'SessionTime',
+                    'LapDistPct',
+                    'Speed',
+                    'Gear',
+                    'IsOnTrack',
+                    'OnPitRoad',
+                    'Lat',
+                    'Lon',
+                    'Alt',
+                    'Yaw',
+                ]
             ) as $record
         ) {
             if (

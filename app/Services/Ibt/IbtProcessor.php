@@ -2631,6 +2631,10 @@ class IbtProcessor
                         'Gear',
                         'IsOnTrack',
                         'OnPitRoad',
+                        'Lat',
+                        'Lon',
+                        'Alt',
+                        'Yaw',
                     ]
                 ) as $record
             ) {
@@ -2670,11 +2674,30 @@ class IbtProcessor
                     continue;
                 }
 
+                $lat = $record['Lat'] ?? null;
+                $lon = $record['Lon'] ?? null;
+                $alt = $record['Alt'] ?? null;
+                $yaw = $record['Yaw'] ?? null;
+
                 $samples[] = [
                     'lap_dist_pct' => $distance,
                     'session_time' => round($sessionTime, 6),
                     'speed_kph' => round($speed * 3.6, 2),
                     'gear' => (int) $gear,
+                    'position' => [
+                        'lat' => is_numeric($lat) && is_finite((float) $lat)
+                            ? (float) $lat
+                            : null,
+                        'lon' => is_numeric($lon) && is_finite((float) $lon)
+                            ? (float) $lon
+                            : null,
+                        'alt' => is_numeric($alt) && is_finite((float) $alt)
+                            ? (float) $alt
+                            : null,
+                    ],
+                    'yaw' => is_numeric($yaw) && is_finite((float) $yaw)
+                        ? (float) $yaw
+                        : null,
                 ];
             }
 

@@ -373,20 +373,33 @@
     @endphp
 
     @if ($trackMapPath && file_exists($trackMapPath))
-        <div class="w-full max-w-4xl">
-            <object
-                id="telemetry-track-map"
-                data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
-                type="image/svg+xml"
-                class="block w-full h-auto"
-                style="min-height: 320px;"
-                aria-label="Mapa del circuito"
-            >
-                <p class="p-4 text-sm text-[var(--text-muted)]">
-                    No se ha podido cargar el mapa del circuito.
-                </p>
-            </object>
-        </div>
+
+<div
+    id="telemetry-track-canvas"
+    class="relative w-full max-w-4xl"
+>
+    {{-- ELEMENTO 1: SVG ESTÁTICO. NO MODIFICAR --}}
+    <object
+        id="telemetry-track-map"
+        data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
+        type="image/svg+xml"
+        class="block w-full h-auto"
+        style="min-height: 320px;"
+        aria-label="Mapa del circuito"
+    >
+        <p class="p-4 text-sm text-[var(--text-muted)]">
+            No se ha podido cargar el mapa del circuito.
+        </p>
+    </object>
+
+    {{-- ELEMENTO 2: CAPA GPS INDEPENDIENTE --}}
+    <canvas
+        id="telemetry-lap-overlay"
+        class="pointer-events-none absolute inset-0 h-full w-full"
+        aria-label="Trazada GPS de la vuelta"
+    ></canvas>
+</div>
+
     @else
         <div class="py-12 text-center">
             <p class="font-medium text-[var(--text-title)]">

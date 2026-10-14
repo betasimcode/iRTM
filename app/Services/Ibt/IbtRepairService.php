@@ -46,6 +46,64 @@ class IbtRepairService
         try {
             $processor = app(IbtProcessor::class);
 
+            /*
+             * FASE 1: generar y validar primero los metadatos estáticos.
+             * Esta fase debe completarse aunque después falle una vuelta.
+             */
+            Log::info('IBT REPAIR SESSION START', [
+                'stint_id' => $stint->id,
+                'ibt' => $ibtPath,
+                'session_json' => $sessionJsonPath,
+            ]);
+
+            $processor->writeSessionJson(
+                $ibtPath,
+                $sessionJsonPath
+            );
+
+            if (!is_file($sessionJsonPath) || filesize($sessionJsonPath) === 0) {
+                throw new RuntimeException(
+                    'Fase 1 fallida: no se ha generado session.json.'
+                );
+            }
+
+            $sessionJson = json_decode(
+                file_get_contents($sessionJsonPath),
+                true
+            );
+
+            if (!is_array($sessionJson) || json_last_error() !== JSON_ERROR_NONE) {
+                throw new RuntimeException(
+                    'Fase 1 fallida: session.json no contiene JSON válido.'
+                );
+            }
+
+            $sessionTrackId = data_get($sessionJson, 'track.id');
+            $sectorBoundaries = data_get($sessionJson, 'sectors.boundaries_pct');
+
+            if (!is_numeric($sessionTrackId) || (int) $sessionTrackId <= 0) {
+                throw new RuntimeException(
+                    'Fase 1 fallida: session.json no contiene track.id válido.'
+                );
+            }
+
+            if (!is_array($sectorBoundaries) || count($sectorBoundaries) < 3) {
+                throw new RuntimeException(
+                    'Fase 1 fallida: session.json no contiene límites de sector suficientes.'
+                );
+            }
+
+            Log::info('IBT REPAIR SESSION COMPLETE', [
+                'stint_id' => $stint->id,
+                'session_json' => $sessionJsonPath,
+                'track_id' => (int) $sessionTrackId,
+                'sector_boundaries_count' => count($sectorBoundaries),
+                'sector_boundaries_pct' => $sectorBoundaries,
+            ]);
+
+            /*
+             * FASE 2: vueltas y sectores.
+             */
             $lapsPayload = $processor->writeLapsJson(
                 $ibtPath,
                 $lapsJsonPath
@@ -126,14 +184,11 @@ class IbtRepairService
                 );
             }
 
-            $processor->writeSessionJson(
-                $ibtPath,
-                $sessionJsonPath
-            );
-
             if (
                 !is_file($lapsJsonPath)
+                || filesize($lapsJsonPath) === 0
                 || !is_file($sessionJsonPath)
+                || filesize($sessionJsonPath) === 0
             ) {
                 throw new RuntimeException(
                     'No se han generado los JSON principales.'

@@ -1112,6 +1112,39 @@ class IbtProcessor
             : null;
 
         /*
+         * --------------------------------------------------------------
+         * LÍMITES ESTÁTICOS DE SECTOR
+         *
+         * Se conservan los porcentajes normalizados del IBT.
+         * Si el IBT no contiene límites válidos, la sesión sigue
+         * pudiendo procesarse y la vista mostrará que no hay datos.
+         * --------------------------------------------------------------
+         */
+        try {
+            $sectorBoundaries = $this->extractSectorBoundaries(
+                $filePath
+            );
+        } catch (\RuntimeException $e) {
+            $sectorBoundaries = [];
+        }
+
+        $sectorSegments = [];
+
+        for (
+            $i = 0;
+            $i < count($sectorBoundaries) - 1;
+            $i++
+        ) {
+            $sectorSegments[] = [
+                'number' => $i + 1,
+                'label' => 'S' . ($i + 1),
+                'start_pct' => $sectorBoundaries[$i],
+                'end_pct' => $sectorBoundaries[$i + 1],
+            ];
+        }
+
+
+        /*
         * Construcción del JSON normalizado.
         */
         $payload = [
@@ -1163,6 +1196,12 @@ class IbtProcessor
                 'direction' => $text(
                     $weekend['TrackDirection'] ?? null
                 ),
+            ],
+
+            'sectors' => [
+                'boundaries_pct' => $sectorBoundaries,
+                'segments' => $sectorSegments,
+                'count' => count($sectorSegments),
             ],
 
             'session' => [

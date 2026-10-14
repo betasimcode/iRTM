@@ -1,10 +1,10 @@
-@extends('layouts.app')
+@extends('layouts.telemetry')
 
 
 
-@section('title', 'Telemetría de vuelta')
+@section('title', 'Telemetry')
 
-@section('page-title', 'Telemetría')
+@section('page-title', 'Telemetry from stint #'  .  $stint->id)
 
 
 
@@ -34,220 +34,12 @@
 
     }"
 
-    class="space-y-4"
+    class="space-y-3"
 
 >
-
-
-
 
 
 {{-- SELECTOR DE STINT Y VUELTA --}}
-
-<section
-
-    class="rounded-xl border border-[var(--border)]
-
-           bg-[var(--card)] p-4"
-
->
-
-    <form
-
-        method="GET"
-
-        action="{{ route('telemetry.lap') }}"
-
-        class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]"
-
-    >
-
-        <div>
-
-            <label
-
-                for="stint"
-
-                class="mb-1 block text-xs text-[var(--text-muted)]"
-
-            >
-
-                Stint
-
-            </label>
-
-
-
-            <select
-
-                id="stint"
-
-                name="stint"
-
-                onchange="this.form.submit()"
-
-                class="w-full rounded-lg border border-[var(--border)]
-
-                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
-
-            >
-
-                <option value="">Seleccionar stint…</option>
-
-
-
-                @foreach ($stints as $item)
-
-                    <option
-
-                        value="{{ $item->id }}"
-
-                        @selected($stint?->id === $item->id)
-
-                    >
-
-                        #{{ $item->id }}
-
-                        — {{ $item->track?->display_name
-
-                            ?? $item->track?->name
-
-                            ?? 'Circuito no disponible' }}
-
-                        — {{ $item->created_at?->format('d/m/Y H:i') }}
-
-                    </option>
-
-                @endforeach
-
-            </select>
-
-        </div>
-
-
-
-        <div>
-
-            <label
-
-                for="lap"
-
-                class="mb-1 block text-xs text-[var(--text-muted)]"
-
-            >
-
-                Vuelta
-
-            </label>
-
-
-
-            <select
-
-                id="lap"
-
-                name="lap"
-
-                class="w-full rounded-lg border border-[var(--border)]
-
-                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
-
-                @disabled(!$stint || count($laps) === 0)
-
-            >
-
-                @forelse ($laps as $lap)
-
-                @php
-
-                    $lapNumber = (int) (
-
-                        $lap['candidate_lap'] ?? $lap['lap'] ?? 0
-
-                    );
-
-                @endphp
-
-
-
-                <option
-
-                    value="{{ $lapNumber }}"
-
-                    @selected(
-
-                        (int) ($selectedLapNumber ?? 0) === $lapNumber
-
-                    )
-
-                >
-
-                    Vuelta {{ $lapNumber }}
-
-                    — {{ isset($lap['lap_time'])
-
-                        ? gmdate('i:s.', (int) $lap['lap_time'])
-
-                            . str_pad(
-
-                                (string) (int) (
-
-                                    ($lap['lap_time'] - floor($lap['lap_time']))
-
-                                    * 1000
-
-                                ),
-
-                                3,
-
-                                '0',
-
-                                STR_PAD_LEFT
-
-                            )
-
-                        : '--:--.---' }}
-
-                </option>
-
-            @empty
-
-                <option value="">Sin vueltas disponibles</option>
-
-            @endforelse
-
-            </select>
-
-        </div>
-
-
-
-        <div class="flex items-end">
-
-            <button
-
-                type="submit"
-
-                class="w-full rounded-lg bg-[var(--accent)]
-
-                       px-4 py-2 text-sm font-medium text-white
-
-                       transition hover:opacity-90"
-
-            >
-
-                Cargar vuelta
-
-            </button>
-
-        </div>
-
-    </form>
-
-</section>
-
-
-
 
 
     {{-- HEADER --}}
@@ -256,7 +48,7 @@
 
         class="rounded-xl border border-[var(--border)]
 
-               bg-[var(--card)] p-4 sm:p-5"
+               bg-[var(--card)] p-3 my-0"
 
     >
 
@@ -342,7 +134,7 @@
 
     {{-- TOOLS + TRACK MAP --}}
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[270px_minmax(0,1fr)]">
 
 
 
@@ -360,13 +152,182 @@
 
                        text-[var(--text-title)]">
 
-                Tools
+                lap config
 
             </h2>
 
+            <div class="space-y-3 mb-3">
 
 
-            <div class="space-y-3">
+<form
+
+        method="GET"
+
+        action="{{ route('telemetry.lap') }}"
+
+        class="gap-3"
+
+    >
+
+        <div class="mb-2">
+
+
+            <select
+
+                id="stint"
+
+                name="stint"
+
+                onchange="this.form.submit()"
+
+                class="w-full rounded-lg border border-[var(--border)]
+
+                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
+
+            >
+
+                <option value="">Seleccionar stint…</option>
+
+
+
+                @foreach ($stints as $item)
+
+                    <option
+
+                        value="{{ $item->id }}"
+
+                        @selected($stint?->id === $item->id)
+
+                    >
+
+                        #{{ $item->id }}
+
+                        — {{ $item->track?->display_name
+
+                            ?? $item->track?->name
+
+                            ?? 'Circuito no disponible' }}
+
+                        — {{ $item->created_at?->format('d/m/Y H:i') }}
+
+                    </option>
+
+                @endforeach
+
+            </select>
+
+        </div>
+
+
+
+        <div class="mb-2">
+
+
+            <select
+
+                id="lap"
+
+                name="lap"
+
+                class="w-full rounded-lg border border-[var(--border)]
+
+                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
+
+                @disabled(!$stint || count($laps) === 0)
+
+            >
+
+                @forelse ($laps as $lap)
+
+                @php
+
+                    $lapNumber = (int) (
+
+                        $lap['candidate_lap'] ?? $lap['lap'] ?? 0
+
+                    );
+
+                @endphp
+
+
+
+                <option
+
+                    value="{{ $lapNumber }}"
+
+                    @selected(
+
+                        (int) ($selectedLapNumber ?? 0) === $lapNumber
+
+                    )
+
+                >
+
+                    Vuelta {{ $lapNumber }}
+
+                    — {{ isset($lap['lap_time'])
+
+                        ? gmdate('i:s.', (int) $lap['lap_time'])
+
+                            . str_pad(
+
+                                (string) (int) (
+
+                                    ($lap['lap_time'] - floor($lap['lap_time']))
+
+                                    * 1000
+
+                                ),
+
+                                3,
+
+                                '0',
+
+                                STR_PAD_LEFT
+
+                            )
+
+                        : '--:--.---' }}
+
+                </option>
+
+            @empty
+
+                <option value="">Sin vueltas disponibles</option>
+
+            @endforelse
+
+            </select>
+
+        </div>
+
+        <div class="flex items-end mb-4">
+
+            <button
+
+                type="submit"
+
+                class="w-full rounded-lg bg-[var(--accent)]
+
+                       px-4 py-2 text-sm font-medium text-white
+
+                       transition hover:opacity-90"
+
+            >
+
+                Cargar vuelta
+
+            </button>
+
+        </div>
+        <div class="my-6 divide-y-2 divide-solid divide-[var(--border)]"></div>
+
+    </form>
+
+
+            </div>
+
+            <div class="space-y-3 mt-2">
 
 
 
@@ -1193,11 +1154,18 @@
 
         const calibrations = {
             "266": {
-                scale: 1.01,
-                rotation_deg: 1,
-                offset_x_pct: -0.2,
-                offset_y_pct: 0.2,
+                scale: 0.98,
+                rotation_deg: 187.8,
+                offset_x_pct: 0.1,
+                offset_y_pct: 0.85,
             },
+            "179": {
+                scale: 0.98,
+                rotation_deg: -0.9,
+                offset_x_pct: 0.1,
+                offset_y_pct: 9.2,
+            },
+
         };
 
 

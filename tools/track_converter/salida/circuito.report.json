@@ -1,0 +1,53 @@
+{
+  "converter_version": "0.3.0",
+  "filled_surface": "polygon between aligned traces, closed cyclically",
+  "inputs": [
+    "borde_izquierdo.json",
+    "borde_derecho.json"
+  ],
+  "lap_metadata": [
+    {
+      "lap": 2,
+      "candidate_lap": 3,
+      "lap_time_s": 214.18150329589844,
+      "valid_gps_points": 12849,
+      "skipped_samples": 0
+    },
+    {
+      "lap": 1,
+      "candidate_lap": 1,
+      "lap_time_s": 216.6414031982422,
+      "valid_gps_points": 12998,
+      "skipped_samples": 0
+    }
+  ],
+  "projection": "local equirectangular (meters)",
+  "sample_count": 3000,
+  "smoothing_window": 5,
+  "separation_m": {
+    "min": 9.390788952968153,
+    "p10": 9.797888891940675,
+    "median": 10.378414619137544,
+    "p90": 13.035310693131786,
+    "max": 15.432311269455425
+  },
+  "raw_progress_range": [
+    {
+      "min": 6.0533700889209285e-05,
+      "max": 0.9998132586479187
+    },
+    {
+      "min": 0.0001558607182232663,
+      "max": 0.999923050403595
+    }
+  ],
+  "seam_chord_m": {
+    "lap1_sorted_end_to_start": 1.217258864056368,
+    "lap2_sorted_end_to_start": 1.116917874184531
+  },
+  "warnings": [
+    "No se genera ni se dibuja línea central: la superficie se define solo por los dos bordes.",
+    "La interpolación cíclica puede atravesar un hueco de GPS en la línea de meta; revisar visualmente el cierre.",
+    "No se ha inferido el borde real ni el ancho reglamentario de la pista."
+  ]
+}

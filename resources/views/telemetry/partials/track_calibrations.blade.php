@@ -1,9 +1,9 @@
         const calibrations = {
             "266": {
-                scale: 0.98,
-                rotation_deg: 187.8,
-                offset_x_pct: 0.0,
-                offset_y_pct: 0.99,
+                scale: 1.068,
+                rotation_deg: 0,
+                offset_x_pct: 0,
+                offset_y_pct: 0,
             },
             "179": {
                 scale: 0.745,

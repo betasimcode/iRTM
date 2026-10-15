@@ -30,19 +30,9 @@
 
                 </div>
 
+@include('telemetry.partials.main_telemetry')
 
-
-                <span
-
-                    class="rounded-md border border-[var(--border)]
-
-                           px-2 py-1 text-xs text-[var(--text-muted)]"
-
-                >
-
-                    Sin datos
-
-                </span>
+@include('telemetry.partials.zoom_control')
 
             </header>
 

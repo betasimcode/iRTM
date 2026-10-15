@@ -8,33 +8,6 @@
 
 <div class="flex flex-1 flex-col gap-2 bg-gray-500 p-4 sm:p-6">
     @if ($trackMapPath && file_exists($trackMapPath))
-        <div class="flex flex-wrap items-center justify-end gap-2"
-             aria-label="Controles de navegación del mapa">
-            <button type="button"
-                id="telemetry-map-zoom-out"
-                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]"
-                aria-label="Alejar mapa">−</button>
-
-            <output id="telemetry-map-zoom-level"
-                class="min-w-14 text-center font-mono text-xs text-[var(--text-muted)]"
-                aria-live="polite">100%</output>
-
-            <button type="button"
-                id="telemetry-map-zoom-in"
-                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]"
-                aria-label="Acercar mapa">+</button>
-
-            <button type="button"
-                id="telemetry-map-reset"
-                class="rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
-                Restablecer vista
-            </button>
-
-            <span class="text-xs text-[var(--text-muted)]">
-                Rueda: zoom · Arrastrar: mover
-            </span>
-        </div>
-
         <div id="telemetry-track-viewport"
             class="relative w-full overflow-hidden rounded-lg"
             style="height: 480px; min-height: 320px; cursor: grab; touch-action: none;"

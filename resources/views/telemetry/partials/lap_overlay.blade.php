@@ -231,11 +231,11 @@
                 };
             });
 
-            context.lineWidth = 1.0;
+            context.lineWidth = 0.5;
             context.lineJoin = 'round';
             context.lineCap = 'round';
             context.imageSmoothingEnabled = true;
-            context.strokeStyle = '#00e5ff';
+            context.strokeStyle = '#ff0000';
             context.beginPath();
 
             drawPoints.forEach((point, index) => {

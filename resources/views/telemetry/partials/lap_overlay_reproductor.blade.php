@@ -27,6 +27,128 @@
         const progressLabel = document.getElementById('telemetry-lap-progress-label');
         const speedSelect = document.getElementById('telemetry-lap-speed');
 
+
+        // Presets de color para las trazadas.
+        const lapColorPresets = [
+            { name: 'Cian', value: '#00E5FF' },
+            { name: 'Naranja', value: '#FFB454' },
+            { name: 'Violeta', value: '#A78BFA' },
+            { name: 'Verde', value: '#4ADE80' },
+            { name: 'Rosa', value: '#FB7185' },
+            { name: 'Amarillo', value: '#FACC15' },
+        ];
+
+        const lapSelector = document.getElementById('lap');
+        const lapColorTrigger = document.getElementById('lap-color-trigger');
+        const lapColorPreview = document.getElementById('lap-color-preview');
+
+        // Conserva los cambios manuales mientras permanezca activa la página.
+        const manualLapColors = new Map();
+
+        const getSelectedLapKey = () => lapSelector?.value ?? '';
+
+        const getAutomaticLapColor = () => {
+            const index = lapSelector?.selectedIndex ?? 0;
+            return lapColorPresets[
+                Math.max(0, index) % lapColorPresets.length
+            ].value;
+        };
+
+        const getActiveLapColor = () => {
+            const key = getSelectedLapKey();
+            return manualLapColors.get(key) ?? getAutomaticLapColor();
+        };
+
+        const updateLapColorPreview = () => {
+            if (lapColorPreview) {
+                lapColorPreview.style.backgroundColor = getActiveLapColor();
+            }
+
+            if (lapColorTrigger) {
+                lapColorTrigger.title =
+                    `Color de trazada: ${lapColorPresets.find(
+                        color => color.value === getActiveLapColor()
+                    )?.name ?? 'Personalizado'}`;
+            }
+        };
+
+
+
+        if (lapColorTrigger && lapColorPreview) {
+            const colorContainer = lapColorTrigger.parentElement;
+
+            if (colorContainer) {
+                colorContainer.style.position = 'relative';
+
+                const colorMenu = document.createElement('div');
+
+                colorMenu.id = 'lap-color-menu';
+                colorMenu.className =
+                    'absolute right-0 top-full z-50 mt-2 hidden ' +
+                    'min-w-40 rounded-lg border border-[var(--border)] ' +
+                    'bg-[var(--panel)] p-2 shadow-xl';
+
+                colorMenu.setAttribute('role', 'group');
+                colorMenu.setAttribute('aria-label', 'Color de trazada');
+
+                lapColorPresets.forEach(preset => {
+                    const option = document.createElement('button');
+
+                    option.type = 'button';
+                    option.className =
+                        'flex w-full items-center gap-2 rounded-md ' +
+                        'px-3 py-2 text-left text-sm hover:bg-white/10';
+
+                    option.innerHTML = `
+                        <span style="
+                            display:inline-block;
+                            width:16px;
+                            height:16px;
+                            border-radius:50%;
+                            background:${preset.value};
+                            flex-shrink:0;
+                        "></span>
+                        <span>${preset.name}</span>
+                    `;
+
+                    option.addEventListener('click', () => {
+                        const key = getSelectedLapKey();
+
+                        if (!key) return;
+
+                        manualLapColors.set(key, preset.value);
+                        updateLapColorPreview();
+                        colorMenu.classList.add('hidden');
+                        drawOverlay();
+                    });
+
+                    colorMenu.appendChild(option);
+                });
+
+                colorContainer.appendChild(colorMenu);
+
+                lapColorTrigger.addEventListener('click', event => {
+                    event.stopPropagation();
+                    colorMenu.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', event => {
+                    if (!colorContainer.contains(event.target)) {
+                        colorMenu.classList.add('hidden');
+                    }
+                });
+
+                lapSelector?.addEventListener('change', () => {
+                    updateLapColorPreview();
+                    drawOverlay();
+                });
+            }
+        }
+
+        updateLapColorPreview();
+
+
+
         const defaultCalibration = {
             scale: 1,
             rotation_deg: 0,
@@ -61,6 +183,61 @@
         }));
 
         const context = canvas.getContext('2d');
+
+                // Silueta SVG del vehículo, vista desde arriba y con el frontal hacia arriba.
+        const vehicleSvg = new Image();
+
+        vehicleSvg.onload = () => {
+            drawOverlay();
+        };
+
+@include('telemetry.partials.formula')
+
+        // vehicleSvg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+        //     <svg xmlns="http://www.w3.org/2000/svg"
+        //          width="64" height="112" viewBox="0 0 64 112">
+        //         <path d="
+        //             M20 5
+        //             Q32 -1 44 5
+        //             L51 21
+        //             L57 42
+        //             L55 83
+        //             L48 104
+        //             Q32 113 16 104
+        //             L9 83
+        //             L7 42
+        //             L13 21 Z"
+        //             fill="#f8fafc"
+        //             stroke="#111827"
+        //             stroke-width="3"/>
+        //         <path d="
+        //             M17 26
+        //             Q32 19 47 26
+        //             L44 43
+        //             L20 43 Z"
+        //             fill="#334155"
+        //             stroke="#111827"
+        //             stroke-width="2"/>
+        //         <path d="
+        //             M20 49 L44 49
+        //             L46 75 L18 75 Z"
+        //             fill="#64748b"
+        //             stroke="#111827"
+        //             stroke-width="2"/>
+        //         <path d="M23 10 L41 10 L45 17 L19 17 Z"
+        //             fill="#00e5ff"/>
+        //         <path d="M20 88 L44 88 L40 101 L24 101 Z"
+        //             fill="#334155"/>
+        //         <path d="M10 27 L15 25 L18 39 L12 41 Z"
+        //             fill="#111827"/>
+        //         <path d="M54 27 L49 25 L46 39 L52 41 Z"
+        //             fill="#111827"/>
+        //         <path d="M10 76 L16 77 L14 91 L8 89 Z"
+        //             fill="#111827"/>
+        //         <path d="M54 76 L48 77 L50 91 L56 89 Z"
+        //             fill="#111827"/>
+        //     </svg>
+        // `);
 
         if (!context || points.length < 2) {
             console.warn('[GPS overlay] No hay suficientes posiciones válidas.', {
@@ -264,20 +441,20 @@
             context.lineCap = 'round';
             context.imageSmoothingEnabled = true;
 
-            // Trazada completa atenuada como referencia.
-            context.lineWidth = 1.25;
-            context.strokeStyle = 'rgba(0, 229, 255, 0.22)';
-            context.beginPath();
-            drawPoints.forEach((point, index) => {
-                if (index === 0) context.moveTo(point.x, point.y);
-                else context.lineTo(point.x, point.y);
-            });
-            context.stroke();
+            // // Trazada completa atenuada como referencia.
+            // context.lineWidth = 1.25;
+            // context.strokeStyle = 'rgba(0, 229, 255, 0.22)';
+            // context.beginPath();
+            // drawPoints.forEach((point, index) => {
+            //     if (index === 0) context.moveTo(point.x, point.y);
+            //     else context.lineTo(point.x, point.y);
+            // });
+            // context.stroke();
 
-            // Tramo ya recorrido, dibujado en cian brillante.
+            // Trazada de la vuelta con su color asignado.
             const completedIndex = Math.floor(playbackIndex);
-            context.lineWidth = 2;
-            context.strokeStyle = '#00e5ff';
+            context.lineWidth = 0.5;
+            context.strokeStyle = getActiveLapColor();
             context.beginPath();
             context.moveTo(drawPoints[0].x, drawPoints[0].y);
             for (let index = 1; index <= completedIndex && index < drawPoints.length; index++) {
@@ -309,15 +486,45 @@
             context.arc(drawPoints[drawPoints.length - 1].x, drawPoints[drawPoints.length - 1].y, 3.5, 0, Math.PI * 2);
             context.fill();
 
-            context.fillStyle = '#ffffff';
-            context.beginPath();
-            context.arc(currentPoint.x, currentPoint.y, 6, 0, Math.PI * 2);
-            context.fill();
-            context.strokeStyle = '#00e5ff';
-            context.lineWidth = 2;
-            context.beginPath();
-            context.arc(currentPoint.x, currentPoint.y, 6, 0, Math.PI * 2);
-            context.stroke();
+                        // Vehículo orientado según la dirección de avance en el mapa.
+            const headingStart = drawPoints[
+                Math.min(completedIndex, drawPoints.length - 2)
+            ];
+
+            const headingEnd = drawPoints[
+                Math.min(completedIndex + 1, drawPoints.length - 1)
+            ];
+
+            const headingAngle = Math.atan2(
+                headingEnd.y - headingStart.y,
+                headingEnd.x - headingStart.x
+            );
+
+            // El frontal del SVG apunta hacia arriba.
+            const vehicleAngle = headingAngle - Math.PI / 2;
+
+            if (vehicleSvg.complete && vehicleSvg.naturalWidth > 0) {
+                context.save();
+
+                context.translate(currentPoint.x, currentPoint.y);
+                context.rotate(vehicleAngle);
+
+                context.drawImage(
+                    vehicleSvg,
+                    -2.45,
+                    -5,
+                    5,
+                    8
+                );
+
+                context.restore();
+            } else {
+                // Marcador provisional mientras se carga el SVG.
+                context.fillStyle = '#ffffff';
+                context.beginPath();
+                context.arc(currentPoint.x, currentPoint.y, 4, 0, Math.PI * 2);
+                context.fill();
+            }
         };
 
         const updatePlaybackControls = () => {

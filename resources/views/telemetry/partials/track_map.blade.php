@@ -302,22 +302,15 @@
 
             >
 
-                <button
-
+               <button
+                    id="telemetry-toggle-sectors"
                     type="button"
-
                     @click="layers.sectors = !layers.sectors"
-
                     :aria-pressed="layers.sectors"
-
                     class="rounded-lg border px-3 py-2 text-sm transition"
-
                     :class="layers.sectors
-
                         ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-
                         : 'border-[var(--border)] text-[var(--text)]'"
-
                 >
 
                     <span x-text="layers.sectors ? '✓ ' : ''"></span>

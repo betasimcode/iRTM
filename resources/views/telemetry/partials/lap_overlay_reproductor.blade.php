@@ -1,17 +1,45 @@
 
 <script>
 (() => {
+    console.info('[LapOverlay] Script cargado');
+
     const initLapOverlay = () => {
+        console.info('[LapOverlay] Inicializando');
+
         const viewport = document.getElementById('telemetry-track-viewport');
         const container = document.getElementById('telemetry-track-canvas');
         const canvas = document.getElementById('telemetry-lap-overlay');
         const mapObject = document.getElementById('telemetry-track-map');
 
-        if (!viewport || !container || !canvas || !mapObject) return;
-        if (viewport.dataset.mapNavigationReady === '1') return;
+        console.info('[LapOverlay] Elementos', {
+            viewport: !!viewport,
+            container: !!container,
+            canvas: !!canvas,
+            mapObject: !!mapObject,
+        });
+
+        if (!viewport || !container || !canvas || !mapObject) {
+            console.warn('[LapOverlay] Faltan elementos del mapa');
+            return;
+        }
+
+        if (viewport.dataset.mapNavigationReady === '1') {
+            console.info('[LapOverlay] Ya estaba inicializado');
+            return;
+        }
+
         viewport.dataset.mapNavigationReady = '1';
 
         const samples = @js($lapTelemetry ?? []);
+        const sectorSegments = @js(
+            $sessionData['sectors']['segments'] ?? []
+        );
+
+        console.info('[LapOverlay] Datos recibidos', {
+            samples: samples.length,
+            sectorSegments,
+        });
+
         const trackId = String(viewport.dataset.trackId);
 
         const zoomInButton = document.getElementById('telemetry-map-zoom-in');
@@ -475,6 +503,139 @@
             }
             context.stroke();
 
+// Capa independiente: referencias de sectores.
+if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
+    context.save();
+
+    context.font = 'bold 11px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.lineCap = 'round';
+
+    const validPctIndices = points
+        .map((point, index) => ({
+            index,
+            pct: point.lapDistPct,
+        }))
+        .filter(item =>
+            Number.isFinite(item.pct) &&
+            item.pct >= 0 &&
+            item.pct <= 1
+        );
+
+    sectorSegments.forEach((sector, sectorIndex) => {
+        const targetPct = Number(sector.start_pct);
+
+        if (
+            !Number.isFinite(targetPct) ||
+            targetPct < 0 ||
+            targetPct >= 1
+        ) {
+            return;
+        }
+
+        if (validPctIndices.length === 0) {
+            console.warn(
+                '[Sectores] No hay muestras con lap_dist_pct válido.'
+            );
+            return;
+        }
+
+        // Buscar la muestra más cercana al porcentaje del sector.
+        let nearest = validPctIndices[0];
+
+        for (const candidate of validPctIndices) {
+            if (
+                Math.abs(candidate.pct - targetPct) <
+                Math.abs(nearest.pct - targetPct)
+            ) {
+                nearest = candidate;
+            }
+        }
+
+        const index = nearest.index;
+
+        // Necesitamos un punto anterior y otro posterior para
+        // calcular la dirección local de la trazada.
+        if (index <= 0 || index >= drawPoints.length - 1) {
+            return;
+        }
+
+        const previous = drawPoints[index - 1];
+        const current = drawPoints[index];
+        const next = drawPoints[index + 1];
+
+        // Tangente local centrada en la muestra seleccionada.
+        const dx = next.x - previous.x;
+        const dy = next.y - previous.y;
+        const length = Math.hypot(dx, dy);
+
+        if (length < 0.001) return;
+
+        // Perpendicular a la dirección de marcha.
+        const normalX = -dy / length;
+        const normalY = dx / length;
+
+        const halfLength = 12;
+        const x1 = current.x - normalX * halfLength;
+        const y1 = current.y - normalY * halfLength;
+        const x2 = current.x + normalX * halfLength;
+        const y2 = current.y + normalY * halfLength;
+
+        const label = sector.label || `S${sectorIndex + 1}`;
+
+        // Línea con contorno para que destaque sobre el mapa.
+        context.lineWidth = 4;
+        context.strokeStyle = '#111827';
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+
+        context.lineWidth = 2;
+        context.strokeStyle = '#facc15';
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+
+        // Etiqueta del sector.
+        const labelX = current.x + normalX * 22;
+        const labelY = current.y + normalY * 22;
+        const boxWidth = context.measureText(label).width + 10;
+        const boxHeight = 18;
+
+        context.fillStyle = '#111827';
+        context.fillRect(
+            labelX - boxWidth / 2,
+            labelY - boxHeight / 2,
+            boxWidth,
+            boxHeight
+        );
+
+        context.strokeStyle = '#facc15';
+        context.lineWidth = 1;
+        context.strokeRect(
+            labelX - boxWidth / 2,
+            labelY - boxHeight / 2,
+            boxWidth,
+            boxHeight
+        );
+
+        context.fillStyle = '#ffffff';
+        context.fillText(label, labelX, labelY);
+
+        console.debug('[Sectores] Referencia dibujada', {
+            sector: label,
+            targetPct,
+            actualPct: nearest.pct,
+            sampleIndex: index,
+        });
+    });
+
+    context.restore();
+}
+
             // Inicio, final y posición actual.
             context.fillStyle = '#22c55e';
             context.beginPath();
@@ -527,10 +688,86 @@
             }
         };
 
+        // Indicadores de telemetría sincronizados con el reproductor.
+        const gearDisplay = document.getElementById('telemetry-current-gear');
+        const speedDisplay = document.getElementById('telemetry-current-speed');
+        const lapTimeDisplay = document.getElementById('telemetry-current-lap-time');
+
+        const formatLapTime = milliseconds => {
+            const safeMs = Math.max(0, Math.floor(milliseconds));
+            const minutes = Math.floor(safeMs / 60000);
+            const seconds = Math.floor((safeMs % 60000) / 1000);
+            const ms = safeMs % 1000;
+
+            return `${String(minutes).padStart(2, '0')}:` +
+                `${String(seconds).padStart(2, '0')}.` +
+                `${String(ms).padStart(3, '0')}`;
+        };
+
+        const updateTelemetryIndicators = () => {
+            if (!validSamples.length) return;
+
+            const index = Math.min(
+                Math.floor(playbackIndex),
+                validSamples.length - 1
+            );
+
+            const nextIndex = Math.min(index + 1, validSamples.length - 1);
+            const fraction = playbackIndex - index;
+
+            const currentSample = validSamples[index];
+            const nextSample = validSamples[nextIndex];
+
+            // La marcha es discreta: no interpolamos entre engranajes.
+            if (gearDisplay) {
+                gearDisplay.textContent =
+                    currentSample.gear != null
+                        ? String(currentSample.gear)
+                        : '—';
+            }
+
+            // La velocidad se interpola para acompañar el movimiento del coche.
+            const speed1 = Number(currentSample.speed_kph);
+            const speed2 = Number(nextSample.speed_kph);
+
+            if (speedDisplay) {
+                speedDisplay.textContent =
+                    Number.isFinite(speed1) && Number.isFinite(speed2)
+                        ? (
+                            speed1 + (speed2 - speed1) * fraction
+                        ).toFixed(0)
+                        : '—';
+            }
+
+            // Tiempo transcurrido desde la primera muestra de la vuelta.
+            const time1 = Number(currentSample.session_time);
+            const time2 = Number(nextSample.session_time);
+            const startTime = Number(validSamples[0].session_time);
+
+            if (
+                lapTimeDisplay &&
+                Number.isFinite(time1) &&
+                Number.isFinite(time2) &&
+                Number.isFinite(startTime)
+            ) {
+                const currentSessionTime =
+                    time1 + (time2 - time1) * fraction;
+
+                lapTimeDisplay.textContent = formatLapTime(
+                    (currentSessionTime - startTime) * 1000
+                );
+            } else if (lapTimeDisplay) {
+                lapTimeDisplay.textContent = '—';
+            }
+        };
+
+
         const updatePlaybackControls = () => {
             const percent = playbackIndex / Math.max(1, points.length - 1) * 100;
             if (progressSlider) progressSlider.value = String(percent);
             if (progressLabel) progressLabel.textContent = `${Math.round(percent)}%`;
+
+                      updateTelemetryIndicators();
         };
 
         const stopPlayback = () => {
@@ -602,6 +839,7 @@
             }
 
             drawOverlay();
+
         };
 
 

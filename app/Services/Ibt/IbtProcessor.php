@@ -2429,6 +2429,233 @@ class IbtProcessor
         return $samples;
     }
 
+
+
+     /**
+     * Exporta la telemetría RAW agrupada por vuelta en un único JSON.
+     *
+     * No exige cruces de meta ni valida que las vueltas estén completas.
+     * Mantiene en memoria únicamente las muestras de la vuelta actual.
+     */
+    public function writeRawLapTelemetryJson(
+        string $filePath,
+        string $outputPath
+    ): array {
+        if (!is_file($filePath)) {
+            throw new \RuntimeException("IBT no encontrado: {$filePath}");
+        }
+
+        $directory = dirname($outputPath);
+
+        if (
+            !is_dir($directory) &&
+            !mkdir($directory, 0775, true) &&
+            !is_dir($directory)
+        ) {
+            throw new \RuntimeException(
+                "No se pudo crear el directorio: {$directory}"
+            );
+        }
+
+        $temporaryPath = $outputPath . '.partial';
+        $handle = fopen($temporaryPath, 'wb');
+
+        if ($handle === false) {
+            throw new \RuntimeException(
+                "No se pudo crear el JSON RAW: {$temporaryPath}"
+            );
+        }
+
+        $recordCount = 0;
+        $lapCount = 0;
+        $currentCandidateLap = null;
+        $currentLapCompleted = null;
+        $samples = [];
+        $isPitLap = false;
+
+        $write = static function ($handle, string $content): void {
+            $length = strlen($content);
+            $written = 0;
+
+            while ($written < $length) {
+                $result = fwrite($handle, substr($content, $written));
+                if ($result === false || $result === 0) {
+                    throw new \RuntimeException(
+                        'Error escribiendo el JSON RAW.'
+                    );
+                }
+                $written += $result;
+            }
+        };
+
+        $flushLap = function () use (
+            &$samples,
+            &$currentCandidateLap,
+            &$currentLapCompleted,
+            &$isPitLap,
+            &$lapCount,
+            $handle,
+            $write
+        ): void {
+            if ($currentCandidateLap === null || empty($samples)) {
+                return;
+            }
+
+            $speeds = array_column($samples, 'speed_kph');
+            $gearsObserved = array_values(array_unique(
+                array_column($samples, 'gear')
+            ));
+            sort($gearsObserved, SORT_NUMERIC);
+
+            $movingSpeeds = array_values(array_filter(
+                $speeds,
+                static fn ($speed) => $speed >= 5
+            ));
+            $gearsUsed = array_values(array_filter(
+                $gearsObserved,
+                static fn ($gear) => $gear > 0
+            ));
+
+            $payload = [
+                'format_version' => 2,
+                'lap' => $currentLapCompleted,
+                'candidate_lap' => $currentCandidateLap,
+                'lap_time' => null,
+                'is_pit_lap' => $isPitLap,
+                'sample_count' => count($samples),
+                'metrics' => [
+                    'speed_min_kph' => min($speeds),
+                    'speed_max_kph' => max($speeds),
+                    'speed_min_moving_kph' => empty($movingSpeeds)
+                        ? null
+                        : min($movingSpeeds),
+                    'gears_used' => $gearsUsed,
+                    'gears_observed' => $gearsObserved,
+                ],
+                'samples' => $samples,
+            ];
+
+            $json = json_encode(
+                $payload,
+                JSON_PRETTY_PRINT
+                | JSON_UNESCAPED_UNICODE
+                | JSON_UNESCAPED_SLASHES
+                | JSON_THROW_ON_ERROR
+            );
+
+            if ($lapCount > 0) {
+                $write($handle, ',');
+            }
+
+            $write($handle, $json);
+            $lapCount++;
+            $samples = [];
+        };
+
+        try {
+            $write($handle, "{\"format_version\":2,\"mode\":\"raw\",\"laps\":[");
+
+            $variables = [
+                'Lap', 'LapCompleted',
+                'LapDistPct', 'SessionTime', 'Speed', 'Gear',
+                'Lat', 'Lon', 'Alt', 'Yaw', 'OnPitRoad',
+            ];
+
+            foreach ($this->streamRecords($filePath, $variables) as $record) {
+                $candidateLap = isset($record['Lap'])
+                    ? (int) $record['Lap']
+                    : 0;
+                $lapCompleted = isset($record['LapCompleted'])
+                    ? (int) $record['LapCompleted']
+                    : null;
+
+                if (
+                    $currentCandidateLap !== null
+                    && $candidateLap !== $currentCandidateLap
+                ) {
+                    $flushLap();
+                    $currentCandidateLap = null;
+                    $currentLapCompleted = null;
+                    $isPitLap = false;
+                }
+
+                if ($currentCandidateLap === null) {
+                    $currentCandidateLap = $candidateLap;
+                    $currentLapCompleted = $lapCompleted;
+                }
+
+                $distance = $record['LapDistPct'] ?? null;
+                $sessionTime = $record['SessionTime'] ?? null;
+                $speed = $record['Speed'] ?? null;
+                $gear = $record['Gear'] ?? null;
+                $lat = $record['Lat'] ?? null;
+                $lon = $record['Lon'] ?? null;
+                $alt = $record['Alt'] ?? null;
+                $yaw = $record['Yaw'] ?? null;
+
+                $samples[] = [
+                    'lap_dist_pct' => is_numeric($distance)
+                        ? (float) $distance : null,
+                    'session_time' => is_numeric($sessionTime)
+                        ? (float) $sessionTime : null,
+                    'speed_kph' => is_numeric($speed)
+                        ? round((float) $speed * 3.6, 2) : null,
+                    'gear' => is_numeric($gear) ? (int) $gear : null,
+                    'position' => [
+                        'lat' => is_numeric($lat) ? (float) $lat : null,
+                        'lon' => is_numeric($lon) ? (float) $lon : null,
+                        'alt' => is_numeric($alt) ? (float) $alt : null,
+                    ],
+                    'yaw' => is_numeric($yaw) ? (float) $yaw : null,
+                ];
+
+                if ((bool) ($record['OnPitRoad'] ?? false)) {
+                    $isPitLap = true;
+                }
+
+
+                $recordCount++;
+            }
+
+            $flushLap();
+            $write($handle, "]}\n");
+
+            if (!fflush($handle)) {
+                throw new \RuntimeException(
+                    'No se pudo vaciar el buffer del JSON RAW.'
+                );
+            }
+        } catch (\Throwable $e) {
+            fclose($handle);
+            if (is_file($temporaryPath)) {
+                @unlink($temporaryPath);
+            }
+            throw $e;
+        }
+
+        fclose($handle);
+
+        if (!rename($temporaryPath, $outputPath)) {
+            @unlink($temporaryPath);
+            throw new \RuntimeException(
+                'No se pudo finalizar el JSON RAW.'
+            );
+        }
+
+        return [
+            'path' => $outputPath,
+            'records' => $recordCount,
+            'laps' => $lapCount,
+            'bytes' => filesize($outputPath),
+            'sha256' => hash_file('sha256', $outputPath),
+        ];
+    }
+
+
+
+
+
+
     /**
      * Genera un JSON independiente de telemetría por vuelta.
      *
@@ -2473,9 +2700,15 @@ class IbtProcessor
                 (bool) ($record['IsOnTrack'] ?? false) &&
                 !(bool) ($record['OnPitRoad'] ?? false) &&
                 is_numeric($distance) &&
-                is_finite((float) $distance) &&
-                (float) $distance >= 0.0 &&
-                (float) $distance <= 1.0;
+                is_finite((float) $distance);
+
+            // $eligible =
+            //     (bool) ($record['IsOnTrack'] ?? false) &&
+            //     !(bool) ($record['OnPitRoad'] ?? false) &&
+            //     is_numeric($distance) &&
+            //     is_finite((float) $distance) &&
+            //     (float) $distance >= 0.0 &&
+            //     (float) $distance <= 1.0;
 
             if (!$eligible) {
                 $previousDistance = null;

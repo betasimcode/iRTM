@@ -526,6 +526,42 @@ class StintController extends Controller
     }
 
 
+    public function repairIbtRaw(Stint $stint)
+    {
+        try {
+            $result = app(
+                \App\Services\Ibt\IbtRawRepairService::class
+            )->repair($stint);
+
+            \Log::info('IBT RAW REPAIR REQUESTED', [
+                'stint_id' => $stint->id,
+                'result' => $result,
+            ]);
+
+            return redirect()
+                ->route('stints.show', $stint)
+                ->with(
+                    'success',
+                    'Exportación RAW completada. Registros: '
+                    . ($result['records'] ?? 0)
+                );
+
+        } catch (\Throwable $e) {
+            \Log::error('IBT RAW REPAIR FAILED', [
+                'stint_id' => $stint->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('stints.show', $stint)
+                ->with(
+                    'error',
+                    'No se pudo exportar el IBT en RAW: '
+                    . $e->getMessage()
+                );
+        }
+    }
+
 
 
 

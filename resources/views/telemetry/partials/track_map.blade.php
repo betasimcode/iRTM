@@ -56,7 +56,7 @@
 
 @include('telemetry.partials.static_map')
 
-
+@include('telemetry.partials.playback_controls')
 
             {{-- REFERENCIA ESTÁTICA DE SECTORES --}}
 

@@ -134,7 +134,7 @@
 
     {{-- TOOLS + TRACK MAP --}}
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[270px_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
 
 
 
@@ -584,7 +584,7 @@
 
 
 
-@include('telemetry.partials.lap_overlay')
+@include('telemetry.partials.lap_overlay_reproductor')
 
 
 

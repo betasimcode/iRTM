@@ -177,12 +177,17 @@ class IbtRepairService
                 }
             }
 
+
             if ($missing) {
-                throw new RuntimeException(
-                    'Telemetría incompleta. Vueltas: '
-                    . implode(', ', array_unique($missing))
-                );
+                Log::warning('IBT REPAIR TELEMETRY INCOMPLETE', [
+                    'stint_id' => $stint->id,
+                    'missing_laps' => array_values(
+                        array_unique($missing)
+                    ),
+                    'message' => 'No se ha podido generar la telemetría detallada de todas las vueltas. Los datos principales del IBT se conservan.',
+                ]);
             }
+
 
             if (
                 !is_file($lapsJsonPath)

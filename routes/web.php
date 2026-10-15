@@ -115,8 +115,11 @@ Route::group([
         Route::get('/stints/{stint}', [StintController::class, 'show'])->name('stints.show');
         Route::get('/stints/{stint}/analysis', [StintController::class, 'showAnalysis'])
             ->name('stints.analysis');
-       Route::post('/stints/{stint}/repair-ibt', [StintController::class, 'repairIbt'])
+        Route::post('/stints/{stint}/repair-ibt', [StintController::class, 'repairIbt'])
             ->name('stints.repair-ibt');
+        Route::post('/stints/{stint}/repair-ibt-raw', [StintController::class, 'repairIbtRaw'])
+            ->name('stints.repair-ibt-raw');
+
 
         Route::resource('setups', \App\Http\Controllers\SetupController::class);
         Route::get('/setups/{setup}/download', [SetupController::class, 'download']

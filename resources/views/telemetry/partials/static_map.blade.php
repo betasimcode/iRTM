@@ -6,7 +6,7 @@
         : null;
 @endphp
 
-<div class="flex flex-1 flex-col gap-2 bg-[var(--bg)] p-4 sm:p-6">
+<div class="flex flex-1 flex-col gap-2 bg-gray-500 p-4 sm:p-6">
     @if ($trackMapPath && file_exists($trackMapPath))
         <div class="flex flex-wrap items-center justify-end gap-2"
              aria-label="Controles de navegación del mapa">

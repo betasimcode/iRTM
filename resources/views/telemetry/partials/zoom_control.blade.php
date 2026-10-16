@@ -1,5 +1,16 @@
 <div class="flex flex-wrap items-center justify-end gap-2">
-
+    <div class="flex items-center gap-2">
+        <button
+            id="telemetry-map-follow"
+            type="button"
+            class="rounded-lg border border-[var(--border)]
+                px-3 py-2 text-sm text-[var(--text)]"
+            aria-pressed="false"
+            title="Mantener el coche centrado durante la reproducción"
+        >
+            Seguir coche
+        </button>
+    </div>
     <div class="flex items-center gap-2">
         <button
             id="telemetry-map-zoom-out"

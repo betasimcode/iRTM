@@ -48,6 +48,20 @@
         const resetButton = document.getElementById('telemetry-map-reset');
         const zoomLabel = document.getElementById('telemetry-map-zoom-level');
 
+        // El control se crea aquí para no depender de una modificación separada de la vista.
+        let followButton = document.getElementById('telemetry-map-follow');
+        if (!followButton && resetButton) {
+            followButton = document.createElement('button');
+            followButton.id = 'telemetry-map-follow';
+            followButton.type = 'button';
+            followButton.className =
+                'rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]';
+            followButton.textContent = 'Seguir coche';
+            followButton.title = 'Mantener el coche centrado durante la reproducción';
+            followButton.setAttribute('aria-pressed', 'false');
+            resetButton.insertAdjacentElement('afterend', followButton);
+        }
+
         // Controles del reproductor (se insertan en track_map.blade.php).
         const playButton = document.getElementById('telemetry-lap-play');
         const pauseButton = document.getElementById('telemetry-lap-pause');
@@ -300,6 +314,27 @@
         let isDragging = false;
         let dragStart = null;
 
+        let isFollowEnabled = false;
+
+        const applyContainerTransform = () => {
+            container.style.transformOrigin = '0 0';
+            container.style.transform =
+                `translate(${view.panX}px, ${view.panY}px) scale(${view.zoom})`;
+        };
+
+        const updateFollowButton = () => {
+            if (!followButton) return;
+
+            followButton.setAttribute('aria-pressed', String(isFollowEnabled));
+            followButton.textContent = isFollowEnabled
+                ? 'Siguiendo coche'
+                : 'Seguir coche';
+
+            followButton.classList.toggle('bg-cyan-600', isFollowEnabled);
+            followButton.classList.toggle('text-white', isFollowEnabled);
+            followButton.classList.toggle('border-cyan-500', isFollowEnabled);
+        };
+
         const zoomAt = (clientX, clientY, factor) => {
             const rect = viewport.getBoundingClientRect();
             const pointerX = clientX - rect.left;
@@ -336,7 +371,7 @@
         }, { passive: false });
 
         viewport.addEventListener('pointerdown', event => {
-            if (event.button !== 0) return;
+            if (event.button !== 0 || isFollowEnabled) return;
 
             isDragging = true;
             dragStart = {
@@ -387,6 +422,8 @@
         });
 
         resetButton?.addEventListener('click', () => {
+            isFollowEnabled = false;
+            updateFollowButton();
             view.zoom = 1;
             view.panX = 0;
             view.panY = 0;
@@ -426,7 +463,7 @@
 
             const dpr = window.devicePixelRatio || 1;
 
-            // Renderizar con más resolución para compensar el zoom CSS.
+            // Renderizar el overlay con resolución extra para que conserve nitidez al aplicar zoom CSS.
             const renderScale = dpr * view.zoom;
 
             canvas.width = Math.round(width * renderScale);
@@ -499,6 +536,12 @@
                 y: drawPoints[completedIndex].y
                     + (drawPoints[nextIndex].y - drawPoints[completedIndex].y) * fraction,
             };
+            // Desplaza mapa y trazada juntos, manteniendo fija la orientación.
+            if (isFollowEnabled) {
+                view.panX = width / 2 - currentPoint.x * view.zoom;
+                view.panY = height / 2 - currentPoint.y * view.zoom;
+                applyContainerTransform();
+            }
             if (playbackIndex > completedIndex && nextIndex !== completedIndex) {
                 context.lineTo(currentPoint.x, currentPoint.y);
             }
@@ -864,6 +907,50 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         const gearDisplay = document.getElementById('telemetry-current-gear');
         const speedDisplay = document.getElementById('telemetry-current-speed');
         const lapTimeDisplay = document.getElementById('telemetry-current-lap-time');
+        const steeringRotor = document.getElementById('telemetry-steering-wheel-rotor');
+        const steeringValue = document.getElementById('telemetry-current-steering-value');
+
+        const updateSteeringDisplay = (currentSample, nextSample, fraction) => {
+
+            console.log('[Steering]', {
+                sampleIndex: Math.floor(playbackIndex),
+                raw: currentSample?.steering_angle,
+                type: typeof currentSample?.steering_angle,
+                next: nextSample?.steering_angle,
+                keys: Object.keys(currentSample ?? {})
+            });
+
+            const first = Number(currentSample?.steering_angle);
+            const second = Number(nextSample?.steering_angle);
+
+            const radians = Number.isFinite(first)
+                ? (
+                    Number.isFinite(second)
+                        ? first + (second - first) * fraction
+                        : first
+                )
+                : null;
+
+            if (radians === null) {
+                if (steeringValue) steeringValue.textContent = '—°';
+                return;
+            }
+
+            // SteeringWheelAngle está expresado en radianes.
+            const degrees = radians * (180 / Math.PI);
+
+            if (steeringRotor) {
+                steeringRotor.setAttribute(
+                    'transform',
+                    `rotate(${-degrees} 32 32)`
+                );
+            }
+
+            if (steeringValue) {
+                const rounded = Math.round(degrees);
+                steeringValue.textContent = `${rounded > 0 ? '+' : ''}${rounded}°`;
+            }
+        };
 
         // Pedales verticales, en el orden físico: embrague, freno y acelerador.
         const pedalDisplays = {
@@ -935,6 +1022,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             updatePedalDisplay('clutch', currentSample, nextSample, fraction);
             updatePedalDisplay('brake', currentSample, nextSample, fraction);
             updatePedalDisplay('throttle', currentSample, nextSample, fraction);
+            updateSteeringDisplay(currentSample, nextSample, fraction);
 
             // La marcha es discreta: no interpolamos entre engranajes.
             if (gearDisplay) {
@@ -1044,10 +1132,17 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             playbackSpeed = Math.max(0.1, Number(speedSelect.value) || 1);
         });
 
+        followButton?.addEventListener('click', () => {
+            isFollowEnabled = !isFollowEnabled;
+            updateFollowButton();
+
+            if (isFollowEnabled) {
+                drawOverlay();
+            }
+        });
+
         const updateView = () => {
-            container.style.transformOrigin = '0 0';
-            container.style.transform =
-                `translate(${view.panX}px, ${view.panY}px) scale(${view.zoom})`;
+            applyContainerTransform();
 
             const label = `${Math.round(view.zoom * 100)}%`;
 
@@ -1057,7 +1152,6 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
 
             drawOverlay();
-
         };
 
 
@@ -1068,6 +1162,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
         mapObject.addEventListener('load', drawOverlay);
 
+        updateFollowButton();
         drawOverlay();
         updateView();
         updatePlaybackControls();

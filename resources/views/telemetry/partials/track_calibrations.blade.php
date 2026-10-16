@@ -12,7 +12,7 @@
                 offset_y_pct: 9,
             },
              "539": {
-                scale: 1.03,
+                scale: 1.015,
                 rotation_deg: 0,
                 offset_x_pct: -0.15,
                 offset_y_pct: -0.6,

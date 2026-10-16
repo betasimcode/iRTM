@@ -2360,6 +2360,7 @@ class IbtProcessor
                     'Lon',
                     'Alt',
                     'Yaw',
+                    'SteeringWheelAngle',
                 ]
             ) as $record
         ) {
@@ -2383,6 +2384,7 @@ class IbtProcessor
             $lon = $record['Lon'] ?? null;
             $alt = $record['Alt'] ?? null;
             $yaw = $record['Yaw'] ?? null;
+            $steeringAngle = $record['SteeringWheelAngle'] ?? null;
 
             if (
                 !is_numeric($distance) ||
@@ -2443,6 +2445,10 @@ class IbtProcessor
                 'yaw' => is_numeric($yaw) && is_finite((float) $yaw)
                     ? (float) $yaw
                     : null,
+                'steering_angle' => is_numeric($steeringAngle)
+                    && is_finite((float) $steeringAngle)
+                        ? (float) $steeringAngle
+                        : null,
 
             ];
         }
@@ -2580,6 +2586,7 @@ class IbtProcessor
                 'Lap', 'LapCompleted',
                 'LapDistPct', 'SessionTime', 'Speed', 'Gear',
                 'Lat', 'Lon', 'Alt', 'Yaw', 'OnPitRoad',
+                'SteeringWheelAngle',
             ];
 
             foreach ($this->streamRecords($filePath, $variables) as $record) {
@@ -2613,6 +2620,7 @@ class IbtProcessor
                 $lon = $record['Lon'] ?? null;
                 $alt = $record['Alt'] ?? null;
                 $yaw = $record['Yaw'] ?? null;
+                $steeringAngle = $record['SteeringWheelAngle'] ?? null;
 
                 $samples[] = [
                     'lap_dist_pct' => is_numeric($distance)
@@ -2628,6 +2636,10 @@ class IbtProcessor
                         'alt' => is_numeric($alt) ? (float) $alt : null,
                     ],
                     'yaw' => is_numeric($yaw) ? (float) $yaw : null,
+                    'steering_angle' => is_numeric($steeringAngle)
+                        && is_finite((float) $steeringAngle)
+                            ? (float) $steeringAngle
+                            : null,
                 ];
 
                 if ((bool) ($record['OnPitRoad'] ?? false)) {
@@ -2903,6 +2915,7 @@ class IbtProcessor
                         'Lon',
                         'Alt',
                         'Yaw',
+                        'SteeringWheelAngle',
                     ]
                 ) as $record
             ) {
@@ -2946,6 +2959,7 @@ class IbtProcessor
                 $lon = $record['Lon'] ?? null;
                 $alt = $record['Alt'] ?? null;
                 $yaw = $record['Yaw'] ?? null;
+                $steeringAngle = $record['SteeringWheelAngle'] ?? null;
                 $throttle = $record['Throttle'] ?? null;
                 $brake = $record['Brake'] ?? null;
                 $clutch = $record['Clutch'] ?? null;
@@ -2980,6 +2994,12 @@ class IbtProcessor
                     'yaw' => is_numeric($yaw) && is_finite((float) $yaw)
                         ? (float) $yaw
                         : null,
+
+                    'steering_angle' => is_numeric($steeringAngle)
+                        && is_finite((float) $steeringAngle)
+                            ? (float) $steeringAngle
+                            : null,
+
                 ];
             }
 

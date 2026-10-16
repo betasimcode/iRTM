@@ -2351,6 +2351,9 @@ class IbtProcessor
                     'LapDistPct',
                     'Speed',
                     'Gear',
+                    'Throttle',
+                    'Brake',
+                    'Clutch',
                     'IsOnTrack',
                     'OnPitRoad',
                     'Lat',
@@ -2371,6 +2374,11 @@ class IbtProcessor
             $sessionTime = $record['SessionTime'] ?? null;
             $speed = $record['Speed'] ?? null;
             $gear = $record['Gear'] ?? null;
+
+            $throttle = $record['Throttle'] ?? null;
+            $brake = $record['Brake'] ?? null;
+            $clutch = $record['Clutch'] ?? null;
+
             $lat = $record['Lat'] ?? null;
             $lon = $record['Lon'] ?? null;
             $alt = $record['Alt'] ?? null;
@@ -2405,6 +2413,19 @@ class IbtProcessor
                 'session_time' => $sessionTime,
                 'speed_kph' => round($speed * 3.6, 2),
                 'gear' => (int) $gear,
+
+                'throttle' => is_numeric($throttle) && is_finite((float) $throttle)
+                    ? (float) $throttle
+                    : null,
+
+                'brake' => is_numeric($brake) && is_finite((float) $brake)
+                    ? (float) $brake
+                    : null,
+
+                'clutch' => is_numeric($clutch) && is_finite((float) $clutch)
+                    ? (float) $clutch
+                    : null,
+
                 'position' => [
                     'lat' => is_numeric($lat) && is_finite((float) $lat)
                         ? (float) $lat

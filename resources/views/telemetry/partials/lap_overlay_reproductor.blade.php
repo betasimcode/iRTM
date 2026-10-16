@@ -890,17 +890,13 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             const raw = Number.isFinite(first)
                 ? (Number.isFinite(second) ? first + (second - first) * fraction : first)
                 : null;
-            const percent = raw === null ? null : Math.round(Math.min(1, Math.max(0, raw)) * 100);
+            const displayRaw = raw === null
+                ? null
+                : (pedal === 'clutch' ? 1 - raw : raw);
 
-        console.log('[Pedales iRTM]', {
-            index: playbackIndex,
-            clutch: currentSample?.clutch,
-            brake: currentSample?.brake,
-            throttle: currentSample?.throttle,
-            clutchBar: !!pedalDisplays.clutch.bar,
-            brakeBar: !!pedalDisplays.brake.bar,
-            throttleBar: !!pedalDisplays.throttle.bar,
-        });
+            const percent = displayRaw === null
+                ? null
+                : Math.round(Math.min(1, Math.max(0, displayRaw)) * 100);
 
             if (display.bar) {
                 display.bar.style.height = `${percent ?? 0}%`;
@@ -910,8 +906,6 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
             if (display.value) display.value.textContent = percent === null ? '—' : `${percent}%`;
         };
-
-
 
         const formatLapTime = milliseconds => {
             const safeMs = Math.max(0, Math.floor(milliseconds));
@@ -937,9 +931,6 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             const currentSample = validSamples[index];
             const nextSample = validSamples[nextIndex];
-
-console.log('[iRTM muestra completa]', currentSample);
-console.log('[iRTM claves]', Object.keys(currentSample ?? {}));
 
             updatePedalDisplay('clutch', currentSample, nextSample, fraction);
             updatePedalDisplay('brake', currentSample, nextSample, fraction);

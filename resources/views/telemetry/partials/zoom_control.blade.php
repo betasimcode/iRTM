@@ -1,10 +1,4 @@
 <div class="flex flex-wrap items-center justify-end gap-2">
-    <span
-        class="rounded-md border border-[var(--border)]
-               px-2 py-1 text-xs text-[var(--text-muted)]"
-    >
-        Sin datos
-    </span>
 
     <div class="flex items-center gap-2">
         <button

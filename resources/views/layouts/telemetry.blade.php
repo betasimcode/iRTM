@@ -16,13 +16,16 @@
         })();
     </script> --}}
 
-<script>
+    <title>@yield('title', 'SimuPanel')</title>
+
+    @vite(['resources/css/app.css','resources/js/app.js'])
+
+    <link rel="stylesheet" href="{{ route('telemetry.theme.css') }}">
+
+    <script>
     const savedTheme = "{{ auth()->user()->theme ?? 'theme-dark' }}";
     document.documentElement.className = savedTheme;
 </script>
-
-    <title>@yield('title', 'SimuPanel')</title>
-    @vite(['resources/css/app.css','resources/js/app.js'])
 
 </head>
 <body

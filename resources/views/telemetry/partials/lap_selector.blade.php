@@ -47,8 +47,7 @@
         id="lap-color-trigger"
         aria-label="Cambiar color de la trazada"
         title="Color de la trazada"
-        class="flex h-10 items-center justify-center rounded-lg
-               border border-[var(--border)] bg-[var(--bg)]"
+        class="flex h-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)]"
     >
         <span
             id="lap-color-preview"

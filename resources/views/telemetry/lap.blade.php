@@ -74,7 +74,7 @@
 
                 <p class="text-xs text-[var(--text-muted)]">Lap time</p>
 
-                <p class="mt-1 font-mono text-lg font-semibold
+                <p class="mt-1 font-mono-timing text-lg font-semibold
 
                           text-[var(--text-title)]">
 

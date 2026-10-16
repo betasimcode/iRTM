@@ -80,6 +80,68 @@ Route::group([
         Route::get('/telemetry/lap', [TelemetryLapController::class, 'index'])
             ->name('telemetry.lap');
 
+        Route::get('/telemetry/theme.css', function () {
+                $theme = auth()->user()->theme ?? 'theme-dark';
+
+                $palette = config("telemetry.track_map_themes.{$theme}")
+                    ?? config('telemetry.track_map_themes.theme-dark');
+
+                $css = ':root {';
+
+                foreach ($palette as $name => $color) {
+                    $css .= "--{$name}: {$color};";
+                }
+
+                $css .= '}';
+
+                return response($css, 200, [
+                    'Content-Type' => 'text/css; charset=UTF-8',
+                    'Cache-Control' => 'private, no-cache, must-revalidate',
+                ]);
+            })->name('telemetry.theme.css');
+
+        Route::get('/telemetry/tracks/{trackMapId}.svg', function (string $trackMapId) {
+                abort_unless(ctype_digit($trackMapId), 404);
+
+                $path = resource_path("views/telemetry/tracks/{$trackMapId}.svg");
+
+                abort_unless(is_file($path), 404);
+
+                $theme = auth()->user()->theme ?? 'theme-dark';
+
+                $palette = config("telemetry.track_map_themes.{$theme}")
+                    ?? config('telemetry.track_map_themes.theme-dark');
+
+                $svg = file_get_contents($path);
+
+                abort_if($svg === false, 500);
+
+                $cssVariables = '<style>:root {';
+
+                foreach ($palette as $name => $color) {
+                    $cssVariables .= "--{$name}: {$color};";
+                }
+
+                $cssVariables .= '}</style>';
+
+                $svg = preg_replace(
+                    '/(<svg\b[^>]*>)/i',
+                    '$1' . $cssVariables,
+                    $svg,
+                    1,
+                    $replacements
+                );
+
+                abort_if($svg === null || $replacements !== 1, 500);
+
+                return response($svg, 200, [
+                    'Content-Type' => 'image/svg+xml; charset=UTF-8',
+                    'Cache-Control' => 'private, no-cache, must-revalidate',
+                ]);
+            })->name('telemetry.tracks.show');
+
+
+
         Route::get('/profile', [ProfileController::class, 'edit'])
             ->name('profile.edit');
 

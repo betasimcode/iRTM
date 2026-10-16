@@ -1,6 +1,6 @@
 {{-- Controles del reproductor GPS de la vuelta --}}
 <div
-    class="mb-4 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+    class="mb-4 w-full bg-[var(--card)] p-4"
     aria-label="Reproductor de telemetría GPS"
 >
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">

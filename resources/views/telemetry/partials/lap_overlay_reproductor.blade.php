@@ -1,4 +1,5 @@
 
+<script src="{{ asset('js/telemetry/sector-marker-style.js') }}?v={{ filemtime(public_path('js/telemetry/sector-marker-style.js')) }}"></script>
 <script>
 (() => {
     console.info('[LapOverlay] Script cargado');
@@ -58,12 +59,12 @@
 
         // Presets de color para las trazadas.
         const lapColorPresets = [
-            { name: 'Cian', value: '#00E5FF' },
-            { name: 'Naranja', value: '#FFB454' },
-            { name: 'Violeta', value: '#A78BFA' },
-            { name: 'Verde', value: '#4ADE80' },
-            { name: 'Rosa', value: '#FB7185' },
-            { name: 'Amarillo', value: '#FACC15' },
+            { name: 'Cian', value: '#0000ff' },
+            { name: 'Orange', value: '#FFB454' },
+            { name: 'Violet', value: '#A78BFA' },
+            { name: 'Green', value: '#00ff00' },
+            { name: 'Red', value: '#ff0000' },
+            { name: 'Yellow', value: '#FACC15' },
         ];
 
         const lapSelector = document.getElementById('lap');
@@ -114,7 +115,7 @@
                 colorMenu.className =
                     'absolute right-0 top-full z-50 mt-2 hidden ' +
                     'min-w-40 rounded-lg border border-[var(--border)] ' +
-                    'bg-[var(--panel)] p-2 shadow-xl';
+                    'bg-[var(--bg)] p-2 shadow-xl';
 
                 colorMenu.setAttribute('role', 'group');
                 colorMenu.setAttribute('aria-label', 'Color de trazada');
@@ -507,7 +508,12 @@
 if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
     context.save();
 
-    context.font = 'bold 11px sans-serif';
+    const markerStyle = window.IRTM_SECTOR_MARKER_STYLE;
+
+    context.font =
+        `${markerStyle.fontWeight} ${markerStyle.fontSize}px ` +
+        markerStyle.fontFamily;
+
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.lineCap = 'round';
@@ -576,54 +582,100 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         const normalX = -dy / length;
         const normalY = dx / length;
 
-        const halfLength = 12;
-        const x1 = current.x - normalX * halfLength;
-        const y1 = current.y - normalY * halfLength;
-        const x2 = current.x + normalX * halfLength;
-        const y2 = current.y + normalY * halfLength;
+        // Longitud adaptativa de la marca de sector.
+            const previousDistance = Math.hypot(
+                current.x - previous.x,
+                current.y - previous.y
+            );
 
-        const label = sector.label || `S${sectorIndex + 1}`;
+            const nextDistance = Math.hypot(
+                next.x - current.x,
+                next.y - current.y
+            );
 
-        // Línea con contorno para que destaque sobre el mapa.
-        context.lineWidth = 4;
-        context.strokeStyle = '#111827';
+            // Estimación local de la separación entre muestras.
+            const localSpacing = (previousDistance + nextDistance) / 2;
+
+                        // Configuración independiente de la línea transversal.
+            const sectorLine = markerStyle.sectorLine;
+
+            const halfLength = Math.max(
+                4,
+                Math.min(40, sectorLine.halfLength)
+            );
+
+            const centerX = current.x + normalX * sectorLine.offset;
+            const centerY = current.y + normalY * sectorLine.offset;
+
+            const x1 = centerX - normalX * halfLength;
+            const y1 = centerY - normalY * halfLength;
+            const x2 = centerX + normalX * halfLength;
+            const y2 = centerY + normalY * halfLength;
+
+        const label = `S${sectorIndex}`;
+
+        context.setLineDash([1, 0.25]);
+
+        // Contorno de la línea transversal.
+        context.lineWidth = sectorLine.outlineWidth;
+        context.strokeStyle = sectorLine.outlineColor;
         context.beginPath();
         context.moveTo(x1, y1);
         context.lineTo(x2, y2);
         context.stroke();
 
-        context.lineWidth = 2;
-        context.strokeStyle = '#facc15';
+        // Línea interior.
+        context.lineWidth = sectorLine.lineWidth;
+        context.strokeStyle = sectorLine.lineColor;
         context.beginPath();
         context.moveTo(x1, y1);
         context.lineTo(x2, y2);
         context.stroke();
 
-        // Etiqueta del sector.
-        const labelX = current.x + normalX * 22;
-        const labelY = current.y + normalY * 22;
-        const boxWidth = context.measureText(label).width + 10;
-        const boxHeight = 18;
+        context.setLineDash([]);
 
-        context.fillStyle = '#111827';
-        context.fillRect(
-            labelX - boxWidth / 2,
-            labelY - boxHeight / 2,
-            boxWidth,
-            boxHeight
-        );
 
-        context.strokeStyle = '#facc15';
-        context.lineWidth = 1;
-        context.strokeRect(
-            labelX - boxWidth / 2,
-            labelY - boxHeight / 2,
-            boxWidth,
-            boxHeight
-        );
+        // Etiqueta del sector: posición independiente de la línea.
+        // Compensamos el zoom solo en la etiqueta, no en la referencia transversal.
+        const labelX = current.x + normalX * markerStyle.labelOffset;
+        const labelY = current.y + normalY * markerStyle.labelOffset;
 
-        context.fillStyle = '#ffffff';
-        context.fillText(label, labelX, labelY);
+        context.save();
+
+        // Mantiene constante el tamaño visual de la etiqueta al ampliar el mapa.
+        context.translate(labelX, labelY);
+        context.scale(1 / view.zoom, 1 / view.zoom);
+
+        const boxWidth =
+            context.measureText(label).width + markerStyle.paddingX * 2;
+
+        const boxHeight = markerStyle.fontSize + markerStyle.paddingY * 2;
+
+        const boxX = -boxWidth / 2;
+        const boxY = -boxHeight / 2;
+
+
+        // Aumentar el tamaño visual de las etiquetas un 20 %.
+        const labelScale = 1.8;
+
+        context.scale(labelScale, labelScale);
+
+
+        // Fondo opaco.
+        context.fillStyle = markerStyle.backgroundColor;
+        context.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Borde.
+        context.strokeStyle = markerStyle.borderColor;
+        context.lineWidth = markerStyle.borderWidth;
+        context.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Texto.
+        context.fillStyle = markerStyle.textColor;
+        context.fillText(label, 0, 0);
+
+        context.restore();
+
 
         console.debug('[Sectores] Referencia dibujada', {
             sector: label,
@@ -633,18 +685,138 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         });
     });
 
+
+    // =====================================================
+    // META AJEDREZADA
+    // =====================================================
+    const finishLine = markerStyle.finishLine;
+
+    if (finishLine?.enabled && validPctIndices.length > 0) {
+        // Buscar una muestra interior próxima al inicio/fin de vuelta.
+        const candidates = validPctIndices.filter(item =>
+            item.index > 0 && item.index < drawPoints.length - 1
+        );
+
+        if (candidates.length > 0) {
+            const finishPoint = candidates.reduce((best, item) => {
+                const distance = Math.min(item.pct, 2 - item.pct);
+                const bestDistance = Math.min(best.pct, 1.5 - best.pct);
+
+                return distance < bestDistance ? item : best;
+            });
+
+            const index = finishPoint.index;
+            const previous = drawPoints[index - 1];
+            const current = drawPoints[index];
+            const next = drawPoints[index + 1];
+
+            const dx = next.x - previous.x;
+            const dy = next.y - previous.y;
+            const length = Math.hypot(dx, dy);
+
+            if (length > 0.001) {
+                // Dirección de marcha y perpendicular a la pista.
+                const tangentX = dx / length;
+                const tangentY = dy / length;
+                const normalX = -tangentY;
+                const normalY = tangentX;
+
+                const centerX =
+                    current.x + normalX * finishLine.offset;
+                const centerY =
+                    current.y + normalY * finishLine.offset;
+
+                const halfLength = Math.max(
+                    1,
+                    Number(finishLine.halfLength) || 18
+                );
+
+                const squareSize = Math.max(
+                    1,
+                    Number(finishLine.squareSize) || 6
+                );
+
+                const bandThickness = Math.max(
+                    1,
+                    Number(finishLine.bandThickness) || 8
+                );
+
+                context.save();
+                context.translate(centerX, centerY);
+
+                // El eje X local sigue la trazada.
+                context.rotate(Math.atan2(dy, dx));
+
+                // Dos líneas contiguas con patrones inversos.
+                // Usa squareSize ya calculado arriba desde finishLine.
+                const totalLength = halfLength * 2;
+                const tileCount = Math.max(
+                    1,
+                    Math.ceil(totalLength / squareSize)
+                );
+                const tileLength = totalLength / tileCount;
+                const rowWidth = bandThickness;
+
+                for (let row = 0; row < 2; row++) {
+                    for (let tile = 0; tile < tileCount; tile++) {
+                        const isLight = (tile + row) % 2 === 0;
+
+                        context.fillStyle = isLight
+                            ? finishLine.lightColor
+                            : finishLine.darkColor;
+
+                        context.fillRect(
+                            -rowWidth + row * rowWidth,
+                            -halfLength + tile * tileLength,
+                            rowWidth,
+                            tileLength
+                        );
+                    }
+                }
+
+                // Contorno exterior de las dos líneas juntas.
+                if ((Number(finishLine.borderWidth) || 0) > 0) {
+                    context.strokeStyle = finishLine.borderColor;
+                    context.lineWidth = finishLine.borderWidth;
+
+                    context.strokeRect(
+                        -rowWidth,
+                        -halfLength,
+                        rowWidth * 2,
+                        halfLength * 2
+                    );
+                }
+
+                context.restore();
+
+                console.debug('[Meta] Línea ajedrezada dibujada', {
+                    lapDistPct: finishPoint.pct,
+                    sampleIndex: index,
+                    halfLength,
+                    bandThickness,
+                    squareSize
+                });
+            }
+        } else {
+            console.warn(
+                '[Meta] No hay muestras interiores válidas para dibujarla.'
+            );
+        }
+    }
+
+
     context.restore();
 }
 
             // Inicio, final y posición actual.
             context.fillStyle = '#22c55e';
             context.beginPath();
-            context.arc(drawPoints[0].x, drawPoints[0].y, 3.5, 0, Math.PI * 2);
+            context.arc(drawPoints[0].x, drawPoints[0].y, 0.2, 0, Math.PI * 2);
             context.fill();
 
             context.fillStyle = '#f97316';
             context.beginPath();
-            context.arc(drawPoints[drawPoints.length - 1].x, drawPoints[drawPoints.length - 1].y, 3.5, 0, Math.PI * 2);
+            context.arc(drawPoints[drawPoints.length - 1].x, drawPoints[drawPoints.length - 1].y, 0.2, 0, Math.PI * 2);
             context.fill();
 
                         // Vehículo orientado según la dirección de avance en el mapa.
@@ -673,7 +845,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 context.drawImage(
                     vehicleSvg,
                     -2.45,
-                    -5,
+                    -6.5,
                     5,
                     8
                 );

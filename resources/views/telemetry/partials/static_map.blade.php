@@ -1,12 +1,13 @@
 
 @php
     $trackMapId = $stint?->track_id;
+
     $trackMapPath = $trackMapId
-        ? public_path("telemetry/tracks/{$trackMapId}.svg")
+        ? resource_path("views/telemetry/tracks/{$trackMapId}.svg")
         : null;
 @endphp
 
-<div class="flex flex-1 flex-col gap-2 bg-gray-500 p-4 sm:p-6">
+<div class="flex flex-1 flex-col gap-2 bg-[var(--back)] p-4 sm:p-6">
     @if ($trackMapPath && file_exists($trackMapPath))
         <div id="telemetry-track-viewport"
             class="relative w-full overflow-hidden rounded-lg"
@@ -19,7 +20,7 @@
                 style="transform-origin: 0 0;">
 
                 <object id="telemetry-track-map"
-                    data="{{ asset("telemetry/tracks/{$trackMapId}.svg") }}"
+                    data="{{ route('telemetry.tracks.show', ['trackMapId' => $trackMapId]) }}"
                     type="image/svg+xml"
                     class="pointer-events-none absolute inset-0 z-0 block h-full w-full"
                     aria-label="Mapa estático del circuito">

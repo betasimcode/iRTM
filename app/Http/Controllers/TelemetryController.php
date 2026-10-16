@@ -1002,10 +1002,20 @@ public function store(Request $request)
                     'directory' => $lapTelemetryDirectory,
                 ]);
 
+                $telemetryLaps = $processor->extractLaps($ibtAbsolutePath);
+
+                Log::info('IBT LAP TELEMETRY INPUT', [
+                    'stint_id' => $stint->id,
+                    'laps_from_json' => count($lapsPayload['laps'] ?? []),
+                    'laps_from_extractor' => count($telemetryLaps),
+                    'first_json_lap' => $lapsPayload['laps'][0] ?? null,
+                    'first_extracted_lap' => $telemetryLaps[0] ?? null,
+                ]);
+
                 $lapTelemetryResult = $processor->writeLapTelemetryJson(
                     $ibtAbsolutePath,
                     $lapTelemetryDirectory,
-                    $lapsPayload['laps'] ?? []
+                    $telemetryLaps
                 );
 
                 $generatedLapNumbers = $lapTelemetryResult['generated_laps'] ?? [];
@@ -1102,6 +1112,13 @@ public function store(Request $request)
 
                 $jsonProcessing['generated'] = false;
                 $jsonProcessing['error'] = $e->getMessage();
+
+                return response()->json([
+                    'status' => 'error',
+                    'stint_id' => $stintId,
+                    'json_processing' => $jsonProcessing,
+                ], 422);
+
             }
 
 

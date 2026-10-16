@@ -864,9 +864,54 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         const gearDisplay = document.getElementById('telemetry-current-gear');
         const speedDisplay = document.getElementById('telemetry-current-speed');
         const lapTimeDisplay = document.getElementById('telemetry-current-lap-time');
-        const throttleDisplay = document.getElementById('telemetry-current-throttle');
-        const brakeDisplay = document.getElementById('telemetry-current-brake');
-        const clutchDisplay = document.getElementById('telemetry-current-clutch');
+
+        // Pedales verticales, en el orden físico: embrague, freno y acelerador.
+        const pedalDisplays = {
+            clutch: {
+                bar: document.getElementById('telemetry-current-clutch-bar'),
+                value: document.getElementById('telemetry-current-clutch-value'),
+            },
+            brake: {
+                bar: document.getElementById('telemetry-current-brake-bar'),
+                value: document.getElementById('telemetry-current-brake-value'),
+            },
+            throttle: {
+                bar: document.getElementById('telemetry-current-throttle-bar'),
+                value: document.getElementById('telemetry-current-throttle-value'),
+            },
+        };
+
+        const updatePedalDisplay = (pedal, currentSample, nextSample, fraction) => {
+            const display = pedalDisplays[pedal];
+            if (!display) return;
+
+            const first = Number(currentSample?.[pedal]);
+            const second = Number(nextSample?.[pedal]);
+            const raw = Number.isFinite(first)
+                ? (Number.isFinite(second) ? first + (second - first) * fraction : first)
+                : null;
+            const percent = raw === null ? null : Math.round(Math.min(1, Math.max(0, raw)) * 100);
+
+        console.log('[Pedales iRTM]', {
+            index: playbackIndex,
+            clutch: currentSample?.clutch,
+            brake: currentSample?.brake,
+            throttle: currentSample?.throttle,
+            clutchBar: !!pedalDisplays.clutch.bar,
+            brakeBar: !!pedalDisplays.brake.bar,
+            throttleBar: !!pedalDisplays.throttle.bar,
+        });
+
+            if (display.bar) {
+                display.bar.style.height = `${percent ?? 0}%`;
+                const meter = display.bar.parentElement;
+                if (meter) meter.setAttribute('aria-valuenow', String(percent ?? 0));
+                display.bar.title = percent === null ? 'Sin datos' : `${percent}%`;
+            }
+            if (display.value) display.value.textContent = percent === null ? '—' : `${percent}%`;
+        };
+
+
 
         const formatLapTime = milliseconds => {
             const safeMs = Math.max(0, Math.floor(milliseconds));
@@ -893,19 +938,12 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             const currentSample = validSamples[index];
             const nextSample = validSamples[nextIndex];
 
-            const updatePedal = (display, value) => {
-                if (!display) return;
+console.log('[iRTM muestra completa]', currentSample);
+console.log('[iRTM claves]', Object.keys(currentSample ?? {}));
 
-                const pedal = Number(value);
-
-                display.textContent = Number.isFinite(pedal)
-                    ? `${Math.round(Math.max(0, Math.min(1, pedal)) * 100)}%`
-                    : '—';
-            };
-
-            updatePedal(throttleDisplay, currentSample.throttle);
-            updatePedal(brakeDisplay, currentSample.brake);
-            updatePedal(clutchDisplay, currentSample.clutch);
+            updatePedalDisplay('clutch', currentSample, nextSample, fraction);
+            updatePedalDisplay('brake', currentSample, nextSample, fraction);
+            updatePedalDisplay('throttle', currentSample, nextSample, fraction);
 
             // La marcha es discreta: no interpolamos entre engranajes.
             if (gearDisplay) {

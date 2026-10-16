@@ -864,6 +864,9 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         const gearDisplay = document.getElementById('telemetry-current-gear');
         const speedDisplay = document.getElementById('telemetry-current-speed');
         const lapTimeDisplay = document.getElementById('telemetry-current-lap-time');
+        const throttleDisplay = document.getElementById('telemetry-current-throttle');
+        const brakeDisplay = document.getElementById('telemetry-current-brake');
+        const clutchDisplay = document.getElementById('telemetry-current-clutch');
 
         const formatLapTime = milliseconds => {
             const safeMs = Math.max(0, Math.floor(milliseconds));
@@ -889,6 +892,20 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             const currentSample = validSamples[index];
             const nextSample = validSamples[nextIndex];
+
+            const updatePedal = (display, value) => {
+                if (!display) return;
+
+                const pedal = Number(value);
+
+                display.textContent = Number.isFinite(pedal)
+                    ? `${Math.round(Math.max(0, Math.min(1, pedal)) * 100)}%`
+                    : '—';
+            };
+
+            updatePedal(throttleDisplay, currentSample.throttle);
+            updatePedal(brakeDisplay, currentSample.brake);
+            updatePedal(clutchDisplay, currentSample.clutch);
 
             // La marcha es discreta: no interpolamos entre engranajes.
             if (gearDisplay) {

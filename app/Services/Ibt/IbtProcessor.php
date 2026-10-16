@@ -2873,6 +2873,9 @@ class IbtProcessor
                         'LapDistPct',
                         'Speed',
                         'Gear',
+                        'Throttle',
+                        'Brake',
+                        'Clutch',
                         'IsOnTrack',
                         'OnPitRoad',
                         'Lat',
@@ -2922,12 +2925,26 @@ class IbtProcessor
                 $lon = $record['Lon'] ?? null;
                 $alt = $record['Alt'] ?? null;
                 $yaw = $record['Yaw'] ?? null;
+                $throttle = $record['Throttle'] ?? null;
+                $brake = $record['Brake'] ?? null;
+                $clutch = $record['Clutch'] ?? null;
 
                 $samples[] = [
                     'lap_dist_pct' => $distance,
                     'session_time' => round($sessionTime, 6),
                     'speed_kph' => round($speed * 3.6, 2),
                     'gear' => (int) $gear,
+                    'throttle' => is_numeric($throttle)
+                        ? (float) $throttle
+                        : null,
+
+                    'brake' => is_numeric($brake)
+                        ? (float) $brake
+                        : null,
+
+                    'clutch' => is_numeric($clutch)
+                        ? (float) $clutch
+                        : null,
                     'position' => [
                         'lat' => is_numeric($lat) && is_finite((float) $lat)
                             ? (float) $lat

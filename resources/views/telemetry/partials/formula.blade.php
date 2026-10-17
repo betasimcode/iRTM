@@ -4,21 +4,21 @@
 
                 <!-- Ruedas traseras -->
                 <path d="M5 29 L16 29 L16 47 L5 47 Z"
-                      fill="#171717" stroke="#555" stroke-width="1"/>
+                      fill="#171717" stroke="#555" stroke-width="1" transform="translate(2.92 -3.7) scale(0.836364 1)"/>
                 <path d="M48 29 L59 29 L59 47 L48 47 Z"
-                      fill="#171717" stroke="#555" stroke-width="1"/>
+                      fill="#171717" stroke="#555" stroke-width="1" transform="translate(9.95 -3.2) scale(0.80314 1)"/>
 
                 <!-- Ruedas delanteras -->
                 <path d="M8 72 L17 72 L17 88 L8 88 Z"
-                      fill="#171717" stroke="#555" stroke-width="1"/>
+                      fill="#171717" stroke="#555" stroke-width="1" transform="translate(1.5 3.3)"/>
                 <path d="M47 72 L56 72 L56 88 L47 88 Z"
-                      fill="#171717" stroke="#555" stroke-width="1"/>
+                      fill="#171717" stroke="#555" stroke-width="1" transform="translate(-2.6 2.5)"/>
 
                 <!-- Alerón trasero -->
                 <path d="M9 20 L55 20 L58 27 L6 27 Z"
-                      fill="#1687ff" stroke="#0b2f55" stroke-width="2"/>
+                      fill="#1687ff" stroke="#0b2f55" stroke-width="2" transform="translate(10.24 -21.46) scale(0.682138 1.53183)"/>
                 <path d="M13 17 L51 17 L51 21 L13 21 Z"
-                      fill="#e5e7eb" stroke="#0b2f55" stroke-width="1"/>
+                      fill="#e5e7eb" stroke="#0b2f55" stroke-width="1" transform="translate(4.11 -4) scale(0.868421 1)"/>
 
                 <!-- Carrocería principal -->
                 <path d="
@@ -51,9 +51,9 @@
                 <!-- Halo -->
                 <path d="M25 40 Q32 34 39 40 L37 48
                          Q32 52 27 48 Z"
-                      fill="none" stroke="#f8fafc" stroke-width="2.5"/>
+                      fill="none" stroke="#f8fafc" stroke-width="2.5" transform="translate(0.2 98.98) scale(1 -1.06154)"/>
                 <path d="M32 37 L32 49"
-                      stroke="#f8fafc" stroke-width="2"/>
+                      stroke="#f8fafc" stroke-width="2" transform="translate(0.3 10.1)"/>
 
                 <!-- Morro -->
                 <path d="M28 55 L36 55 L34 78 L32 94 L30 78 Z"
@@ -62,7 +62,7 @@
                 <!-- Alerón delantero -->
                 <path d="M13 94 L51 94 L57 100
                          L39 103 L25 103 L7 100 Z"
-                      fill="#1687ff" stroke="#0b2f55" stroke-width="2"/>
+                      fill="#1687ff" stroke="#0b2f55" stroke-width="2" transform="translate(10.21 192.42) scale(0.701668 -0.955556)"/>
                 <path d="M18 97 L46 97"
                       stroke="#e5e7eb" stroke-width="2"/>
 

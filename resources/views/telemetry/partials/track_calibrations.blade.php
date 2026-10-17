@@ -6,9 +6,9 @@
                 offset_y_pct: 0.27,
             },
             "179": {
-                scale: 0.745,
+                scale: 0.743,
                 rotation_deg: -0.9,
-                offset_x_pct: -0.1,
+                offset_x_pct: -0.2,
                 offset_y_pct: 9,
             },
              "539": {

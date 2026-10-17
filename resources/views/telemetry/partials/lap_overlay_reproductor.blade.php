@@ -234,7 +234,12 @@
             drawOverlay();
         };
 
-@include('telemetry.partials.formula')
+
+@if($stint->car_id == 25)
+@include('telemetry.partials.fclass')
+@elseif($stint->car_id == 128)
+@include('telemetry.partials.proto')
+@endif
 
         // vehicleSvg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
         //     <svg xmlns="http://www.w3.org/2000/svg"

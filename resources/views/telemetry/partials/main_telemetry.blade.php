@@ -36,14 +36,7 @@
         </div>
     </div>
     <div class="flex w-24 flex-col items-center justify-center gap-1 px-1 py-1">
-        <svg viewBox="0 0 64 64" class="h-12 w-12 overflow-visible" aria-label="Indicador de rotación del volante">
-            <circle cx="32" cy="32" r="25" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="4"/>
-            <g id="telemetry-steering-wheel-rotor">
-                <circle cx="32" cy="32" r="19" fill="none" stroke="currentColor" stroke-width="4"/>
-                <path d="M13 32 H51 M32 32 L21 46 M32 32 L43 46" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M26 9 L32 3 L38 9" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-        </svg>
+@include('telemetry.partials.steering.classic')
         <span id="telemetry-current-steering-value" class="font-mono text-sm font-semibold tabular-nums">—°</span>
     </div>
 

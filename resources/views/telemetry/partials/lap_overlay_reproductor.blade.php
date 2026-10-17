@@ -236,9 +236,9 @@
 
 
 @if($stint->car_id == 25)
-@include('telemetry.partials.fclass')
+@include('telemetry.partials.car.fclass')
 @elseif($stint->car_id == 128)
-@include('telemetry.partials.proto')
+@include('telemetry.partials.car.proto')
 @endif
 
         // vehicleSvg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`

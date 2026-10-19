@@ -16,23 +16,19 @@
 
                 <div>
 
-                    <h2 class="font-semibold text-[var(--text-title)]">
 
-                        {{ $sessionData['track']['display_name'] ?? $stint?->track?->display_name ?? '—' }} Map
-
-                    </h2>
-
-                    <p class="mt-1 text-xs text-[var(--text-muted)]">
-
-                        El trazado aparecerá al cargar una vuelta válida.
-
-                    </p>
 
                 </div>
 
-@include('telemetry.partials.main_telemetry')
+
+<div id="telemetry-main-panel">
+    @include('telemetry.partials.main_telemetry')
+</div>
+
+@include('telemetry.partials.telemetry_panel_controls')
 
 @include('telemetry.partials.zoom_control')
+
 
             </header>
 
@@ -45,7 +41,7 @@
 {{-- MAPA ESTÁTICO + CAPA GPS INDEPENDIENTE --}}
 
 @include('telemetry.partials.static_map')
-
+@include('telemetry.partials.telemetry_panel_behavior')
 @include('telemetry.partials.playback_controls')
 
             {{-- REFERENCIA ESTÁTICA DE SECTORES --}}

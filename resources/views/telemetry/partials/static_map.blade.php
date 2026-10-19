@@ -33,6 +33,14 @@
                     class="pointer-events-none absolute inset-0 z-10 block h-full w-full"
                     aria-label="Trazada GPS de la vuelta"></canvas>
             </div>
+
+            <div
+                id="telemetry-floating-panel-host"
+                class="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+                aria-label="Área de instrumentos desacoplados"
+            >
+            </div>
+
         </div>
     @else
         <div class="py-12 text-center">

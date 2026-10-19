@@ -973,6 +973,23 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             },
         };
 
+
+        const miniPedalDisplays = {
+            clutch: {
+                bar: document.getElementById('telemetry-mini-clutch-bar'),
+                value: document.getElementById('telemetry-mini-clutch-value'),
+            },
+            brake: {
+                bar: document.getElementById('telemetry-mini-brake-bar'),
+                value: document.getElementById('telemetry-mini-brake-value'),
+            },
+            throttle: {
+                bar: document.getElementById('telemetry-mini-throttle-bar'),
+                value: document.getElementById('telemetry-mini-throttle-value'),
+            },
+        };
+
+
         const updatePedalDisplay = (pedal, currentSample, nextSample, fraction) => {
             const display = pedalDisplays[pedal];
             if (!display) return;
@@ -990,6 +1007,24 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 ? null
                 : Math.round(Math.min(1, Math.max(0, displayRaw)) * 100);
 
+
+            const miniDisplay = miniPedalDisplays[pedal];
+
+            if (miniDisplay) {
+                if (miniDisplay.bar) {
+                    miniDisplay.bar.style.width = `${percent ?? 0}%`;
+                    miniDisplay.bar.title =
+                        percent === null ? 'Sin datos' : `${percent}%`;
+                }
+
+                if (miniDisplay.value) {
+                    miniDisplay.value.textContent =
+                        percent === null ? '—' : `${percent}%`;
+                }
+            }
+
+
+
             if (display.bar) {
                 display.bar.style.height = `${percent ?? 0}%`;
                 const meter = display.bar.parentElement;
@@ -997,7 +1032,11 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 display.bar.title = percent === null ? 'Sin datos' : `${percent}%`;
             }
             if (display.value) display.value.textContent = percent === null ? '—' : `${percent}%`;
+
+
         };
+
+
 
         const formatLapTime = milliseconds => {
             const safeMs = Math.max(0, Math.floor(milliseconds));

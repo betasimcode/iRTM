@@ -17,10 +17,11 @@
         tools: {
 
             gear: true,
-
             speed: true,
-
             sectors: true,
+            controls: true,
+            steering: true,
+            minicontrols: false,
 
         },
 

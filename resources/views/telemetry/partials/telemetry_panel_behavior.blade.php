@@ -479,7 +479,12 @@
         // Arrastrar desde el título, sin capturar los clics de los botones.
         toolbar.addEventListener('pointerdown', event => {
             if (!detached || event.button !== 0) return;
-            if (event.target.closest('button')) return;
+
+            if (event.target.closest('button')) {
+                // El clic pertenece al botón, no al arrastre del mapa.
+                event.stopPropagation();
+                return;
+            }
 
             const rect = panel.getBoundingClientRect();
             const hostRect = host.getBoundingClientRect();

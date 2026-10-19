@@ -149,129 +149,194 @@
 
 
 
-                {{-- GEAR --}}
 
-                <button
+{{-- CONFIGURACIÓN VISUAL DE TELEMETRÍA --}}
 
-                    type="button"
+<div class="space-y-5 mt-3">
 
-                    @click="tools.gear = !tools.gear"
+    {{-- MAP --}}
+    <section class="space-y-2">
+        <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
+            <span class="text-base">⌖</span> MAP
+        </h3>
 
-                    :aria-pressed="tools.gear"
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button"
+                @click="document.getElementById('telemetry-panel-toggle')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">◉</span>Instrumentos
+            </button>
 
-                    class="flex w-full items-center justify-between gap-3
+            <button type="button"
+                @click="document.getElementById('telemetry-panel-detach')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">⤢</span>Acoplar
+            </button>
 
-                           rounded-lg border p-3 text-left transition"
+            <button type="button"
+                @click="document.getElementById('telemetry-map-reset')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">⌂</span>Encuadrar
+            </button>
 
-                    :class="tools.gear
+            <button type="button"
+                @click="document.getElementById('telemetry-map-zoom-in')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">＋</span>Zoom +
+            </button>
 
-                        ? 'border-[var(--accent)] bg-[var(--bg)]'
+            <button type="button"
+                @click="document.getElementById('telemetry-map-zoom-out')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">−</span>Zoom −
+            </button>
 
-                        : 'border-[var(--border)] opacity-60'"
+            <button type="button"
+                @click="document.getElementById('telemetry-map-follow')?.click()"
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
+                <span class="block text-lg">◎</span>Seguir
+            </button>
+        </div>
+    </section>
 
-                >
+    <div class="border-t border-[var(--border)]"></div>
 
-                    <span class="flex items-center gap-3">
+    {{-- ASIDE --}}
+    <section class="space-y-2">
+        <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
+            <span class="text-base">◫</span> ASIDE
+        </h3>
 
-                        <span class="text-xl">⚙</span>
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button"
+                @click="tools.gear = !tools.gear"
+                :aria-pressed="tools.gear"
+                :class="tools.gear ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
+                <span class="block text-lg">⚙</span>Gear
+            </button>
 
-                        <span class="text-sm font-medium">Gear</span>
+            <button type="button"
+                @click="tools.speed = !tools.speed"
+                :aria-pressed="tools.speed"
+                :class="tools.speed ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
+                <span class="block text-lg">◉</span>Speed
+            </button>
 
-                    </span>
+            <button type="button"
+                @click="tools.sectors = !tools.sectors"
+                :aria-pressed="tools.sectors"
+                :class="tools.sectors ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
+                <span class="block text-lg">⌁</span>Sectors
+            </button>
 
-                    <span
+            <button
+                type="button"
+                @click="
+                    tools.controls = !tools.controls;
+                    if (tools.controls) tools.minicontrols = false;
+                "
+                :aria-pressed="tools.controls"
+                :class="tools.controls
+                    ? 'border-[var(--accent)] bg-[var(--bg)]'
+                    : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs"
+            >
+                <span class="block text-lg">▥</span>
+                Controls
+                <span
+                    class="mt-1 block text-[10px]"
+                    {{-- x-text="tools.controls ? 'ON' : 'OFF'" --}}
+                ></span>
+            </button>
 
-                        class="text-xs"
-
-                        x-text="tools.gear ? 'ON' : 'OFF'"
-
-                    ></span>
-
-                </button>
-
-
-
-                {{-- SPEED --}}
-
-                <button
-
-                    type="button"
-
-                    @click="tools.speed = !tools.speed"
-
-                    :aria-pressed="tools.speed"
-
-                    class="flex w-full items-center justify-between gap-3
-
-                           rounded-lg border p-3 text-left transition"
-
-                    :class="tools.speed
-
-                        ? 'border-[var(--accent)] bg-[var(--bg)]'
-
-                        : 'border-[var(--border)] opacity-60'"
-
-                >
-
-                    <span class="flex items-center gap-3">
-
-                        <span class="text-xl">◉</span>
-
-                        <span class="text-sm font-medium">Speed</span>
-
-                    </span>
-
-                    <span
-
-                        class="text-xs"
-
-                        x-text="tools.speed ? 'ON' : 'OFF'"
-
-                    ></span>
-
-                </button>
+            {{-- <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">▤</span>Mini controls
+            </button> --}}
 
 
+            <button
+                type="button"
+                @click="
+                    tools.minicontrols = !tools.minicontrols;
+                    if (tools.minicontrols) tools.controls = false;
+                "
+                :aria-pressed="tools.minicontrols"
+                class="w-full items-center text-xs justify-between gap-1
+                    rounded-lg border p-2 text-center transition"
+                :class="tools.minicontrols
+                    ? 'border-[var(--accent)] bg-[var(--bg)]'
+                    : 'border-[var(--border)] opacity-60'"
+            >
+                <span class="block text-lg">▤</span>Inputs
 
-                {{-- SECTORS --}}
+            </button>
 
-                <button
 
-                    type="button"
+            <button
+                type="button"
+                @click="tools.steering = !tools.steering"
+                :aria-pressed="tools.steering"
+                :class="tools.steering
+                    ? 'border-[var(--accent)] bg-[var(--bg)]'
+                    : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs"
+            >
+                <span class="block text-lg">↻</span>
+                Steering
+                <span
+                    class="mt-1 block text-[10px]"
+                    {{-- x-text="tools.steering ? 'ON' : 'OFF'" --}}
+                ></span>
+            </button>
+        </div>
+    </section>
 
-                    @click="tools.sectors = !tools.sectors"
+    <div class="border-t border-[var(--border)]"></div>
 
-                    :aria-pressed="tools.sectors"
+    {{-- GRAPHICS --}}
+    <section class="space-y-2">
+        <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
+            <span class="text-base">⌁</span> GRAPHICS
+        </h3>
 
-                    class="flex w-full items-center justify-between gap-3
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">↗</span>Speed
+            </button>
 
-                           rounded-lg border p-3 text-left transition"
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">⚙</span>Gears
+            </button>
 
-                    :class="tools.sectors
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">▥</span>Throttle / brake
+            </button>
 
-                        ? 'border-[var(--accent)] bg-[var(--bg)]'
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">↻</span>Steering
+            </button>
 
-                        : 'border-[var(--border)] opacity-60'"
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">Ⅱ</span>Sectors
+            </button>
 
-                >
+            <button type="button" disabled title="Pendiente de integrar"
+                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+                <span class="block text-lg">☷</span>Setup
+            </button>
+        </div>
+    </section>
+</div>
 
-                    <span class="flex items-center gap-3">
-
-                        <span class="text-xl">⌁</span>
-
-                        <span class="text-sm font-medium">Sectors</span>
-
-                    </span>
-
-                    <span
-
-                        class="text-xs"
-
-                        x-text="tools.sectors ? 'ON' : 'OFF'"
-
-                    ></span>
-
-                </button>
 
 
 

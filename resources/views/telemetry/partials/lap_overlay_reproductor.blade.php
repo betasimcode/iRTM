@@ -162,6 +162,7 @@
 
                         manualLapColors.set(key, preset.value);
                         updateLapColorPreview();
+                        updateVehicleColor();
                         colorMenu.classList.add('hidden');
                         drawOverlay();
                         drawSpeedGraph();
@@ -186,6 +187,7 @@
 
                 lapSelector?.addEventListener('change', () => {
                     updateLapColorPreview();
+                    updateVehicleColor();
                     drawOverlay();
                     drawSpeedGraph();
                     drawGearsGraph();
@@ -659,8 +661,8 @@
         };
 
 
-@if($stint->car_id == 128)
-@include('telemetry.partials.car.proto')
+@if($stint->car_id == 25)
+@include('telemetry.partials.car.fclass')
 @elseif($stint->car_id == 128)
 @include('telemetry.partials.car.proto')
 @endif
@@ -737,7 +739,7 @@
         // Estado de navegación independiente de la calibración del circuito.
         const view = { zoom: 1, panX: 0, panY: 0 };
         const MIN_ZOOM = 1;
-        const MAX_ZOOM = 8;
+        const MAX_ZOOM = 12;
         const ZOOM_STEP = 1.2;
 
         let isDragging = false;
@@ -1316,10 +1318,10 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
                 context.drawImage(
                     vehicleSvg,
-                    -2.45,
-                    -6.5,
-                    5,
-                    8
+                    -1,
+                    -3.5,
+                    2,
+                    4
                 );
 
                 context.restore();

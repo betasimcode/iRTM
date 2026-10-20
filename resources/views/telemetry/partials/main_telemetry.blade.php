@@ -1,22 +1,18 @@
 <div class="min-w-52 flex items-center justify-center gap-3">
-    <div class="min-w-16 rounded-lg bg-[var(--digital)] border border-[var(--border)] px-1 py-1 text-center">
+
+    <div class="min-w-16 rounded-lg bg-[var(--bg)] border border-[var(--bg)] px-1 py-1 text-center">
         <div id="telemetry-current-gear"
-             class="text-3xl text-[var(--char)] font-mono-timing font-bold tabular-nums">—</div>
+             class="text-3xl text-[var(--text)] font-mono-timing font-bold tabular-nums">—</div>
     </div>
 
-<div class="min-w-22 h-10 rounded-lg bg-[var(--digital)]
-            border border-[var(--border)] px-1 py-1
-            flex items-center justify-center text-center">
-    <div class="flex h-full w-full items-center justify-center
-                text-3xl leading-none text-[var(--char)]
-                font-mono-timing font-bold tabular-nums">
-        <span id="telemetry-current-speed">—</span>
+    <div class="min-w-24 rounded-lg bg-[var(--bg)] border border-[var(--bg)] px-4 py-1 text-center">
+        <div id="telemetry-current-speed"
+             class="text-3xl text-[var(--text)] font-mono-timing font-bold tabular-nums">—</div>
     </div>
-</div>
 
-    <div class="rounded-lg bg-[var(--digital)] border border-[var(--border)] px-1 py-1 mr-5 text-center">
+    <div class="rounded-lg bg-[var(--bg)] border border-[var(--border)] px-2 py-1 mr-5 text-center">
         <div id="telemetry-current-lap-time"
-             class="text-3xl text-[var(--char)] font-mono-timing font-bold tabular-nums">00:00.000</div>
+             class="text-3xl text-[var(--text)] font-mono-timing font-bold tabular-nums">00:00.000</div>
     </div>
 
 <div

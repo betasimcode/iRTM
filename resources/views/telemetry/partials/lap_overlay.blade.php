@@ -59,7 +59,7 @@
         // Estado de navegación independiente de la calibración del circuito.
         const view = { zoom: 1, panX: 0, panY: 0 };
         const MIN_ZOOM = 1;
-        const MAX_ZOOM = 8;
+        const MAX_ZOOM = 12;
         const ZOOM_STEP = 1.2;
 
         let isDragging = false;
@@ -88,6 +88,13 @@
             }
 
             updateView();
+
+            window.__telemetryZoomDebug = () => ({
+                zoom: view.zoom,
+                maxZoom: MAX_ZOOM,
+                label: zoomLabel?.textContent
+            });
+
         };
 
         viewport.addEventListener('wheel', event => {

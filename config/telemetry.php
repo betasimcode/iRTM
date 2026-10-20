@@ -15,11 +15,16 @@ return [
         ],
 
         'theme-iracing' => [
-            'road' => '#E7EAED',
-            'border' => '#D3D6D9',
-            'back' => '#ffffff',
+            'road' => '#757575',
+            'border' => '#bebebe',
+            'back' => '#909090',
             'digital' => '#BEFF9E',
             'char' => '#005E06',
+            'water' => '#505090',
+            'ground' => '#757590',
+            'buildings' => '#707080',
+
+
         ],
 
     ],

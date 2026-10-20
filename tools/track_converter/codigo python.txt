@@ -1,0 +1,11 @@
+py .\telemetry_to_track_svg.py `
+  --lap1 "B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1089\laps\lap_002.json" `
+  --lap2 "B:\laragon\www\iracing-manager-mrt\storage\app\private\telemetry\2026\10\user_1\stint_1090\laps\lap_005.json" `
+  --out ".\salida\circuito" `
+  --smooth 5
+  
+  
+  /*///////////////////////////////////////// codigo reducido ->
+  
+  
+  py .\telemetry_to_track_svg.py --lap1 .\lap_002.json --lap2 .\lap_005.json --out .\salida\circuito --smooth 5

@@ -304,33 +304,51 @@
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.speed = !graphics.speed"
+                :aria-pressed="graphics.speed"
+                :class="graphics.speed ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">↗</span>Speed
             </button>
 
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.gears = !graphics.gears"
+                :aria-pressed="graphics.gears"
+                :class="graphics.gears ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">⚙</span>Gears
             </button>
 
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.inputs = !graphics.inputs"
+                :aria-pressed="graphics.inputs"
+                :class="graphics.inputs ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">▥</span>Throttle / brake
             </button>
 
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.steering = !graphics.steering"
+                :aria-pressed="graphics.steering"
+                :class="graphics.steering ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">↻</span>Steering
             </button>
 
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.sectors = !graphics.sectors"
+                :aria-pressed="graphics.sectors"
+                :class="graphics.sectors ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">Ⅱ</span>Sectors
             </button>
 
-            <button type="button" disabled title="Pendiente de integrar"
-                class="cursor-not-allowed rounded-lg border border-[var(--border)] p-2 text-center text-xs opacity-40">
+            <button type="button"
+                @click="graphics.setup = !graphics.setup"
+                :aria-pressed="graphics.setup"
+                :class="graphics.setup ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
                 <span class="block text-lg">☷</span>Setup
             </button>
         </div>

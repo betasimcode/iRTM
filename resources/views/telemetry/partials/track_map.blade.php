@@ -25,7 +25,7 @@
     @include('telemetry.partials.main_telemetry')
 </div>
 
-@include('telemetry.partials.telemetry_panel_controls')
+{{-- @include('telemetry.partials.telemetry_panel_controls') --}}
 
 @include('telemetry.partials.zoom_control')
 

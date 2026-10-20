@@ -33,6 +33,15 @@
 
         },
 
+        graphics: {
+            speed: false,
+            gears: false,
+            inputs: false,
+            steering: false,
+            sectors: false,
+            setup: false,
+        },
+
     }"
 
     class="space-y-3"
@@ -135,20 +144,25 @@
 
     {{-- TOOLS + TRACK MAP --}}
 
+{{-- TOOLS + TRACK MAP + GRAPHICS --}}
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
 
-
-
         {{-- TOOLS --}}
+        @include('telemetry.partials.aside')
 
-@include('telemetry.partials.aside')
+        {{-- MAPA Y GRÁFICAS --}}
+        <div
+            class="grid min-w-0 grid-cols-1 gap-4"
+            :class="Object.values(graphics).some(Boolean)
+                ? 'xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]'
+                : 'grid-cols-1'"
+        >
+            {{-- TRACK MAP --}}
+            @include('telemetry.partials.track_map')
 
-
-
-        {{-- TRACK MAP --}}
-
-@include('telemetry.partials.track_map')
-
+            {{-- GRAPHICS --}}
+            @include('telemetry.partials.graphics_panel')
+        </div>
     </div>
 
 </div>

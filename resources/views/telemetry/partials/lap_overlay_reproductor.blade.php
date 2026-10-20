@@ -225,6 +225,187 @@
                 : null,
         }));
 
+
+
+        // Gráfica de velocidad sincronizada con la vuelta.
+        const speedGraphCanvas = document.getElementById('telemetry-graphics-speed');
+        let speedGraphContext = null;
+
+        const drawSpeedGraph = () => {
+            const graph = document.getElementById('telemetry-graphics-speed');
+
+            if (!graph || !graph.isConnected) return;
+
+            const width = graph.clientWidth;
+            const height = graph.clientHeight;
+
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = window.devicePixelRatio || 1;
+
+            graph.width = Math.round(width * dpr);
+            graph.height = Math.round(height * dpr);
+
+            const ctx = graph.getContext('2d');
+            if (!ctx) return;
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const data = validSamples
+                .map((sample, index) => {
+                    const rawDistance = Number(sample.lap_dist_pct);
+                    const rawSpeed = Number(sample.speed_kph);
+
+                    if (
+                        !Number.isFinite(rawDistance) ||
+                        !Number.isFinite(rawSpeed) ||
+                        rawSpeed < 0
+                    ) {
+                        return null;
+                    }
+
+                    // lap_dist_pct normalmente se expresa entre 0 y 1.
+                    // Si llega en porcentaje, convertirlo al mismo rango.
+                    const distance = rawDistance > 1 && rawDistance <= 100
+                        ? rawDistance / 100
+                        : rawDistance;
+
+                    if (distance < 0 || distance > 1) {
+                        return null;
+                    }
+
+                    return {
+                        x: distance,
+                        speed: rawSpeed,
+                        index,
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.x - b.x);
+
+            if (data.length < 2) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px sans-serif';
+                ctx.fillText('Sin datos de velocidad suficientes', 8, 20);
+                return;
+            }
+
+            const maxSpeed = Math.max(50, ...data.map(point => point.speed));
+            const minSpeed = 0;
+
+            const padding = { top: 10, right: 10, bottom: 24, left: 38 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            if (plotWidth <= 0 || plotHeight <= 0) return;
+
+            const xAt = distance =>
+                padding.left + distance * plotWidth;
+
+            const yAt = speed =>
+                padding.top + (1 - (speed - minSpeed) / (maxSpeed - minSpeed))
+                    * plotHeight;
+
+            // Rejilla y escala vertical.
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.fillStyle = '#94a3b8';
+
+            for (let step = 0; step <= 4; step++) {
+                const speed = maxSpeed * step / 4;
+                const y = yAt(speed);
+
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillText(String(Math.round(speed)), padding.left - 6, y);
+            }
+
+            // Distancia normalizada de la vuelta: 0–100 %.
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            [0, 25, 50, 75, 100].forEach(percent => {
+                const x = xAt(percent / 100);
+                ctx.fillText(`${percent}%`, x, height - padding.bottom + 7);
+            });
+
+            // Curva de velocidad.
+            ctx.beginPath();
+
+            data.forEach((point, index) => {
+                const x = xAt(point.x);
+                const y = yAt(point.speed);
+
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Cursor asociado al índice de reproducción actual.
+            const sampleIndex = Math.min(
+                Math.floor(playbackIndex),
+                validSamples.length - 1
+            );
+
+            const currentSample = validSamples[sampleIndex];
+            const rawCurrentDistance = Number(currentSample?.lap_dist_pct);
+
+            const currentDistance = Number.isFinite(rawCurrentDistance)
+                ? (
+                    rawCurrentDistance > 1 && rawCurrentDistance <= 100
+                        ? rawCurrentDistance / 100
+                        : rawCurrentDistance
+                )
+                : sampleIndex / Math.max(1, validSamples.length - 1);
+
+            const cursorX = xAt(
+                Math.max(0, Math.min(1, currentDistance))
+            );
+
+            ctx.beginPath();
+            ctx.moveTo(cursorX, padding.top);
+            ctx.lineTo(cursorX, height - padding.bottom);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            const nearest = data.reduce((best, point) =>
+                Math.abs(point.index - playbackIndex)
+                    < Math.abs(best.index - playbackIndex)
+                    ? point
+                    : best
+            );
+
+            ctx.beginPath();
+            ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(
+                `${nearest.speed.toFixed(0)} km/h`,
+                width - padding.right,
+                padding.top
+            );
+        };
+
+
+
+
         const context = canvas.getContext('2d');
 
                 // Silueta SVG del vehículo, vista desde arriba y con el frontal hacia arriba.
@@ -235,8 +416,8 @@
         };
 
 
-@if($stint->car_id == 25)
-@include('telemetry.partials.car.fclass')
+@if($stint->car_id == 128)
+@include('telemetry.partials.car.proto')
 @elseif($stint->car_id == 128)
 @include('telemetry.partials.car.proto')
 @endif
@@ -1118,7 +1299,11 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             if (progressLabel) progressLabel.textContent = `${Math.round(percent)}%`;
 
                       updateTelemetryIndicators();
+                      drawSpeedGraph();
         };
+
+
+
 
         const stopPlayback = () => {
             isPlaying = false;
@@ -1185,6 +1370,10 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
         });
 
+
+
+
+
         const updateView = () => {
             applyContainerTransform();
 
@@ -1210,6 +1399,33 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         drawOverlay();
         updateView();
         updatePlaybackControls();
+
+
+        const speedGraphResizeObserver = new ResizeObserver(() => {
+            drawSpeedGraph();
+        });
+
+        const observeSpeedGraph = () => {
+            const graph = document.getElementById('telemetry-graphics-speed');
+
+            if (graph && graph.isConnected) {
+                speedGraphResizeObserver.observe(graph);
+                drawSpeedGraph();
+            }
+        };
+
+        observeSpeedGraph();
+
+
+        document.addEventListener('click', event => {
+            if (event.target.closest('button') && event.target.closest('button').textContent.includes('Speed')) {
+                requestAnimationFrame(() => {
+                    observeSpeedGraph();
+                    drawSpeedGraph();
+                });
+            }
+        });
+
 
         console.info('[GPS overlay]', {
             trackId,

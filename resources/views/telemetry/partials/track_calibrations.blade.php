@@ -17,5 +17,16 @@
                 offset_x_pct: -0.15,
                 offset_y_pct: -0.6,
             },
-
+            "580": {
+                scale: 1.09,
+                rotation_deg: 0,
+                offset_x_pct: -0.28,
+                offset_y_pct: -0.43,
+            },
+            "218": {
+                scale: 1.17,
+                rotation_deg: 0,
+                offset_x_pct: -0.07,
+                offset_y_pct: 0,
+            },
         };

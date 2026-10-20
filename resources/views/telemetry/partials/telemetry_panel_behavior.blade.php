@@ -93,18 +93,16 @@
     }
 
     /* Pedales: tercera fila, siempre visibles */
+    /* Pedales verticales: tercera fila cuando están activos */
     #telemetry-main-panel.telemetry-compact
     > div.min-w-52 > div:nth-child(4) {
-        display: flex;
         grid-column: 1 / -1;
         grid-row: 3;
-        justify-content: center;
-        align-items: flex-end;
-        gap: 20px;
+        justify-self: center;
         width: 100%;
         margin: 0;
         padding: 4px 0 0;
-        border-top: 1px solid rgb(100 116 139 / 25%);
+        /* border-top: 1px solid rgb(100 116 139 / 25%); */
     }
 
     /* Superficies digitales */
@@ -292,7 +290,39 @@
         pointer-events: auto !important;
     }
 
+    /* INPUTS y volante comparten la fila inferior del panel flotante */
+    #telemetry-main-panel.telemetry-compact
+    #telemetry-bottom-controls {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-width: 0;
+        width: 100%;
+        margin: 0;
+        padding-top: 6px;
+        border-top: 1px solid rgb(100 116 139 / 25%);
+    }
 
+    /* INPUTS ocupa la zona izquierda */
+    #telemetry-main-panel.telemetry-compact
+    #telemetry-mini-controls {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        padding: 6px 8px;
+    }
+
+    /* El volante permanece a la derecha */
+    #telemetry-main-panel.telemetry-compact
+    #telemetry-steering-control {
+        flex: 0 0 64px;
+        width: 64px;
+        min-width: 0;
+        padding: 0;
+    }
 </style>
 
 

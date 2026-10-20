@@ -47,64 +47,68 @@
 
 {{-- MINI CONTROLS: representación compacta independiente --}}
 <div
-    id="telemetry-mini-controls"
-    x-show="tools.minicontrols"
-    x-transition
-    class="w-full rounded-lg border border-[var(--border)]
-           bg-black/20 px-3 py-2"
+    id="telemetry-bottom-controls"
+    class="flex w-full items-center justify-between gap-2"
 >
-    <div class="mb-2 flex items-center justify-between">
-        <span class="text-[10px] text-[var(--text-muted)]">INPUTS</span>
+    <div
+        id="telemetry-mini-controls"
+        x-show="tools.minicontrols"
+        x-transition
+        class="w-full rounded-lg border border-[var(--border)]
+            bg-black/20 px-3 py-2"
+    >
+        <div class="mb-2 flex items-center justify-between">
+            <span class="text-[10px] text-[var(--text-muted)]">INPUTS</span>
+        </div>
+
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="w-9 text-[10px] font-semibold text-blue-400">CLT</span>
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div id="telemetry-mini-clutch-bar"
+                        class="h-full rounded-full bg-blue-500"
+                        style="width:0%"></div>
+                </div>
+                <span id="telemetry-mini-clutch-value"
+                    class="w-9 text-right font-mono text-[10px]">0%</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="w-9 text-[10px] font-semibold text-red-400">BRAKE</span>
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div id="telemetry-mini-brake-bar"
+                        class="h-full rounded-full bg-red-500"
+                        style="width:0%"></div>
+                </div>
+                <span id="telemetry-mini-brake-value"
+                    class="w-9 text-right font-mono text-[10px]">0%</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="w-9 text-[10px] font-semibold text-green-400">THR</span>
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div id="telemetry-mini-throttle-bar"
+                        class="h-full rounded-full bg-green-500"
+                        style="width:0%"></div>
+                </div>
+                <span id="telemetry-mini-throttle-value"
+                    class="w-9 text-right font-mono text-[10px]">0%</span>
+            </div>
+        </div>
     </div>
-
-    <div class="space-y-2">
-        <div class="flex items-center gap-2">
-            <span class="w-9 text-[10px] font-semibold text-blue-400">CLT</span>
-            <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                <div id="telemetry-mini-clutch-bar"
-                     class="h-full rounded-full bg-blue-500"
-                     style="width:0%"></div>
-            </div>
-            <span id="telemetry-mini-clutch-value"
-                  class="w-9 text-right font-mono text-[10px]">0%</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <span class="w-9 text-[10px] font-semibold text-red-400">BRAKE</span>
-            <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                <div id="telemetry-mini-brake-bar"
-                     class="h-full rounded-full bg-red-500"
-                     style="width:0%"></div>
-            </div>
-            <span id="telemetry-mini-brake-value"
-                  class="w-9 text-right font-mono text-[10px]">0%</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <span class="w-9 text-[10px] font-semibold text-green-400">THR</span>
-            <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                <div id="telemetry-mini-throttle-bar"
-                     class="h-full rounded-full bg-green-500"
-                     style="width:0%"></div>
-            </div>
-            <span id="telemetry-mini-throttle-value"
-                  class="w-9 text-right font-mono text-[10px]">0%</span>
-        </div>
-    </div>
-</div>
 
 
    <div
-    id="telemetry-steering-control"
-    x-show="tools.steering"
-    class="flex w-24 flex-col items-center justify-center gap-1 px-1 py-1"
->
-    @include('telemetry.partials.steering.classic')
+        id="telemetry-steering-control"
+        x-show="tools.steering"
+        class="flex w-24 flex-col items-center justify-center gap-1 px-1 py-1"
+    >
+        @include('telemetry.partials.steering.classic')
 
-    <span
-        id="telemetry-current-steering-value"
-        class="font-mono text-sm font-semibold tabular-nums"
-    >—°</span>
+        <span
+            id="telemetry-current-steering-value"
+            class="font-mono text-sm font-semibold tabular-nums"
+        >—°</span>
+    </div>
 </div>
-
 </div>

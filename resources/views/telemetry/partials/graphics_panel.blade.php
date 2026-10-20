@@ -2,7 +2,8 @@
     x-cloak
     x-show="Object.values(graphics).some(Boolean)"
     x-transition
-    class="min-w-0 rounded-xl border border-[var(--border)]
+    class="box-border w-full min-w-0 rounded-xl
+           border border-[var(--border)]
            bg-[var(--card)] p-3"
 >
     <header class="mb-3 flex items-center justify-between gap-2">
@@ -24,7 +25,7 @@
     <div class="space-y-3">
         <template x-for="item in [
             { key: 'speed', label: 'Speed' },
-            { key: 'gears', label: 'Marchas' },
+            { key: 'gears', label: 'Gears' },
             { key: 'inputs', label: 'Throttle / Brake' },
             { key: 'steering', label: 'Dirección' },
             { key: 'sectors', label: 'Comparativa de sectores' },
@@ -53,16 +54,20 @@
                     </div>
                 </template>
 
-                <div
-                    x-show="item.key !== 'speed'"
-                    class="flex min-h-24 items-center justify-center
-                        rounded-md border border-dashed
-                        border-[var(--border)] p-3"
-                >
-                    <p class="text-center text-xs text-[var(--text-muted)]">
-                        Gráfica pendiente de conectar a las muestras de telemetría.
-                    </p>
-                </div>
+                <template x-if="item.key === 'gears'">
+                    <div class="w-full min-w-0">
+                        <canvas
+                            id="telemetry-graphics-gears"
+                            class="block w-full"
+                            style="height: 180px;"
+                            aria-label="Gráfica de marchas durante la vuelta"
+                        ></canvas>
+                    </div>
+                </template>
+
+
+
+
             </section>
         </template>
     </div>

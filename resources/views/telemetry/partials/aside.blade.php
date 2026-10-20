@@ -167,10 +167,23 @@
                 <span class="block text-lg">◉</span>Instrumentos
             </button>
 
-            <button type="button"
-                @click="document.getElementById('telemetry-panel-detach')?.click()"
-                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">⤢</span>Acoplar
+            <button
+                type="button"
+                id="telemetry-panel-detach"
+                @click="
+                    const panel = document.getElementById('telemetry-main-panel');
+                    if (panel) {
+                        const detached = panel.parentElement?.id === 'telemetry-floating-panel-host';
+                        $el.textContent = detached ? '⤢ Acoplar' : '⤢ Desacoplar';
+                        $el.title = detached ? 'Acoplar instrumentos' : 'Desacoplar instrumentos';
+                        $el.setAttribute('aria-pressed', String(!detached));
+                        window.dispatchEvent(new CustomEvent('telemetry-panel-toggle-detach'));
+                    }
+                "
+                class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]"
+            >
+                <span class="block text-lg">⤢</span>
+                <span>Acoplar</span>
             </button>
 
             <button type="button"

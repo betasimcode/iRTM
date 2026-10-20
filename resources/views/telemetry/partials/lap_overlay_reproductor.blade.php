@@ -71,14 +71,15 @@
         const speedSelect = document.getElementById('telemetry-lap-speed');
 
 
-        // Presets de color para las trazadas.
+        // Paleta fija compartida por trazadas y gráficas.
         const lapColorPresets = [
-            { name: 'Cian', value: '#0000ff' },
-            { name: 'Orange', value: '#FFB454' },
-            { name: 'Violet', value: '#A78BFA' },
-            { name: 'Green', value: '#00ff00' },
-            { name: 'Red', value: '#ff0000' },
+            { name: 'Red', value: '#EF4444' },
+            { name: 'Blue', value: '#3B82F6' },
+            { name: 'Violet', value: '#A855F7' },
+            { name: 'Green', value: '#22C55E' },
             { name: 'Yellow', value: '#FACC15' },
+            { name: 'Cian', value: '#06B6D4' },
+            { name: 'Orange', value: '#F59E0B' },
         ];
 
         const lapSelector = document.getElementById('lap');
@@ -163,6 +164,8 @@
                         updateLapColorPreview();
                         colorMenu.classList.add('hidden');
                         drawOverlay();
+                        drawSpeedGraph();
+                        drawGearsGraph();
                     });
 
                     colorMenu.appendChild(option);
@@ -184,6 +187,8 @@
                 lapSelector?.addEventListener('change', () => {
                     updateLapColorPreview();
                     drawOverlay();
+                    drawSpeedGraph();
+                    drawGearsGraph();
                 });
             }
         }
@@ -311,7 +316,7 @@
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 0.5;
             ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
             ctx.fillStyle = '#94a3b8';
 
@@ -347,8 +352,8 @@
                 else ctx.lineTo(x, y);
             });
 
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = getActiveLapColor();
+            ctx.lineWidth = 0.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
 
@@ -377,7 +382,7 @@
             ctx.moveTo(cursorX, padding.top);
             ctx.lineTo(cursorX, height - padding.bottom);
             ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
 
             const nearest = data.reduce((best, point) =>
@@ -403,7 +408,245 @@
             );
         };
 
+        // Gráfica de marchas sincronizada con la reproducción.
+        const drawGearsGraph = () => {
+            const graph = document.getElementById('telemetry-graphics-gears');
 
+            if (!graph || !graph.isConnected) return;
+
+            const width = graph.clientWidth;
+            const height = graph.clientHeight;
+
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = window.devicePixelRatio || 1;
+
+            graph.width = Math.round(width * dpr);
+            graph.height = Math.round(height * dpr);
+
+            const ctx = graph.getContext('2d');
+            if (!ctx) return;
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const data = validSamples
+                .map((sample, index) => {
+                    const rawDistance = Number(sample.lap_dist_pct);
+                    const rawGear = Number(sample.gear);
+                    const time = Number(sample.session_time);
+
+                    if (
+                        !Number.isFinite(rawDistance) ||
+                        sample.gear == null ||
+                        !Number.isFinite(rawGear) ||
+                        rawGear < -1 ||
+                        rawGear > 10
+                    ) {
+                        return null;
+                    }
+
+                    const distance =
+                        rawDistance > 1 && rawDistance <= 100
+                            ? rawDistance / 100
+                            : rawDistance;
+
+                    if (distance < 0 || distance > 1) return null;
+
+                    return {
+                        x: distance,
+                        gear: rawGear,
+                        time,
+                        index,
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.x - b.x);
+
+            // Filtro visual de neutral transitorio.
+            // Solo afecta a la serie representada en la gráfica.
+            const MAX_TRANSIENT_NEUTRAL_SECONDS = 0.06;
+
+            for (let index = 1; index < data.length - 1;) {
+                if (data[index].gear !== 0) {
+                    index++;
+                    continue;
+                }
+
+                const neutralStart = index;
+                let neutralEnd = index;
+
+                while (
+                    neutralEnd + 1 < data.length &&
+                    data[neutralEnd + 1].gear === 0
+                ) {
+                    neutralEnd++;
+                }
+
+                const previous = data[neutralStart - 1];
+                const next = data[neutralEnd + 1];
+
+                const startTime = data[neutralStart].time;
+                const endTime = data[neutralEnd].time;
+
+                const neutralDuration =
+                    Number.isFinite(startTime) && Number.isFinite(endTime)
+                        ? endTime - startTime
+                        : Infinity;
+
+                const isTransientShift =
+                    next &&
+                    previous.gear > 0 &&
+                    next.gear > 0 &&
+                    previous.gear !== next.gear &&
+                    neutralDuration >= 0 &&
+                    neutralDuration <= MAX_TRANSIENT_NEUTRAL_SECONDS;
+
+                if (isTransientShift) {
+                    for (
+                        let neutralIndex = neutralStart;
+                        neutralIndex <= neutralEnd;
+                        neutralIndex++
+                    ) {
+                        data[neutralIndex].gear = previous.gear;
+                    }
+                }
+
+                index = neutralEnd + 1;
+            }
+
+            if (data.length < 2) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px sans-serif';
+                ctx.fillText('Sin datos de marchas suficientes', 8, 20);
+                return;
+            }
+
+            const gears = data.map(point => point.gear);
+            const minGear = Math.min(0, ...gears);
+            const maxGear = Math.max(1, ...gears);
+
+            const padding = { top: 10, right: 10, bottom: 24, left: 38 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            if (plotWidth <= 0 || plotHeight <= 0) return;
+
+            const xAt = distance => padding.left + distance * plotWidth;
+
+            const yAt = gear =>
+                padding.top +
+                (maxGear - gear) / Math.max(1, maxGear - minGear) * plotHeight;
+
+            // Rejilla y etiquetas de marchas.
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.fillStyle = '#94a3b8';
+
+            for (let gear = minGear; gear <= maxGear; gear++) {
+                const y = yAt(gear);
+
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillText(gear === 0 ? 'N' : gear === -1 ? 'R' : String(gear),
+                    padding.left - 6, y);
+            }
+
+            // Eje X: distancia normalizada.
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            [0, 25, 50, 75, 100].forEach(percent => {
+                ctx.fillText(
+                    `${percent}%`,
+                    xAt(percent / 100),
+                    height - padding.bottom + 7
+                );
+            });
+
+            // Curva escalonada: horizontal mientras se mantiene la marcha,
+            // vertical únicamente cuando cambia.
+            ctx.beginPath();
+
+            if (data.length > 0) {
+                ctx.moveTo(xAt(data[0].x), yAt(data[0].gear));
+
+                for (let index = 1; index < data.length; index++) {
+                    const previous = data[index - 1];
+                    const current = data[index];
+
+                    const x = xAt(current.x);
+
+                    // Mantener la marcha anterior hasta el punto de cambio.
+                    ctx.lineTo(x, yAt(previous.gear));
+
+                    // Dibujar el cambio vertical solo si cambia la marcha.
+                    if (current.gear !== previous.gear) {
+                        ctx.lineTo(x, yAt(current.gear));
+                    }
+                }
+            }
+
+            ctx.strokeStyle = getActiveLapColor();
+            ctx.lineWidth = 0.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Cursor compartido con Speed y el mapa.
+            const sampleIndex = Math.min(
+                Math.floor(playbackIndex),
+                validSamples.length - 1
+            );
+
+            const currentSample = validSamples[sampleIndex];
+            const rawDistance = Number(currentSample?.lap_dist_pct);
+
+            const currentDistance = Number.isFinite(rawDistance)
+                ? (
+                    rawDistance > 1 && rawDistance <= 100
+                        ? rawDistance / 100
+                        : rawDistance
+                )
+                : sampleIndex / Math.max(1, validSamples.length - 1);
+
+            const cursorX = xAt(Math.max(0, Math.min(1, currentDistance)));
+
+            ctx.beginPath();
+            ctx.moveTo(cursorX, padding.top);
+            ctx.lineTo(cursorX, height - padding.bottom);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            const nearest = data.reduce((best, point) =>
+                Math.abs(point.index - playbackIndex) <
+                Math.abs(best.index - playbackIndex)
+                    ? point
+                    : best
+            );
+
+            ctx.beginPath();
+            ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = '#a78bfa';
+
+            ctx.fillText(
+                `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
+                width - padding.right,
+                padding.top
+            );
+        };
 
 
         const context = canvas.getContext('2d');
@@ -1294,12 +1537,18 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
 
         const updatePlaybackControls = () => {
-            const percent = playbackIndex / Math.max(1, points.length - 1) * 100;
-            if (progressSlider) progressSlider.value = String(percent);
-            if (progressLabel) progressLabel.textContent = `${Math.round(percent)}%`;
+            const percent =
+                playbackIndex / Math.max(1, points.length - 1) * 100;
 
-                      updateTelemetryIndicators();
-                      drawSpeedGraph();
+            if (progressSlider) progressSlider.value = String(percent);
+
+            if (progressLabel) {
+                progressLabel.textContent = `${Math.round(percent)}%`;
+            }
+
+            updateTelemetryIndicators();
+            drawSpeedGraph();
+            drawGearsGraph();
         };
 
 
@@ -1401,20 +1650,38 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         updatePlaybackControls();
 
 
-        const speedGraphResizeObserver = new ResizeObserver(() => {
-            drawSpeedGraph();
-        });
+        const observeGraphics = () => {
+            const speedGraph = document.getElementById('telemetry-graphics-speed');
+            const gearsGraph = document.getElementById('telemetry-graphics-gears');
 
-        const observeSpeedGraph = () => {
-            const graph = document.getElementById('telemetry-graphics-speed');
-
-            if (graph && graph.isConnected) {
-                speedGraphResizeObserver.observe(graph);
+            if (speedGraph?.isConnected) {
+                graphicsResizeObserver.observe(speedGraph);
                 drawSpeedGraph();
+            }
+
+            if (gearsGraph?.isConnected) {
+                graphicsResizeObserver.observe(gearsGraph);
+                drawGearsGraph();
             }
         };
 
-        observeSpeedGraph();
+        const graphicsResizeObserver = new ResizeObserver(() => {
+            drawSpeedGraph();
+            drawGearsGraph();
+        });
+
+        observeGraphics();
+
+        document.addEventListener('click', event => {
+            const button = event.target.closest('button');
+
+            if (
+                button &&
+                /Speed|Marchas/.test(button.textContent)
+            ) {
+                requestAnimationFrame(observeGraphics);
+            }
+        });
 
 
         document.addEventListener('click', event => {

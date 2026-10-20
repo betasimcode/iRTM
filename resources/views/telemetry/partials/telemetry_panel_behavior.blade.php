@@ -303,7 +303,7 @@
         width: 100%;
         margin: 0;
         padding-top: 6px;
-        border-top: 1px solid rgb(100 116 139 / 25%);
+        /* border-top: 1px solid rgb(100 116 139 / 25%); */
     }
 
     /* INPUTS ocupa la zona izquierda */
@@ -327,32 +327,32 @@
 
 
 
+
 <script>
 (() => {
     const initTelemetryPanel = () => {
         const panel = document.getElementById('telemetry-main-panel');
         const host = document.getElementById('telemetry-floating-panel-host');
-        const controls = document.getElementById('telemetry-panel-controls');
-        const toggleButton = document.getElementById('telemetry-panel-toggle');
         const detachButton = document.getElementById('telemetry-panel-detach');
-        const toggleLabel = document.getElementById('telemetry-panel-toggle-icon');
 
-        if (!panel || !host || !controls || !toggleButton || !detachButton) {
-            console.error('[TelemetryPanel] Faltan elementos necesarios.');
+        if (!panel || !host || !detachButton) {
+            console.error('[TelemetryPanel] Faltan elementos necesarios.', {
+                panel: !!panel,
+                host: !!host,
+                detachButton: !!detachButton,
+            });
             return;
         }
 
+        // Evitar registrar los listeners más de una vez.
         if (panel.dataset.presentationReady === '1') return;
         panel.dataset.presentationReady = '1';
 
-        // Guardar las ubicaciones originales.
+        // Recordar la ubicación original del panel.
         const panelPlaceholder = document.createComment('panel-origin');
         panel.parentNode.insertBefore(panelPlaceholder, panel);
 
-        const controlsPlaceholder = document.createComment('controls-origin');
-        controls.parentNode.insertBefore(controlsPlaceholder, controls);
-
-        // Miniheader flotante.
+        // Miniheader para arrastrar el panel flotante.
         const toolbar = document.createElement('div');
         toolbar.className = 'telemetry-floating-toolbar';
 
@@ -363,10 +363,30 @@
 
         toolbar.appendChild(dragHandle);
 
-        let detached = false;
-        let hidden = false;
+        let detached = panel.parentElement === host;
         let drag = null;
         let position = { x: 12, y: 12 };
+
+        const updateButton = () => {
+            const label = detachButton.querySelector('span:last-child');
+
+            // Un solo botón: muestra la acción disponible.
+            if (label) {
+                label.textContent = detached ? 'Acoplar' : 'Desacoplar';
+            } else {
+                detachButton.textContent = detached ? 'Acoplar' : 'Desacoplar';
+            }
+
+            detachButton.title = detached
+                ? 'Acoplar instrumentos en su posición original'
+                : 'Desacoplar instrumentos sobre el mapa';
+
+            detachButton.setAttribute('aria-pressed', String(detached));
+            detachButton.setAttribute(
+                'aria-label',
+                detached ? 'Acoplar instrumentos' : 'Desacoplar instrumentos'
+            );
+        };
 
         const applyPosition = () => {
             const maxX = Math.max(0, host.clientWidth - panel.offsetWidth);
@@ -379,45 +399,13 @@
             panel.style.top = `${position.y}px`;
         };
 
-        const setHidden = value => {
-            hidden = value;
-
-            if (detached) {
-                const instruments = Array.from(panel.children).find(
-                    element => element !== toolbar
-                );
-
-                if (instruments) instruments.hidden = hidden;
-            } else {
-                panel.hidden = hidden;
-            }
-
-            toggleButton.setAttribute('aria-pressed', String(!hidden));
-            toggleButton.setAttribute(
-                'aria-label',
-                hidden ? 'Mostrar instrumentos' : 'Ocultar instrumentos'
-            );
-            toggleButton.title = hidden
-                ? 'Mostrar instrumentos'
-                : 'Ocultar instrumentos';
-
-            if (toggleLabel) {
-                toggleLabel.textContent = hidden ? 'Mostrar' : 'Ocultar';
-            } else {
-                toggleButton.textContent = hidden ? 'Mostrar' : 'Ocultar';
-            }
-        };
-
         const setDetached = value => {
             if (value === detached) return;
 
             if (value) {
-                // Trasladar el panel al área flotante.
+                // Desacoplar: mover el panel al contenedor flotante.
                 host.appendChild(panel);
                 panel.insertBefore(toolbar, panel.firstChild);
-
-                // Trasladar el contenedor original de los botones.
-                toolbar.appendChild(controls);
 
                 panel.classList.add('telemetry-compact');
                 panel.hidden = false;
@@ -426,38 +414,19 @@
 
                 detached = true;
 
-                detachButton.textContent = 'Acoplar';
-                detachButton.title = 'Devolver instrumentos al encabezado';
-                detachButton.setAttribute('aria-pressed', 'true');
-
-                setHidden(false);
                 applyPosition();
-
-                console.log('[TelemetryPanel] Botones iniciales', {
-                    toggleButton,
-                    detachButton,
-                    toolbar,
-                    controls,
-                    detachParent: detachButton.parentElement,
-                });
-
-
             } else {
-                // Devolver el panel a su ubicación original.
+                // Acoplar: devolverlo exactamente a su posición original.
                 if (!panelPlaceholder.parentNode) {
-                    console.error('[TelemetryPanel] Falta el marcador del panel.');
+                    console.error(
+                        '[TelemetryPanel] No se encuentra el marcador original del panel.'
+                    );
                     return;
                 }
 
                 panelPlaceholder.parentNode.insertBefore(
                     panel,
                     panelPlaceholder.nextSibling
-                );
-
-                // Retirar controles y miniheader del panel flotante.
-                controlsPlaceholder.parentNode.insertBefore(
-                    controls,
-                    controlsPlaceholder.nextSibling
                 );
 
                 toolbar.remove();
@@ -471,47 +440,31 @@
                 panel.hidden = false;
 
                 detached = false;
-
-                detachButton.textContent = 'Desacoplar';
-                detachButton.title = 'Desacoplar instrumentos sobre el mapa';
-                detachButton.setAttribute('aria-pressed', 'false');
-
-                setHidden(false);
             }
+
+            updateButton();
+
+            console.info('[TelemetryPanel] Estado actualizado:', {
+                detached,
+                parent: panel.parentElement?.id ?? null,
+            });
         };
 
-        // Los listeners permanecen asociados a los mismos botones.
-        toggleButton.type = 'button';
+        // El mismo botón alterna ambos estados.
         detachButton.type = 'button';
 
-        toggleButton.addEventListener('click', event => {
-            event.preventDefault();
-            event.stopPropagation();
-            setHidden(!hidden);
-        });
-
         detachButton.addEventListener('click', event => {
-            console.log('[TelemetryPanel] CLICK recibido', {
-                target: event.target,
-                currentTarget: event.currentTarget,
-                detached,
-                parent: detachButton.parentElement,
-            });
-
             event.preventDefault();
             event.stopPropagation();
 
             setDetached(!detached);
-
-            console.log('[TelemetryPanel] Transición terminada', { detached });
         });
 
-        // Arrastrar desde el título, sin capturar los clics de los botones.
+        // Arrastrar desde el miniheader, sin interferir con los botones.
         toolbar.addEventListener('pointerdown', event => {
             if (!detached || event.button !== 0) return;
 
             if (event.target.closest('button')) {
-                // El clic pertenece al botón, no al arrastre del mapa.
                 event.stopPropagation();
                 return;
             }
@@ -555,17 +508,27 @@
             if (detached) applyPosition();
         });
 
+        // Reflejar el estado inicial real del panel.
+        if (detached && !panel.contains(toolbar)) {
+            panel.insertBefore(toolbar, panel.firstChild);
+            panel.classList.add('telemetry-compact');
+            panel.style.position = 'absolute';
+        }
+
+        updateButton();
+
         console.info('[TelemetryPanel] Inicializado correctamente.');
     };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initTelemetryPanel, {
-            once: true
+            once: true,
         });
     } else {
         initTelemetryPanel();
     }
 })();
 </script>
+
 
 

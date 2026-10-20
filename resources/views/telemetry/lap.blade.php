@@ -145,7 +145,7 @@
     {{-- TOOLS + TRACK MAP --}}
 
 {{-- TOOLS + TRACK MAP + GRAPHICS --}}
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
 
         {{-- TOOLS --}}
         @include('telemetry.partials.aside')
@@ -154,7 +154,7 @@
         <div
             class="grid min-w-0 grid-cols-1 gap-4"
             :class="Object.values(graphics).some(Boolean)
-                ? 'xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]'
+                ? 'xl:grid-cols-[minmax(0,1fr)_minmax(460px,0.65fr)]'
                 : 'grid-cols-1'"
         >
             {{-- TRACK MAP --}}

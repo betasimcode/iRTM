@@ -1,4 +1,4 @@
-<div class="mb-2 grid grid-cols-[minmax(0,1fr)_44px] gap-2">
+{{-- <div class="mb-2 grid grid-cols-[minmax(0,1fr)_44px] gap-2">
 
     <select
         id="lap"
@@ -56,4 +56,5 @@
         ></span>
     </button>
 
-</div>
+</div> --}}
+

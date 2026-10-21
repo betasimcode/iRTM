@@ -1,4 +1,3 @@
-
 <script src="{{ asset('js/telemetry/sector-marker-style.js') }}?v={{ filemtime(public_path('js/telemetry/sector-marker-style.js')) }}"></script>
 <script>
 (() => {
@@ -89,10 +88,20 @@
         // Conserva los cambios manuales mientras permanezca activa la página.
         const manualLapColors = new Map();
 
-        const getSelectedLapKey = () => lapSelector?.value ?? '';
+        const getSelectedLapKey = () => {
+            if (lapSelector?.value) {
+                return String(lapSelector.value);
+            }
+
+            return new URLSearchParams(window.location.search).get('lap') ?? '';
+        };
 
         const getAutomaticLapColor = () => {
-            const index = lapSelector?.selectedIndex ?? 0;
+            const lapNumber = Number(getSelectedLapKey());
+            const index = lapSelector
+                ? lapSelector.selectedIndex
+                : Math.max(0, lapNumber - 1);
+
             return lapColorPresets[
                 Math.max(0, index) % lapColorPresets.length
             ].value;
@@ -128,7 +137,7 @@
 
                 colorMenu.id = 'lap-color-menu';
                 colorMenu.className =
-                    'absolute right-0 top-full z-50 mt-2 hidden ' +
+                    'absolute left-5 top-full z-50 mt-2 hidden ' +
                     'min-w-40 rounded-lg border border-[var(--border)] ' +
                     'bg-[var(--bg)] p-2 shadow-xl';
 
@@ -1145,7 +1154,7 @@
         // Estado de navegación independiente de la calibración del circuito.
         const view = { zoom: 1, panX: 0, panY: 0 };
         const MIN_ZOOM = 1;
-        const MAX_ZOOM = 12;
+        const MAX_ZOOM = 10;
         const ZOOM_STEP = 1.2;
 
         let isDragging = false;

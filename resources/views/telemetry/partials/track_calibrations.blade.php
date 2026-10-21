@@ -26,7 +26,7 @@
             "218": {
                 scale: 1.16,
                 rotation_deg: 0,
-                offset_x_pct: -0.07,
-                offset_y_pct: -0.05,
+                offset_x_pct: -0.04,
+                offset_y_pct: 0.3,
             },
         };

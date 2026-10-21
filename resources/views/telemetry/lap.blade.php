@@ -84,11 +84,25 @@
 
                 <p class="text-xs text-[var(--text-muted)]">Lap time</p>
 
-                <p class="mt-1 font-mono-timing text-lg font-semibold
+                <p class="flex mt-1 font-mono-timing text-lg font-semibold
 
                           text-[var(--text-title)]">
 
                     {{ isset($selectedLap['lap_time']) ? gmdate('i:s.', (int) $selectedLap['lap_time']) . str_pad((string) ((int) (($selectedLap['lap_time'] - floor($selectedLap['lap_time'])) * 1000)), 3, '0', STR_PAD_LEFT) : '--:--.---' }}
+
+                    <button
+                        type="button"
+                        id="lap-color-trigger"
+                        aria-label="Cambiar color de la trazada"
+                        title="Color de la trazada"
+                        class="flex items-center justify-center rounded-lg"
+                    >
+                        <span
+                            id="lap-color-preview"
+                            class="ml-3 h-4 w-4 rounded-full border border-white/20"
+                            style="background-color: #00E5FF"
+                        ></span>
+                    </button>
 
                 </p>
 

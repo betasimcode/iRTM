@@ -540,6 +540,9 @@
                         ?? null;
 
                     $displayLapTime = $jsonLap['lap_time'] ?? null;
+                    $telemetryUrl = is_numeric($displayLap) && (int) $displayLap > 0
+                        ? route('telemetry.lap', ['stint' => $stint->id, 'lap' => (int) $displayLap])
+                        : null;
                 @endphp
 
 
@@ -550,10 +553,24 @@
                         @continue
                     @endif
 
-                <tr class="hover:bg-[var(--card-hover)] transition">
+                <tr
+                    @if ($telemetryUrl)
+                        onclick="window.location.href='{{ $telemetryUrl }}'"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href='{{ $telemetryUrl }}'; }"
+                        tabindex="0"
+                        role="link"
+                        title="Abrir telemetría de la vuelta {{ (int) $displayLap }}"
+                        class="cursor-pointer hover:bg-[var(--card-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] transition"
+                    @else
+                        class="transition"
+                    @endif
+                >
 
                    <td class="w-12 text-center align-middle px-3 py-4 font-medium">
-                        {{ $displayLap ?? '—' }}
+                        <div class="flex items-center justify-center gap-2">
+                            <span>{{ $displayLap ?? '—' }}</span>
+
+                        </div>
                     </td>
 
                     <td class="w-12 text-center align-middle px-3 py-4">
@@ -565,26 +582,8 @@
                             </span>
                         @endif
                     </td>
-                   {{-- LAP TIME --}}
-                    <td class="px-6 py-4 cursor-pointer "
-                        @click='
-                            open = true;
-                            lap = @json([
-                                "lap" => $displayLap,
-                                "lap_time" => is_numeric($displayLapTime)
-                                    ? (float) $displayLapTime
-                                    : null,
-                                "sectors" => collect($jsonLap['sectors'] ?? [])
-                                    ->map(fn ($time) => [
-                                        "sector_time" => is_numeric($time)
-                                            ? (float) $time
-                                            : null
-                                    ])
-                                    ->values()
-                            ])
-
-                            '
-                        >
+                   {{-- LAP TIME: la fila completa abre la telemetría de esta vuelta. --}}
+                    <td class="px-6 py-4">
 
                     <span class="
                             font-mono-timing

@@ -1180,47 +1180,56 @@
         const context = canvas.getContext('2d');
 
                 // Silueta SVG del vehículo, vista desde arriba y con el frontal hacia arriba.
+                // Siluetas SVG del coche principal y de referencia.
         const vehicleSvg = new Image();
-
-                // Silueta del coche de la vuelta de referencia.
         const referenceVehicleSvg = new Image();
+
         let referenceVehicleColor = null;
+        let referenceVehicleSource = null;
+
+        vehicleSvg.onload = () => {
+            updateReferenceVehicleSvg();
+            drawOverlay();
+        };
 
         referenceVehicleSvg.onload = () => {
             drawOverlay();
         };
 
         function updateReferenceVehicleSvg() {
-            const referenceColor = getActiveReferenceLapColor();
-
-            if (
-                referenceVehicleColor === referenceColor &&
-                referenceVehicleSvg.complete &&
-                referenceVehicleSvg.naturalWidth > 0
-            ) {
-                return;
-            }
-
-            const referenceColor = getActiveReferenceLapColor();
             const source = vehicleSvg.src;
-                    let referenceVehicleSource = null;
+            const referenceColor = getActiveReferenceLapColor();
 
             if (!source) {
                 return;
             }
 
             if (
-                referenceVehicleColor === referenceColor &&
-                referenceVehicleSource === source
+                referenceVehicleSource === source &&
+                referenceVehicleColor === referenceColor
             ) {
                 return;
             }
 
-            const svgData = decodeURIComponent(
-                vehicleSvg.src.substring(
-                    vehicleSvg.src.indexOf(',') + 1
-                )
-            );
+            const commaIndex = source.indexOf(',');
+
+            if (commaIndex === -1) {
+                return;
+            }
+
+            let svgData;
+
+            try {
+                svgData = decodeURIComponent(
+                    source.substring(commaIndex + 1)
+                );
+            } catch (error) {
+                console.error(
+                    '[LapOverlay] No se pudo decodificar el SVG del coche.',
+                    error
+                );
+                return;
+            }
 
             const mainColor = getActiveLapColor();
             const mainShadow = shadeHexColor(mainColor, 0.78);
@@ -1234,8 +1243,8 @@
                 .replaceAll(mainDark, referenceDark)
                 .replaceAll(mainColor, referenceColor);
 
-            referenceVehicleColor = referenceColor;
             referenceVehicleSource = source;
+            referenceVehicleColor = referenceColor;
 
             referenceVehicleSvg.src =
                 'data:image/svg+xml;charset=utf-8,' +

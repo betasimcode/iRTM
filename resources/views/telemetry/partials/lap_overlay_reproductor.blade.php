@@ -243,6 +243,46 @@
             end: 1,
         };
 
+        // Durante la reproducción, desplaza la ventana visible sin alterar el zoom.
+        // El cursor se mantiene aproximadamente al 65 % del ancho de la gráfica.
+        const updateGraphFollow = () => {
+            if (!isPlaying || validSamples.length === 0) return;
+
+            const sampleIndex = Math.min(
+                Math.floor(playbackIndex),
+                validSamples.length - 1
+            );
+
+            const sample = validSamples[sampleIndex];
+            const rawDistance = Number(sample?.lap_dist_pct);
+
+            const distance = Number.isFinite(rawDistance)
+                ? (
+                    rawDistance > 1 && rawDistance <= 100
+                        ? rawDistance / 100
+                        : rawDistance
+                )
+                : sampleIndex / Math.max(1, validSamples.length - 1);
+
+            if (!Number.isFinite(distance)) return;
+
+            const range = graphViewport.end - graphViewport.start;
+
+            // Con la vuelta completa visible no hace falta desplazar la gráfica.
+            if (range >= 0.999) return;
+
+            const cursorRatio = (distance - graphViewport.start) / range;
+            const targetRatio = 0.65;
+
+            // Mantener una zona de anticipación a la derecha, y recuperar el cursor
+            // si se reanuda la reproducción desde fuera del intervalo visible.
+            if (cursorRatio > 0.50 || cursorRatio < 0.08) {
+                graphViewport.start = distance - range * targetRatio;
+                graphViewport.end = graphViewport.start + range;
+                clampGraphViewport();
+            }
+        };
+
         const GRAPH_MIN_RANGE = 0.005; // Zoom máximo: intervalo del 0,5 %.
         const GRAPH_ZOOM_FACTOR = 1.25;
 
@@ -451,6 +491,10 @@
             });
 
             // Curva de velocidad.
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(padding.left, padding.top, plotWidth, plotHeight);
+            ctx.clip();
             ctx.beginPath();
 
             data.forEach((point, index) => {
@@ -465,6 +509,7 @@
             ctx.lineWidth = 0.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
+            ctx.restore();
 
             // Cursor asociado al índice de reproducción actual.
             const sampleIndex = Math.min(
@@ -483,38 +528,45 @@
                 )
                 : sampleIndex / Math.max(1, validSamples.length - 1);
 
-            const cursorX = xAt(
-                Math.max(0, Math.min(1, currentDistance))
-            );
+            if (
+                Number.isFinite(currentDistance) &&
+                currentDistance >= graphViewport.start &&
+                currentDistance <= graphViewport.end
+            ) {
+                const cursorX = xAt(
+                    Math.max(0, Math.min(1, currentDistance))
+                );
 
-            ctx.beginPath();
-            ctx.moveTo(cursorX, padding.top);
-            ctx.lineTo(cursorX, height - padding.bottom);
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cursorX, padding.top);
+                ctx.lineTo(cursorX, height - padding.bottom);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
 
-            const nearest = data.reduce((best, point) =>
-                Math.abs(point.index - playbackIndex)
-                    < Math.abs(best.index - playbackIndex)
-                    ? point
-                    : best
-            );
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex)
+                        < Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
 
-            ctx.beginPath();
-            ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#f59e0b';
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
 
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillText(
-                `${nearest.speed.toFixed(0)} km/h`,
-                width - padding.right,
-                padding.top
-            );
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(
+                    `${nearest.speed.toFixed(0)} km/h`,
+                    width - padding.right,
+                    padding.top
+                );
+            }
+
         };
 
         // Gráfica de marchas sincronizada con la reproducción.
@@ -692,6 +744,10 @@
 
             // Curva escalonada: horizontal mientras se mantiene la marcha,
             // vertical únicamente cuando cambia.
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(padding.left, padding.top, plotWidth, plotHeight);
+            ctx.clip();
             ctx.beginPath();
 
             if (data.length > 0) {
@@ -717,6 +773,7 @@
             ctx.lineWidth = 0.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
+            ctx.restore();
 
             // Cursor compartido con Speed y el mapa.
             const sampleIndex = Math.min(
@@ -735,37 +792,44 @@
                 )
                 : sampleIndex / Math.max(1, validSamples.length - 1);
 
-            const cursorX = xAt(Math.max(0, Math.min(1, currentDistance)));
+            if (
+                Number.isFinite(currentDistance) &&
+                currentDistance >= graphViewport.start &&
+                currentDistance <= graphViewport.end
+            ) {
+                const cursorX = xAt(Math.max(0, Math.min(1, currentDistance)));
 
-            ctx.beginPath();
-            ctx.moveTo(cursorX, padding.top);
-            ctx.lineTo(cursorX, height - padding.bottom);
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cursorX, padding.top);
+                ctx.lineTo(cursorX, height - padding.bottom);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
 
-            const nearest = data.reduce((best, point) =>
-                Math.abs(point.index - playbackIndex) <
-                Math.abs(best.index - playbackIndex)
-                    ? point
-                    : best
-            );
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex) <
+                    Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
 
-            ctx.beginPath();
-            ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#f59e0b';
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
 
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillStyle = '#a78bfa';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#a78bfa';
 
-            ctx.fillText(
-                `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
-                width - padding.right,
-                padding.top
-            );
+                ctx.fillText(
+                    `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
+                    width - padding.right,
+                    padding.top
+                );
+            }
+
         };
 
 
@@ -908,6 +972,10 @@
             }
 
             // Curva del pedal.
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(padding.left, padding.top, plotWidth, plotHeight);
+            ctx.clip();
             ctx.beginPath();
 
             data.forEach((point, index) => {
@@ -922,6 +990,7 @@
             ctx.lineWidth = 1.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
+            ctx.restore();
 
             // Posición actual sincronizada con el reproductor.
             const sampleIndex = Math.min(
@@ -940,38 +1009,45 @@
                 )
                 : sampleIndex / Math.max(1, validSamples.length - 1);
 
-            const cursorX = xAt(
-                Math.max(0, Math.min(1, currentDistance))
-            );
+            if (
+                Number.isFinite(currentDistance) &&
+                currentDistance >= graphViewport.start &&
+                currentDistance <= graphViewport.end
+            ) {
+                const cursorX = xAt(
+                    Math.max(0, Math.min(1, currentDistance))
+                );
 
-            const nearest = data.reduce((best, point) =>
-                Math.abs(point.index - playbackIndex) <
-                Math.abs(best.index - playbackIndex)
-                    ? point
-                    : best
-            );
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex) <
+                    Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
 
-            ctx.beginPath();
-            ctx.moveTo(cursorX, padding.top);
-            ctx.lineTo(cursorX, height - padding.bottom);
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cursorX, padding.top);
+                ctx.lineTo(cursorX, height - padding.bottom);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
 
-            ctx.beginPath();
-            ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#f59e0b';
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
 
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillStyle = color;
-            ctx.fillText(
-                `${Math.round(nearest.value * 100)}%`,
-                width - padding.right,
-                padding.top
-            );
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = color;
+                ctx.fillText(
+                    `${Math.round(nearest.value * 100)}%`,
+                    width - padding.right,
+                    padding.top
+                );
+            }
+
         };
 
         const drawThrottleGraph = () =>
@@ -1879,6 +1955,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
 
             updateTelemetryIndicators();
+            updateGraphFollow();
             drawSpeedGraph();
             drawGearsGraph();
             drawThrottleGraph();

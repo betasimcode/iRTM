@@ -18,10 +18,10 @@
                 offset_y_pct: -0.6,
             },
             "580": {
-                scale: 1.09,
+                scale: 1.1,
                 rotation_deg: 0,
-                offset_x_pct: -0.28,
-                offset_y_pct: -0.43,
+                offset_x_pct: -0.3,
+                offset_y_pct: -0.32,
             },
             "218": {
                 scale: 1.16,

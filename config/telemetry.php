@@ -15,9 +15,9 @@ return [
         ],
 
         'theme-iracing' => [
-            'road' => '#757575',
-            'border' => '#bebebe',
-            'back' => '#909090',
+            'road' => '#252525',
+            'border' => '#000000',
+            'back' => '#707070',
             'digital' => '#BEFF9E',
             'char' => '#005E06',
             'water' => '#505090',

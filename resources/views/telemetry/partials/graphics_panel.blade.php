@@ -20,13 +20,22 @@
         >
             Cerrar gráficas
         </button>
+        <button
+            type="button"
+            @click="window.dispatchEvent(new CustomEvent('telemetry-graph-reset-zoom'))"
+            class="rounded-lg border border-[var(--border)]
+                px-2 py-1 text-xs hover:border-[var(--accent)]"
+        >
+            Restablecer zoom
+        </button>
     </header>
 
     <div class="space-y-3">
         <template x-for="item in [
             { key: 'speed', label: 'Speed' },
             { key: 'gears', label: 'Gears' },
-            { key: 'inputs', label: 'Throttle / Brake' },
+            { key: 'throttle', label: 'Throttle' },
+            { key: 'brake', label: 'Brake' },
             { key: 'steering', label: 'Dirección' },
             { key: 'sectors', label: 'Comparativa de sectores' },
             { key: 'setup', label: 'Setup' },
@@ -65,6 +74,27 @@
                     </div>
                 </template>
 
+                <template x-if="item.key === 'throttle'">
+                    <div class="w-full min-w-0">
+                        <canvas
+                            id="telemetry-graphics-throttle"
+                            class="block w-full"
+                            style="height: 180px;"
+                            aria-label="Gráfica del acelerador durante la vuelta"
+                        ></canvas>
+                    </div>
+                </template>
+
+                <template x-if="item.key === 'brake'">
+                    <div class="w-full min-w-0">
+                        <canvas
+                            id="telemetry-graphics-brake"
+                            class="block w-full"
+                            style="height: 180px;"
+                            aria-label="Gráfica del freno durante la vuelta"
+                        ></canvas>
+                    </div>
+                </template>
 
 
 

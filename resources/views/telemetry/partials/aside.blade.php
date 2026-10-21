@@ -333,12 +333,30 @@
                 <span class="block text-lg">⚙</span>Gears
             </button>
 
-            <button type="button"
-                @click="graphics.inputs = !graphics.inputs"
-                :aria-pressed="graphics.inputs"
-                :class="graphics.inputs ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
-                class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">▥</span>Throttle / brake
+            <button
+                type="button"
+                @click="graphics.throttle = !graphics.throttle"
+                :aria-pressed="graphics.throttle"
+                :class="graphics.throttle
+                    ? 'border-[var(--accent)] bg-[var(--bg)]'
+                    : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs"
+            >
+                <span class="block text-lg">▥</span>
+                Throttle
+            </button>
+
+            <button
+                type="button"
+                @click="graphics.brake = !graphics.brake"
+                :aria-pressed="graphics.brake"
+                :class="graphics.brake
+                    ? 'border-[var(--accent)] bg-[var(--bg)]'
+                    : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs"
+            >
+                <span class="block text-lg">▤</span>
+                Brake
             </button>
 
             <button type="button"

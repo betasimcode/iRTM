@@ -167,6 +167,8 @@
                         drawOverlay();
                         drawSpeedGraph();
                         drawGearsGraph();
+                        drawThrottleGraph();
+                        drawBrakeGraph();
                     });
 
                     colorMenu.appendChild(option);
@@ -191,6 +193,8 @@
                     drawOverlay();
                     drawSpeedGraph();
                     drawGearsGraph();
+                    drawThrottleGraph();
+                    drawBrakeGraph();
                 });
             }
         }
@@ -232,6 +236,96 @@
                 : null,
         }));
 
+        // Intervalo horizontal compartido por todas las gráficas.
+        // Los valores representan la distancia normalizada de la vuelta.
+        const graphViewport = {
+            start: 0,
+            end: 1,
+        };
+
+        const GRAPH_MIN_RANGE = 0.005; // Zoom máximo: intervalo del 0,5 %.
+        const GRAPH_ZOOM_FACTOR = 1.25;
+
+        const redrawAllGraphs = () => {
+            drawSpeedGraph();
+            drawGearsGraph();
+            drawThrottleGraph();
+            drawBrakeGraph();
+        };
+
+        const clampGraphViewport = () => {
+            const range = graphViewport.end - graphViewport.start;
+
+            if (range >= 1) {
+                graphViewport.start = 0;
+                graphViewport.end = 1;
+                return;
+            }
+
+            if (graphViewport.start < 0) {
+                graphViewport.end -= graphViewport.start;
+                graphViewport.start = 0;
+            }
+
+            if (graphViewport.end > 1) {
+                graphViewport.start -= graphViewport.end - 1;
+                graphViewport.end = 1;
+            }
+
+            graphViewport.start = Math.max(0, graphViewport.start);
+            graphViewport.end = Math.min(1, graphViewport.end);
+        };
+
+        const resetGraphZoom = () => {
+            graphViewport.start = 0;
+            graphViewport.end = 1;
+            redrawAllGraphs();
+        };
+
+        window.addEventListener(
+            'telemetry-graph-reset-zoom',
+            resetGraphZoom
+        );
+
+        const zoomGraphAt = (distance, factor) => {
+            const oldRange = graphViewport.end - graphViewport.start;
+            const newRange = Math.max(
+                GRAPH_MIN_RANGE,
+                Math.min(1, oldRange * factor)
+            );
+
+            const anchor = Math.max(
+                graphViewport.start,
+                Math.min(graphViewport.end, distance)
+            );
+
+            const ratio = oldRange > 0
+                ? (anchor - graphViewport.start) / oldRange
+                : 0.5;
+
+            graphViewport.start = anchor - ratio * newRange;
+            graphViewport.end = graphViewport.start + newRange;
+
+            clampGraphViewport();
+            redrawAllGraphs();
+        };
+
+        const graphDistanceAtPointer = (canvas, clientX) => {
+            const rect = canvas.getBoundingClientRect();
+
+            // Las gráficas usan un margen izquierdo de 38 px y uno derecho de 10 px.
+            const left = 38;
+            const right = 10;
+            const plotWidth = rect.width - left - right;
+
+            if (plotWidth <= 0) return graphViewport.start;
+
+            const pixel = clientX - rect.left - left;
+            const ratio = Math.max(0, Math.min(1, pixel / plotWidth));
+
+            return graphViewport.start
+                + ratio * (graphViewport.end - graphViewport.start);
+        };
 
 
         // Gráfica de velocidad sincronizada con la vuelta.
@@ -308,7 +402,10 @@
             if (plotWidth <= 0 || plotHeight <= 0) return;
 
             const xAt = distance =>
-                padding.left + distance * plotWidth;
+                padding.left
+                + ((distance - graphViewport.start)
+                    / (graphViewport.end - graphViewport.start))
+                * plotWidth;
 
             const yAt = speed =>
                 padding.top + (1 - (speed - minSpeed) / (maxSpeed - minSpeed))
@@ -339,8 +436,18 @@
             ctx.textBaseline = 'top';
 
             [0, 25, 50, 75, 100].forEach(percent => {
-                const x = xAt(percent / 100);
-                ctx.fillText(`${percent}%`, x, height - padding.bottom + 7);
+                const distance = graphViewport.start
+                    + (graphViewport.end - graphViewport.start) * percent / 100;
+
+                const x = xAt(distance);
+
+                ctx.fillText(
+                    `${(distance * 100).toFixed(
+                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
+                    )}%`,
+                    x,
+                    height - padding.bottom + 7
+                );
             });
 
             // Curva de velocidad.
@@ -534,7 +641,11 @@
 
             if (plotWidth <= 0 || plotHeight <= 0) return;
 
-            const xAt = distance => padding.left + distance * plotWidth;
+            const xAt = distance =>
+                padding.left
+                + ((distance - graphViewport.start)
+                    / (graphViewport.end - graphViewport.start))
+                * plotWidth;
 
             const yAt = gear =>
                 padding.top +
@@ -565,9 +676,16 @@
             ctx.textBaseline = 'top';
 
             [0, 25, 50, 75, 100].forEach(percent => {
+                const distance = graphViewport.start
+                    + (graphViewport.end - graphViewport.start) * percent / 100;
+
+                const x = xAt(distance);
+
                 ctx.fillText(
-                    `${percent}%`,
-                    xAt(percent / 100),
+                    `${(distance * 100).toFixed(
+                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
+                    )}%`,
+                    x,
                     height - padding.bottom + 7
                 );
             });
@@ -649,6 +767,218 @@
                 padding.top
             );
         };
+
+
+        // Gráficas independientes de acelerador y freno.
+        const drawPedalGraph = (pedal, color) => {
+            const graph = document.getElementById(
+                `telemetry-graphics-${pedal}`
+            );
+
+            if (!graph || !graph.isConnected) return;
+
+            const width = graph.clientWidth;
+            const height = graph.clientHeight;
+
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = window.devicePixelRatio || 1;
+
+            graph.width = Math.round(width * dpr);
+            graph.height = Math.round(height * dpr);
+
+            const ctx = graph.getContext('2d');
+            if (!ctx) return;
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const data = validSamples
+                .map((sample, index) => {
+                    const rawDistance = Number(sample.lap_dist_pct);
+                    const rawValue = sample[pedal] == null
+                        ? NaN
+                        : Number(sample[pedal]);
+
+                    if (
+                        !Number.isFinite(rawDistance) ||
+                        !Number.isFinite(rawValue)
+                    ) {
+                        return null;
+                    }
+
+                    const distance =
+                        rawDistance > 1 && rawDistance <= 100
+                            ? rawDistance / 100
+                            : rawDistance;
+
+                    // Admite señales expresadas como fracción o porcentaje.
+                    const value = rawValue > 1 && rawValue <= 100
+                        ? rawValue / 100
+                        : rawValue;
+
+                    if (
+                        distance < 0 || distance > 1 ||
+                        value < 0 || value > 1
+                    ) {
+                        return null;
+                    }
+
+                    return {
+                        x: distance,
+                        value,
+                        index,
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.x - b.x);
+
+            const padding = {
+                top: 12,
+                right: 12,
+                bottom: 26,
+                left: 38,
+            };
+
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            if (plotWidth <= 0 || plotHeight <= 0) return;
+
+            const xAt = distance =>
+                padding.left
+                + ((distance - graphViewport.start)
+                    / (graphViewport.end - graphViewport.start))
+                * plotWidth;
+
+            const yAt = value =>
+                padding.top + (1 - value) * plotHeight;
+
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.fillStyle = '#94a3b8';
+
+            // Escala vertical fija: 0–100 %.
+            [0, 25, 50, 75, 100].forEach(percent => {
+                const y = yAt(percent / 100);
+
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillText(
+                    `${percent}%`,
+                    padding.left - 6,
+                    y
+                );
+            });
+
+            // Eje horizontal: distancia de vuelta.
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            [0, 25, 50, 75, 100].forEach(percent => {
+                const distance = graphViewport.start
+                    + (graphViewport.end - graphViewport.start) * percent / 100;
+
+                const x = xAt(distance);
+
+                ctx.fillText(
+                    `${(distance * 100).toFixed(
+                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
+                    )}%`,
+                    x,
+                    height - padding.bottom + 7
+                );
+            });
+
+            if (data.length < 2) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.textAlign = 'left';
+                ctx.fillText(
+                    `Sin datos de ${pedal === 'throttle' ? 'acelerador' : 'freno'} suficientes`,
+                    padding.left,
+                    padding.top
+                );
+                return;
+            }
+
+            // Curva del pedal.
+            ctx.beginPath();
+
+            data.forEach((point, index) => {
+                const x = xAt(point.x);
+                const y = yAt(point.value);
+
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Posición actual sincronizada con el reproductor.
+            const sampleIndex = Math.min(
+                Math.floor(playbackIndex),
+                validSamples.length - 1
+            );
+
+            const currentSample = validSamples[sampleIndex];
+            const rawDistance = Number(currentSample?.lap_dist_pct);
+
+            const currentDistance = Number.isFinite(rawDistance)
+                ? (
+                    rawDistance > 1 && rawDistance <= 100
+                        ? rawDistance / 100
+                        : rawDistance
+                )
+                : sampleIndex / Math.max(1, validSamples.length - 1);
+
+            const cursorX = xAt(
+                Math.max(0, Math.min(1, currentDistance))
+            );
+
+            const nearest = data.reduce((best, point) =>
+                Math.abs(point.index - playbackIndex) <
+                Math.abs(best.index - playbackIndex)
+                    ? point
+                    : best
+            );
+
+            ctx.beginPath();
+            ctx.moveTo(cursorX, padding.top);
+            ctx.lineTo(cursorX, height - padding.bottom);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = color;
+            ctx.fillText(
+                `${Math.round(nearest.value * 100)}%`,
+                width - padding.right,
+                padding.top
+            );
+        };
+
+        const drawThrottleGraph = () =>
+            drawPedalGraph('throttle', '#22c55e');
+
+        const drawBrakeGraph = () =>
+            drawPedalGraph('brake', '#ef4444');
 
 
         const context = canvas.getContext('2d');
@@ -950,7 +1280,7 @@
 
             // Trazada de la vuelta con su color asignado.
             const completedIndex = Math.floor(playbackIndex);
-            context.lineWidth = 0.5;
+            context.lineWidth = 0.1;
             context.strokeStyle = getActiveLapColor();
             context.beginPath();
             context.moveTo(drawPoints[0].x, drawPoints[0].y);
@@ -1551,6 +1881,8 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             updateTelemetryIndicators();
             drawSpeedGraph();
             drawGearsGraph();
+            drawThrottleGraph();
+            drawBrakeGraph();
         };
 
 
@@ -1653,24 +1985,137 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
 
         const observeGraphics = () => {
-            const speedGraph = document.getElementById('telemetry-graphics-speed');
-            const gearsGraph = document.getElementById('telemetry-graphics-gears');
+            const graphCanvases = [
+                ['telemetry-graphics-speed', drawSpeedGraph],
+                ['telemetry-graphics-gears', drawGearsGraph],
+                ['telemetry-graphics-throttle', drawThrottleGraph],
+                ['telemetry-graphics-brake', drawBrakeGraph],
+            ];
 
-            if (speedGraph?.isConnected) {
-                graphicsResizeObserver.observe(speedGraph);
-                drawSpeedGraph();
-            }
+            graphCanvases.forEach(([id, draw]) => {
+                const graph = document.getElementById(id);
 
-            if (gearsGraph?.isConnected) {
-                graphicsResizeObserver.observe(gearsGraph);
-                drawGearsGraph();
-            }
+                if (graph?.isConnected) {
+                    graphicsResizeObserver.observe(graph);
+                    bindGraphNavigation(graph);
+                    draw();
+                }
+            });
         };
 
         const graphicsResizeObserver = new ResizeObserver(() => {
             drawSpeedGraph();
             drawGearsGraph();
+            drawThrottleGraph();
+            drawBrakeGraph();
         });
+
+        const boundGraphCanvases = new WeakSet();
+
+        const bindGraphNavigation = canvas => {
+            if (boundGraphCanvases.has(canvas)) return;
+
+            boundGraphCanvases.add(canvas);
+
+            let dragStart = null;
+            let initialViewport = null;
+
+            canvas.style.touchAction = 'pan-y';
+            canvas.style.cursor = 'crosshair';
+
+            canvas.addEventListener('wheel', event => {
+                event.preventDefault();
+
+                const distance = graphDistanceAtPointer(
+                    canvas,
+                    event.clientX
+                );
+
+                zoomGraphAt(
+                    distance,
+                    event.deltaY < 0
+                        ? 1 / GRAPH_ZOOM_FACTOR
+                        : GRAPH_ZOOM_FACTOR
+                );
+            }, { passive: false });
+
+            canvas.addEventListener('pointerdown', event => {
+                if (event.button !== 0) return;
+
+                dragStart = {
+                    x: event.clientX,
+                    distance: graphDistanceAtPointer(canvas, event.clientX),
+                    pan: event.shiftKey,
+                };
+
+                initialViewport = {
+                    start: graphViewport.start,
+                    end: graphViewport.end,
+                };
+
+                canvas.setPointerCapture(event.pointerId);
+            });
+
+            canvas.addEventListener('pointerup', event => {
+                if (!dragStart) return;
+
+                const start = dragStart;
+                const initial = initialViewport;
+                const endDistance = graphDistanceAtPointer(
+                    canvas,
+                    event.clientX
+                );
+
+                const pixelDistance = Math.abs(event.clientX - start.x);
+
+                if (start.pan) {
+                    // Shift + arrastre: desplazar el intervalo visible.
+                    const rect = canvas.getBoundingClientRect();
+                    const plotWidth = rect.width - 38 - 10;
+
+                    if (plotWidth > 0) {
+                        const distanceDelta =
+                            (start.x - event.clientX)
+                            / plotWidth
+                            * (initial.end - initial.start);
+
+                        graphViewport.start = initial.start + distanceDelta;
+                        graphViewport.end = initial.end + distanceDelta;
+
+                        clampGraphViewport();
+                        redrawAllGraphs();
+                    }
+                } else if (pixelDistance >= 8) {
+                    // Arrastre normal: ampliar la selección.
+                    const selectionStart = Math.min(
+                        start.distance,
+                        endDistance
+                    );
+
+                    const selectionEnd = Math.max(
+                        start.distance,
+                        endDistance
+                    );
+
+                    if (selectionEnd - selectionStart >= GRAPH_MIN_RANGE) {
+                        graphViewport.start = selectionStart;
+                        graphViewport.end = selectionEnd;
+
+                        clampGraphViewport();
+                        redrawAllGraphs();
+                    }
+                }
+
+                dragStart = null;
+                initialViewport = null;
+            });
+
+            canvas.addEventListener('pointercancel', () => {
+                dragStart = null;
+                initialViewport = null;
+            });
+        };
+
 
         observeGraphics();
 
@@ -1679,7 +2124,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             if (
                 button &&
-                /Speed|Marchas/.test(button.textContent)
+                /Speed|Gears|Throttle|Brake/.test(button.textContent)
             ) {
                 requestAnimationFrame(observeGraphics);
             }
@@ -1689,7 +2134,6 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         document.addEventListener('click', event => {
             if (event.target.closest('button') && event.target.closest('button').textContent.includes('Speed')) {
                 requestAnimationFrame(() => {
-                    observeSpeedGraph();
                     drawSpeedGraph();
                 });
             }

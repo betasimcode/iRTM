@@ -31,6 +31,12 @@
         viewport.dataset.mapNavigationReady = '1';
 
         const samples = @js($lapTelemetry ?? []);
+
+        const referenceSamples = @js($referenceLapTelemetry ?? []);
+        const referenceLapNumber = @js($referenceLapNumber ?? null);
+
+        const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
+
         const sectorSegments = @js(
             $sessionData['sectors']['segments'] ?? []
         );
@@ -105,6 +111,17 @@
             return lapColorPresets[
                 Math.max(0, index) % lapColorPresets.length
             ].value;
+        };
+
+        const getActiveReferenceLapColor = () => {
+            if (referenceLapNumber == null) {
+                return DEFAULT_REFERENCE_LAP_COLOR;
+            }
+
+            const key = `reference:${referenceLapNumber}`;
+
+            return manualLapColors.get(key) ??
+                DEFAULT_REFERENCE_LAP_COLOR;
         };
 
         const getActiveLapColor = () => {
@@ -210,7 +227,101 @@
 
         updateLapColorPreview();
 
+        // Selector independiente para el color de la vuelta de referencia.
+        if (lapColorTrigger?.parentElement) {
+            const colorContainer = lapColorTrigger.parentElement;
 
+            const referenceColorTrigger = document.createElement('button');
+            referenceColorTrigger.type = 'button';
+            referenceColorTrigger.id = 'reference-lap-color-trigger';
+            referenceColorTrigger.className = lapColorTrigger.className;
+            referenceColorTrigger.title = 'Color de la vuelta de referencia';
+            referenceColorTrigger.disabled = referenceLapNumber == null;
+            referenceColorTrigger.style.marginLeft = '0.5rem';
+
+            const referenceColorPreview = document.createElement('span');
+            referenceColorPreview.style.cssText = [
+                'display:inline-block',
+                'width:14px',
+                'height:14px',
+                'border-radius:50%',
+                'background:' + getActiveReferenceLapColor(),
+                'border:1px solid rgba(148,163,184,.6)'
+            ].join(';');
+
+            referenceColorTrigger.appendChild(referenceColorPreview);
+            referenceColorTrigger.appendChild(
+                document.createTextNode(' Referencia')
+            );
+
+            const referenceColorMenu = document.createElement('div');
+            referenceColorMenu.id = 'reference-lap-color-menu';
+            referenceColorMenu.className =
+                'absolute left-5 top-full z-50 mt-2 hidden ' +
+                'min-w-40 rounded-lg border border-[var(--border)] ' +
+                'bg-[var(--bg)] p-2 shadow-xl';
+
+            referenceColorMenu.setAttribute('role', 'group');
+            referenceColorMenu.setAttribute(
+                'aria-label',
+                'Color de la vuelta de referencia'
+            );
+
+            lapColorPresets.forEach(preset => {
+                const option = document.createElement('button');
+
+                option.type = 'button';
+                option.className =
+                    'flex w-full items-center gap-2 rounded-md ' +
+                    'px-3 py-2 text-left text-sm hover:bg-white/10';
+
+                option.innerHTML = `
+                    <span style="
+                        display:inline-block;
+                        width:16px;
+                        height:16px;
+                        border-radius:50%;
+                        background:${preset.value};
+                        flex-shrink:0;
+                    "></span>
+                    <span>${preset.name}</span>
+                `;
+
+                option.addEventListener('click', () => {
+                    if (referenceLapNumber == null) return;
+
+                    manualLapColors.set(
+                        `reference:${referenceLapNumber}`,
+                        preset.value
+                    );
+
+                    referenceColorPreview.style.backgroundColor = preset.value;
+                    referenceColorTrigger.title =
+                        `Color de referencia: ${preset.name}`;
+
+                    referenceColorMenu.classList.add('hidden');
+
+                    drawOverlay();
+                    redrawAllGraphs();
+                });
+
+                referenceColorMenu.appendChild(option);
+            });
+
+            colorContainer.appendChild(referenceColorTrigger);
+            colorContainer.appendChild(referenceColorMenu);
+
+            referenceColorTrigger.addEventListener('click', event => {
+                event.stopPropagation();
+                referenceColorMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', event => {
+                if (!colorContainer.contains(event.target)) {
+                    referenceColorMenu.classList.add('hidden');
+                }
+            });
+        }
 
         const defaultCalibration = {
             scale: 1,
@@ -1282,6 +1393,26 @@
         const originLon = points.reduce((sum, p) => sum + p.lon, 0) / points.length;
         const cosLat = Math.cos(originLat * radians);
 
+        const referenceProjected = referenceSamples
+            .filter(sample =>
+                sample?.position?.lat != null &&
+                sample?.position?.lon != null &&
+                Number.isFinite(Number(sample.position.lat)) &&
+                Number.isFinite(Number(sample.position.lon))
+            )
+            .map(sample => ({
+                x: (Number(sample.position.lon) - originLon)
+                    * radians * 6371000 * cosLat,
+                y: (Number(sample.position.lat) - originLat)
+                    * radians * 6371000,
+                lapDistPct: Number.isFinite(Number(sample.lap_dist_pct))
+                    ? Number(sample.lap_dist_pct)
+                    : null,
+                sessionTime: Number.isFinite(Number(sample.session_time))
+                    ? Number(sample.session_time)
+                    : null,
+            }));
+
         const projected = points.map(point => ({
             x: (point.lon - originLon) * radians * 6371000 * cosLat,
             y: (point.lat - originLat) * radians * 6371000,
@@ -1353,6 +1484,103 @@
             context.lineCap = 'round';
             context.imageSmoothingEnabled = true;
 
+            // REFERENCE LAP
+
+
+
+            const referenceDrawPoints = referenceProjected.map(point => {
+                const x = (point.x - centerX) * fitScale;
+                const y = -(point.y - centerY) * fitScale;
+
+                const rotatedX = x * cosAngle - y * sinAngle;
+                const rotatedY = x * sinAngle + y * cosAngle;
+
+                return {
+                    x: width / 2
+                        + rotatedX * calibration.scale
+                        + width * calibration.offset_x_pct / 100,
+                    y: height / 2
+                        + rotatedY * calibration.scale
+                        + height * calibration.offset_y_pct / 100,
+                    lapDistPct: point.lapDistPct,
+                    sessionTime: point.sessionTime,
+                };
+            });
+
+            // Trazada completa de la vuelta de referencia.
+
+            // Trazada de referencia: solo mostrar el tramo reproducido.
+            if (referenceDrawPoints.length > 1) {
+                const mainIndex = Math.min(
+                    Math.floor(playbackIndex),
+                    points.length - 1
+                );
+
+                const nextMainIndex = Math.min(
+                    mainIndex + 1,
+                    points.length - 1
+                );
+
+                const mainFraction = playbackIndex - mainIndex;
+
+                const startTime = Number(points[mainIndex].sessionTime);
+                const endTime = Number(points[nextMainIndex].sessionTime);
+
+                let refProgress;
+
+                if (
+                    Number.isFinite(startTime) &&
+                    Number.isFinite(endTime)
+                ) {
+                    const elapsed = startTime
+                        + (endTime - startTime) * mainFraction;
+
+                    const firstTime = Number(points[0].sessionTime);
+                    const lastTime = Number(points[points.length - 1].sessionTime);
+
+                    refProgress = Number.isFinite(firstTime) &&
+                        Number.isFinite(lastTime) &&
+                        lastTime > firstTime
+                        ? (elapsed - firstTime) / (lastTime - firstTime)
+                        : playbackIndex / Math.max(1, points.length - 1);
+                } else {
+                    refProgress = playbackIndex
+                        / Math.max(1, points.length - 1);
+                }
+
+                const visibleCount = Math.max(
+                    1,
+                    Math.min(
+                        referenceDrawPoints.length - 1,
+                        Math.floor(
+                            refProgress * (referenceDrawPoints.length - 1)
+                        )
+                    )
+                );
+
+                context.save();
+                context.beginPath();
+                context.lineWidth = 0.2;
+                context.strokeStyle = getActiveReferenceLapColor();
+
+                context.moveTo(
+                    referenceDrawPoints[0].x,
+                    referenceDrawPoints[0].y
+                );
+
+                for (let index = 1; index <= visibleCount; index++) {
+                    context.lineTo(
+                        referenceDrawPoints[index].x,
+                        referenceDrawPoints[index].y
+                    );
+                }
+
+                context.stroke();
+                context.restore();
+            }
+
+            // Trazada completa de la vuelta de referencia.
+
             // // Trazada completa atenuada como referencia.
             // context.lineWidth = 1.25;
             // context.strokeStyle = 'rgba(0, 229, 255, 0.22)';
@@ -1362,6 +1590,157 @@
             //     else context.lineTo(point.x, point.y);
             // });
             // context.stroke();
+
+
+            // Vehículo de referencia sincronizado por tiempo transcurrido.
+            if (referenceDrawPoints.length > 1) {
+                const mainIndex = Math.min(
+                    Math.floor(playbackIndex),
+                    points.length - 1
+                );
+
+                const nextMainIndex = Math.min(
+                    mainIndex + 1,
+                    points.length - 1
+                );
+
+                const mainFraction = playbackIndex - mainIndex;
+                const mainStartTime = points[mainIndex].sessionTime;
+                const mainEndTime = points[nextMainIndex].sessionTime;
+                const mainLapStartTime = points[0].sessionTime;
+
+                const hasTimeData =
+                    Number.isFinite(mainStartTime) &&
+                    Number.isFinite(mainEndTime) &&
+                    Number.isFinite(mainLapStartTime) &&
+                    referenceDrawPoints.every(point =>
+                        Number.isFinite(point.sessionTime)
+                    );
+
+                let refX;
+                let refY;
+                let refAngle;
+
+                if (hasTimeData) {
+                    // Tiempo transcurrido desde el inicio de la vuelta principal.
+                    const targetElapsed =
+                        mainStartTime +
+                        (mainEndTime - mainStartTime) * mainFraction -
+                        mainLapStartTime;
+
+                    const referenceStartTime =
+                        referenceDrawPoints[0].sessionTime;
+
+                    const referenceEndTime =
+                        referenceDrawPoints[
+                            referenceDrawPoints.length - 1
+                        ].sessionTime;
+
+                    const targetReferenceTime =
+                        referenceStartTime + targetElapsed;
+
+                    // Buscar el intervalo temporal correspondiente en la referencia.
+                    let refIndex = 0;
+
+                    if (targetReferenceTime >= referenceEndTime) {
+                        refIndex = referenceDrawPoints.length - 2;
+                    } else {
+                        for (
+                            let index = 0;
+                            index < referenceDrawPoints.length - 1;
+                            index++
+                        ) {
+                            const a = referenceDrawPoints[index].sessionTime;
+                            const b = referenceDrawPoints[index + 1].sessionTime;
+
+                            if (
+                                targetReferenceTime >= a &&
+                                targetReferenceTime <= b
+                            ) {
+                                refIndex = index;
+                                break;
+                            }
+                        }
+                    }
+
+                    const refStart = referenceDrawPoints[refIndex];
+                    const refEnd = referenceDrawPoints[refIndex + 1];
+
+                    const timeDelta =
+                        refEnd.sessionTime - refStart.sessionTime;
+
+                    const refFraction = targetReferenceTime >= referenceEndTime
+                        ? 1
+                        : timeDelta > 0
+                            ? Math.max(
+                                0,
+                                Math.min(
+                                    1,
+                                    (targetReferenceTime - refStart.sessionTime) /
+                                        timeDelta
+                                )
+                            )
+                            : 0;
+
+                    refX = refStart.x + (refEnd.x - refStart.x) * refFraction;
+                    refY = refStart.y + (refEnd.y - refStart.y) * refFraction;
+
+                    refAngle = Math.atan2(
+                        refEnd.y - refStart.y,
+                        refEnd.x - refStart.x
+                    );
+                } else {
+                    // Sin tiempos válidos, usar progreso normalizado como alternativa.
+                    const progress =
+                        playbackIndex / Math.max(1, points.length - 1);
+
+                    const refProgress = Math.max(
+                        0,
+                        Math.min(
+                            referenceDrawPoints.length - 1,
+                            progress * (referenceDrawPoints.length - 1)
+                        )
+                    );
+
+                    const refIndex = Math.min(
+                        Math.floor(refProgress),
+                        referenceDrawPoints.length - 2
+                    );
+
+                    const fraction = refProgress - refIndex;
+                    const refStart = referenceDrawPoints[refIndex];
+                    const refEnd = referenceDrawPoints[refIndex + 1];
+
+                    refX = refStart.x + (refEnd.x - refStart.x) * fraction;
+                    refY = refStart.y + (refEnd.y - refStart.y) * fraction;
+
+                    refAngle = Math.atan2(
+                        refEnd.y - refStart.y,
+                        refEnd.x - refStart.x
+                    );
+                }
+
+                // Marcador triangular orientado hacia el sentido de avance.
+                context.save();
+                context.translate(refX, refY);
+                context.rotate(refAngle + Math.PI / 2);
+
+                context.beginPath();
+                context.moveTo(0, -5);
+                context.lineTo(3.5, 4);
+                context.lineTo(-3.5, 4);
+                context.closePath();
+
+                context.fillStyle = getActiveReferenceLapColor();
+                context.fill();
+
+                context.lineWidth = 1;
+                context.strokeStyle = '#ffffff';
+                context.stroke();
+
+                context.restore();
+            }
+
 
             // Trazada de la vuelta con su color asignado.
             const completedIndex = Math.floor(playbackIndex);

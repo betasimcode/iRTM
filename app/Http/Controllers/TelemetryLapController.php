@@ -28,6 +28,10 @@ class TelemetryLapController extends Controller
 
         $lapTelemetry = [];
 
+        $referenceLapTelemetry = [];
+        $referenceLapNumber = null;
+        $referenceLapOptions = [];
+
         if ($stintId > 0) {
             $stint = Stint::query()
                 ->with(['track'])
@@ -101,14 +105,37 @@ class TelemetryLapController extends Controller
             )
             : null;
 
-            // Si no se solicita una vuelta concreta, seleccionar
-            // la última vuelta disponible en el JSON.
-            if ($selectedLap === null && count($laps) > 0) {
-                $selectedLap = $laps[array_key_last($laps)];
-            }
+        // Preparar las vueltas válidas que pueden utilizarse como referencia.
+        $referenceLapOptions = array_values(array_filter(
+            $laps,
+            function (array $lap) use ($selectedLapNumber): bool {
+                $number = (int) (
+                    $lap['candidate_lap'] ?? $lap['lap'] ?? 0
+                );
 
-            $selectedLapNumber = $selectedLap['lap'] ?? null;
+                $lapTime = $lap['lap_time'] ?? null;
+
+                return $number > 0
+                    && $number !== $selectedLapNumber
+                    && is_numeric($lapTime)
+                    && (float) $lapTime > 5
+                    && empty($lap['is_pit_lap']);
+            }
+        ));
+
+        $requestedReference = $request->integer('reference_lap');
+
+        foreach ($referenceLapOptions as $option) {
+            $optionNumber = (int) (
+                $option['candidate_lap'] ?? $option['lap'] ?? 0
+            );
+
+            if ($optionNumber === $requestedReference) {
+                $referenceLapNumber = $optionNumber;
+                break;
+            }
         }
+    }
 
     if ($stint && $selectedLap) {
         $stintDate = $stint->created_at;
@@ -132,16 +159,24 @@ class TelemetryLapController extends Controller
                 );
 
                 if ($rawLapNumber > 0) {
-                    $lapTelemetry = app(IbtProcessor::class)
-                        ->extractLapTelemetry(
-                            Storage::path($ibtRelativePath),
-                            $rawLapNumber
+                    $ibtPath = Storage::path($ibtRelativePath);
+                    $processor = app(IbtProcessor::class);
+
+                    $lapTelemetry = $processor->extractLapTelemetry(
+                        $ibtPath,
+                        $rawLapNumber
+                    );
+
+                    if ($referenceLapNumber !== null) {
+                        $referenceLapTelemetry = $processor->extractLapTelemetry(
+                            $ibtPath,
+                            $referenceLapNumber
                         );
+                    }
                 }
-            }
         }
     }
-
+    }
 
         return view('telemetry.lap', [
             'stints' => $stints,
@@ -151,6 +186,9 @@ class TelemetryLapController extends Controller
             'selectedLap' => $selectedLap,
             'lapTelemetry' => $lapTelemetry,
             'selectedLapNumber' => $selectedLapNumber,
+            'referenceLapTelemetry' => $referenceLapTelemetry,
+            'referenceLapNumber' => $referenceLapNumber,
+            'referenceLapOptions' => $referenceLapOptions,
         ]);
     }
 }

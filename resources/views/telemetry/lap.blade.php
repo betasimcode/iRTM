@@ -156,7 +156,91 @@
 
 
 
-    {{-- TOOLS + TRACK MAP --}}
+{{-- COMPARATIVA DE VUELTAS --}}
+<section class="rounded-xl border border-[var(--border)]
+                bg-[var(--card)] p-4">
+    <form
+        method="GET"
+        action="{{ route('telemetry.lap') }}"
+        class="flex flex-wrap items-end gap-4"
+    >
+        <input type="hidden" name="stint" value="{{ $stint->id }}">
+        <input
+            type="hidden"
+            name="lap"
+            value="{{ $selectedLapNumber }}"
+        >
+
+        <div class="min-w-56 flex-1">
+            <label
+                for="reference_lap"
+                class="mb-2 block text-xs uppercase tracking-wider
+                       text-[var(--text-muted)]"
+            >
+                Vuelta de referencia
+            </label>
+
+            <select
+                id="reference_lap"
+                name="reference_lap"
+                class="w-full rounded-lg border border-[var(--border)]
+                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
+            >
+                <option value="">Sin referencia</option>
+
+                @foreach ($referenceLapOptions as $lapOption)
+                    @php
+                        $optionNumber = (int) (
+                            $lapOption['candidate_lap']
+                            ?? $lapOption['lap']
+                            ?? 0
+                        );
+                    @endphp
+
+                    <option
+                        value="{{ $optionNumber }}"
+                        @selected($referenceLapNumber === $optionNumber)
+                    >
+                        Vuelta {{ $optionNumber }}
+                        — {{ number_format((float) $lapOption['lap_time'], 3) }} s
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <button
+            type="submit"
+            class="rounded-lg border border-[var(--border)]
+                   px-4 py-2 text-sm font-semibold
+                   text-[var(--text-title)] hover:border-[var(--accent)]"
+        >
+            Comparar
+        </button>
+
+        <div class="min-w-40">
+            <p class="text-xs uppercase tracking-wider
+                      text-[var(--text-muted)]">
+                Diferencia en este punto
+            </p>
+
+            <p
+                id="telemetry-lap-delta"
+                class="mt-1 font-mono-timing text-lg font-semibold
+                       text-[var(--text-title)]"
+            >
+                —
+            </p>
+        </div>
+    </form>
+
+    @if ($referenceLapNumber !== null)
+        <p class="mt-3 text-xs text-[var(--text-muted)]">
+            Referencia: vuelta {{ $referenceLapNumber }}.
+            Diferencia positiva: la vuelta principal pierde tiempo.
+            Diferencia negativa: la vuelta principal gana tiempo.
+        </p>
+    @endif
+</section>
 
 {{-- TOOLS + TRACK MAP + GRAPHICS --}}
     <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">

@@ -1182,6 +1182,66 @@
                 // Silueta SVG del vehículo, vista desde arriba y con el frontal hacia arriba.
         const vehicleSvg = new Image();
 
+                // Silueta del coche de la vuelta de referencia.
+        const referenceVehicleSvg = new Image();
+        let referenceVehicleColor = null;
+
+        referenceVehicleSvg.onload = () => {
+            drawOverlay();
+        };
+
+        function updateReferenceVehicleSvg() {
+            const referenceColor = getActiveReferenceLapColor();
+
+            if (
+                referenceVehicleColor === referenceColor &&
+                referenceVehicleSvg.complete &&
+                referenceVehicleSvg.naturalWidth > 0
+            ) {
+                return;
+            }
+
+            const referenceColor = getActiveReferenceLapColor();
+            const source = vehicleSvg.src;
+                    let referenceVehicleSource = null;
+
+            if (!source) {
+                return;
+            }
+
+            if (
+                referenceVehicleColor === referenceColor &&
+                referenceVehicleSource === source
+            ) {
+                return;
+            }
+
+            const svgData = decodeURIComponent(
+                vehicleSvg.src.substring(
+                    vehicleSvg.src.indexOf(',') + 1
+                )
+            );
+
+            const mainColor = getActiveLapColor();
+            const mainShadow = shadeHexColor(mainColor, 0.78);
+            const mainDark = shadeHexColor(mainColor, 0.55);
+
+            const referenceShadow = shadeHexColor(referenceColor, 0.78);
+            const referenceDark = shadeHexColor(referenceColor, 0.55);
+
+            const referenceSvgData = svgData
+                .replaceAll(mainShadow, referenceShadow)
+                .replaceAll(mainDark, referenceDark)
+                .replaceAll(mainColor, referenceColor);
+
+            referenceVehicleColor = referenceColor;
+            referenceVehicleSource = source;
+
+            referenceVehicleSvg.src =
+                'data:image/svg+xml;charset=utf-8,' +
+                encodeURIComponent(referenceSvgData);
+        }
+
         vehicleSvg.onload = () => {
             drawOverlay();
         };
@@ -1720,25 +1780,28 @@
                     );
                 }
 
-                // Marcador triangular orientado hacia el sentido de avance.
-                context.save();
-                context.translate(refX, refY);
-                context.rotate(refAngle + Math.PI / 2);
+                                // Coche de referencia: misma silueta que el coche principal.
+                updateReferenceVehicleSvg();
 
-                context.beginPath();
-                context.moveTo(0, -5);
-                context.lineTo(3.5, 4);
-                context.lineTo(-3.5, 4);
-                context.closePath();
+                if (
+                    referenceVehicleSvg.complete &&
+                    referenceVehicleSvg.naturalWidth > 0
+                ) {
+                    context.save();
 
-                context.fillStyle = getActiveReferenceLapColor();
-                context.fill();
+                    context.translate(refX, refY);
+                    context.rotate(refAngle - Math.PI / 2);
 
-                context.lineWidth = 1;
-                context.strokeStyle = '#ffffff';
-                context.stroke();
+                    context.drawImage(
+                        referenceVehicleSvg,
+                        -1,
+                        -3.5,
+                        2,
+                        4
+                    );
 
-                context.restore();
+                    context.restore();
+                }
             }
 
 

@@ -229,15 +229,38 @@
 
         // Selector independiente para el color de la vuelta de referencia.
         if (lapColorTrigger?.parentElement) {
-            const colorContainer = lapColorTrigger.parentElement;
+            const referenceColorHost = document.getElementById(
+                'reference-lap-color-host'
+            );
+
+            if (referenceColorHost) {
+                const colorContainer = referenceColorHost;
+                colorContainer.style.position = 'relative';
 
             const referenceColorTrigger = document.createElement('button');
             referenceColorTrigger.type = 'button';
             referenceColorTrigger.id = 'reference-lap-color-trigger';
-            referenceColorTrigger.className = lapColorTrigger.className;
+            referenceColorTrigger.className =
+                'flex h-9 w-9 items-center justify-center rounded-lg ' +
+                'border border-[var(--border)]';
             referenceColorTrigger.title = 'Color de la vuelta de referencia';
+            referenceColorTrigger.setAttribute(
+                'aria-label',
+                'Cambiar color de la vuelta de referencia'
+            );
             referenceColorTrigger.disabled = referenceLapNumber == null;
-            referenceColorTrigger.style.marginLeft = '0.5rem';
+
+            const referenceColorPreview = document.createElement('span');
+            referenceColorPreview.style.cssText = [
+                'display:inline-block',
+                'width:12px',
+                'height:12px',
+                'border-radius:50%',
+                'background:' + getActiveReferenceLapColor(),
+                'border:1px solid rgba(148,163,184,.6)'
+            ].join(';');
+
+            referenceColorTrigger.appendChild(referenceColorPreview);
 
             const referenceColorPreview = document.createElement('span');
             referenceColorPreview.style.cssText = [
@@ -257,7 +280,7 @@
             const referenceColorMenu = document.createElement('div');
             referenceColorMenu.id = 'reference-lap-color-menu';
             referenceColorMenu.className =
-                'absolute left-5 top-full z-50 mt-2 hidden ' +
+                'absolute right-0 top-full z-50 mt-2 hidden ' +
                 'min-w-40 rounded-lg border border-[var(--border)] ' +
                 'bg-[var(--bg)] p-2 shadow-xl';
 

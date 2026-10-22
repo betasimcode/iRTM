@@ -64,15 +64,16 @@
 
 
 
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4
+            xl:grid-cols-[96px_minmax(260px,1.1fr)_minmax(290px,1.1fr)_minmax(180px,0.8fr)_minmax(220px,1fr)_minmax(260px,1.1fr)_minmax(220px,1fr)]">
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="max-w-28 rounded-lg bg-[var(--bg)] p-3">
 
-                <p class="text-xs text-[var(--text-muted)]">Vuelta</p>
+                <p class="text-xs text-[var(--text-muted)]">Stint #{{ $stint->id }}</p>
 
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
 
-                    {{ $selectedLap['candidate_lap'] ?? $selectedLap['lap'] ?? '—' }}
+                   Lap  {{ $selectedLap['candidate_lap'] ?? $selectedLap['lap'] ?? '—' }}
 
                 </p>
 
@@ -99,12 +100,60 @@
                     >
                         <span
                             id="lap-color-preview"
-                            class="ml-3 h-4 w-4 rounded-full border border-white/20"
+                            class="ml-3 h-3 w-3 rounded-full border border-white/20"
                             style="background-color: #00E5FF"
                         ></span>
                     </button>
 
                 </p>
+
+            </div>
+
+
+            <div class="min-w-0 rounded-lg bg-[var(--bg)] p-3">
+                <p class="text-xs text-[var(--text-muted)]">Reference lap</p>
+
+                <div class="mt-1 flex min-w-0 items-center gap-2">
+                    <select
+                        id="reference_lap"
+                        name="reference_lap"
+                        class="min-w-0 flex-1 rounded-lg border border-[var(--border)]
+                            bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
+                    >
+                        <option value="">Sin referencia</option>
+
+                        @foreach ($referenceLapOptions as $lapOption)
+                            @php
+                                $optionNumber = (int) (
+                                    $lapOption['candidate_lap']
+                                    ?? $lapOption['lap']
+                                    ?? 0
+                                );
+                            @endphp
+
+                            <option
+                                value="{{ $optionNumber }}"
+                                @selected($referenceLapNumber === $optionNumber)
+                            >
+                                Vuelta {{ $optionNumber }}
+                                — {{ laptime((float) $lapOption['lap_time'], 3) }} s
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <div
+                        id="reference-lap-color-host"
+                        class="relative flex shrink-0 items-center"
+                    ></div>
+                </div>
+            </div>
+
+
+            <div class="rounded-lg bg-[var(--bg)] p-3">
+
+                <p class="text-xs text-[var(--text-muted)]">Reference mode</p>
+
+
 
             </div>
 
@@ -180,32 +229,7 @@
                 Vuelta de referencia
             </label>
 
-            <select
-                id="reference_lap"
-                name="reference_lap"
-                class="w-full rounded-lg border border-[var(--border)]
-                       bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
-            >
-                <option value="">Sin referencia</option>
 
-                @foreach ($referenceLapOptions as $lapOption)
-                    @php
-                        $optionNumber = (int) (
-                            $lapOption['candidate_lap']
-                            ?? $lapOption['lap']
-                            ?? 0
-                        );
-                    @endphp
-
-                    <option
-                        value="{{ $optionNumber }}"
-                        @selected($referenceLapNumber === $optionNumber)
-                    >
-                        Vuelta {{ $optionNumber }}
-                        — {{ number_format((float) $lapOption['lap_time'], 3) }} s
-                    </option>
-                @endforeach
-            </select>
         </div>
 
         <button

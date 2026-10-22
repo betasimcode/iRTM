@@ -2594,13 +2594,18 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
 
         const updatePlaybackControls = () => {
-            const percent =
-                playbackIndex / Math.max(1, points.length - 1) * 100;
+            const progressPercent = referenceMode === 'spatial'
+                ? spatialPct * 100
+                : playbackIndex / Math.max(1, points.length - 1) * 100;
 
-            if (progressSlider) progressSlider.value = String(percent);
+            if (progressSlider) {
+                progressSlider.value = String(progressPercent);
+            }
 
             if (progressLabel) {
-                progressLabel.textContent = `${Math.round(percent)}%`;
+                progressLabel.textContent = referenceMode === 'spatial'
+                    ? `${(spatialPct * 100).toFixed(1)}%`
+                    : formatGraphCoordinate(getCurrentGraphCoordinate());
             }
 
             updateTelemetryIndicators();
@@ -2621,6 +2626,17 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+        };
+
+        const setSpatialPosition = pct => {
+            if (referenceMode !== 'spatial') return;
+
+            spatialPct = Math.max(0, Math.min(1, Number(pct) || 0));
+            stopPlayback();
+            playbackIndex = getIndexAtPct(points, spatialPct);
+
+            drawOverlay();
+            updatePlaybackControls();
         };
 
         const playbackFrame = timestamp => {
@@ -2644,6 +2660,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         };
 
         const startPlayback = () => {
+            if (referenceMode === 'spatial') return;
             if (playbackIndex >= points.length - 1) playbackIndex = 0;
             if (isPlaying) return;
             isPlaying = true;
@@ -2660,14 +2677,132 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             updatePlaybackControls();
         });
         progressSlider?.addEventListener('input', () => {
-            stopPlayback();
             const percent = Number(progressSlider.value) / 100;
+
+            if (referenceMode === 'spatial') {
+                setSpatialPosition(percent);
+                return;
+            }
+
+            stopPlayback();
             playbackIndex = percent * (points.length - 1);
             drawOverlay();
             updatePlaybackControls();
         });
         speedSelect?.addEventListener('change', () => {
             playbackSpeed = Math.max(0.1, Number(speedSelect.value) || 1);
+        });
+
+        const temporalModeButton = document.getElementById('reference-mode-temporal');
+        const spatialModeButton = document.getElementById('reference-mode-spatial');
+        const referenceModeDescription = document.getElementById('reference-mode-description');
+        const playbackDescription = document.getElementById('telemetry-playback-description');
+        const temporalControls = document.getElementById('telemetry-playback-time-controls');
+        const speedControl = document.getElementById('telemetry-playback-speed-control');
+        const progressStartLabel = document.getElementById('telemetry-lap-progress-start');
+        const progressEndLabel = document.getElementById('telemetry-lap-progress-end');
+
+        const applyModeButtonStyle = (button, active) => {
+            if (!button) return;
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('bg-cyan-600', active);
+            button.classList.toggle('text-white', active);
+            button.classList.toggle('border-cyan-500', active);
+            button.classList.toggle('border-[var(--border)]', !active);
+            button.classList.toggle('text-[var(--text)]', !active);
+        };
+
+        const updateReferenceModeUI = () => {
+            const spatial = referenceMode === 'spatial';
+
+            applyModeButtonStyle(temporalModeButton, !spatial);
+            applyModeButtonStyle(spatialModeButton, spatial);
+
+            if (referenceModeDescription) {
+                referenceModeDescription.textContent = spatial
+                    ? 'Sincronización por posición: 0–100 % del recorrido.'
+                    : 'Sincronización por tiempo transcurrido.';
+            }
+
+            if (playbackDescription) {
+                playbackDescription.textContent = spatial
+                    ? 'Explora el mismo punto de pista en ambas vueltas.'
+                    : 'Reproduce la trazada GPS siguiendo el tiempo de vuelta.';
+            }
+
+            if (temporalControls) temporalControls.style.display = spatial ? 'none' : '';
+            if (speedControl) speedControl.style.display = spatial ? 'none' : '';
+
+            if (progressSlider) {
+                progressSlider.setAttribute(
+                    'aria-label',
+                    spatial
+                        ? 'Posición de análisis en el recorrido, de 0 a 100 %'
+                        : 'Posición temporal de reproducción en la vuelta'
+                );
+            }
+
+            if (progressStartLabel) {
+                progressStartLabel.textContent = spatial
+                    ? '0 % · Salida/meta'
+                    : '00:00.000 · Salida/meta';
+            }
+
+            if (progressEndLabel) {
+                progressEndLabel.textContent = spatial
+                    ? '100 % · Meta'
+                    : `${formatLapTime(playbackDuration * 1000)} · Fin de vuelta`;
+            }
+
+            if (progressLabel) {
+                progressLabel.textContent = spatial
+                    ? `${(spatialPct * 100).toFixed(1)}%`
+                    : formatGraphCoordinate(getCurrentGraphCoordinate());
+            }
+        };
+
+        const changeReferenceMode = mode => {
+            if (mode !== 'temporal' && mode !== 'spatial') return;
+
+            stopPlayback();
+
+            if (mode === 'spatial' && referenceMode !== 'spatial') {
+                const mainIndex = Math.min(
+                    Math.floor(playbackIndex),
+                    Math.max(0, points.length - 1)
+                );
+                spatialPct = normalizeLapPct(points[mainIndex]?.lapDistPct)
+                    ?? mainIndex / Math.max(1, points.length - 1);
+                playbackIndex = getIndexAtPct(points, spatialPct);
+            } else if (mode === 'temporal' && referenceMode === 'spatial') {
+                playbackIndex = getIndexAtPct(points, spatialPct);
+            }
+
+            referenceMode = mode;
+
+            try {
+                window.localStorage.setItem(REFERENCE_MODE_STORAGE_KEY, mode);
+            } catch (error) {
+                // El cambio funciona durante esta visita aunque no se pueda guardar.
+            }
+
+            graphViewport.start = 0;
+            graphViewport.end = getGraphDomainEnd(mode);
+            clampGraphViewport();
+
+            updateReferenceModeUI();
+            updateFollowButton();
+            drawOverlay();
+            updatePlaybackControls();
+            redrawAllGraphs();
+        };
+
+        temporalModeButton?.addEventListener('click', () => {
+            changeReferenceMode('temporal');
+        });
+
+        spatialModeButton?.addEventListener('click', () => {
+            changeReferenceMode('spatial');
         });
 
         followButton?.addEventListener('click', () => {
@@ -2704,6 +2839,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
         mapObject.addEventListener('load', drawOverlay);
 
+        updateReferenceModeUI();
         updateFollowButton();
         drawOverlay();
         updateView();
@@ -2748,6 +2884,11 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             canvas.style.touchAction = 'pan-y';
             canvas.style.cursor = 'crosshair';
+
+            canvas.addEventListener('pointermove', event => {
+                if (referenceMode !== 'spatial' || event.buttons !== 0) return;
+                setSpatialPosition(graphDistanceAtPointer(canvas, event.clientX));
+            });
 
             canvas.addEventListener('wheel', event => {
                 event.preventDefault();

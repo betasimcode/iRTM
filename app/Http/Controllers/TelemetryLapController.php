@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Stint;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
-use App\Services\Ibt\IbtProcessor;
+use App\Services\Telemetry\TelemetryJsonStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
@@ -142,41 +142,44 @@ class TelemetryLapController extends Controller
         $stintDate = $stint->created_at;
 
         if ($stintDate) {
-            $ibtRelativePath = sprintf(
-                'telemetry/%s/%s/user_%s/stint_%s/stint_%s.ibt',
-                $stintDate->format('Y'),
-                $stintDate->format('m'),
-                $stint->user_id,
-                $stint->id,
-                $stint->id
+            $directory = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id
             );
 
-            if (Storage::exists($ibtRelativePath)) {
-                // El IBT usa el número nativo de vuelta.
-                $rawLapNumber = (int) (
-                    $selectedLap['candidate_lap']
-                    ?? $selectedLap['lap']
-                    ?? 0
+            $jsonStorage = app(TelemetryJsonStorage::class);
+            $rawLapNumber = (int) (
+                $selectedLap['candidate_lap']
+                ?? $selectedLap['lap']
+                ?? 0
+            );
+
+            if ($rawLapNumber > 0) {
+                $lapPath = $directory . '/laps/' . sprintf(
+                    'lap_%03d.json',
+                    $rawLapNumber
                 );
 
-                if ($rawLapNumber > 0) {
-                    $ibtPath = Storage::path($ibtRelativePath);
-                    $processor = app(IbtProcessor::class);
-
-                    $lapTelemetry = $processor->extractLapTelemetry(
-                        $ibtPath,
-                        $rawLapNumber
-                    );
-
-                    if ($referenceLapNumber !== null) {
-                        $referenceLapTelemetry = $processor->extractLapTelemetry(
-                            $ibtPath,
-                            $referenceLapNumber
-                        );
-                    }
+                if ($jsonStorage->exists($lapPath)) {
+                    $lapPayload = $jsonStorage->readJson($lapPath);
+                    $lapTelemetry = $lapPayload['samples'] ?? [];
                 }
+            }
+
+            if ($referenceLapNumber !== null) {
+                $referencePath = $directory . '/laps/' . sprintf(
+                    'lap_%03d.json',
+                    $referenceLapNumber
+                );
+
+                if ($jsonStorage->exists($referencePath)) {
+                    $referencePayload = $jsonStorage->readJson($referencePath);
+                    $referenceLapTelemetry = $referencePayload['samples'] ?? [];
+                }
+            }
         }
-    }
     }
 
         return view('telemetry.lap', [

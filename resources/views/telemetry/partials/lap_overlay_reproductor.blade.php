@@ -430,11 +430,11 @@
 
         const getGraphDomainEnd = (mode = referenceMode) => {
             if (mode === 'spatial') return 1;
-            return Math.max(
-                getSeriesDuration(validSamples),
-                getSeriesDuration(referenceSamples),
-                1
-            );
+
+            // El cronómetro de la comparativa temporal termina con la vuelta principal.
+            // Si faltan tiempos válidos, el reproductor usa su fallback de 60 segundos.
+            const primaryDuration = getSeriesDuration(validSamples);
+            return primaryDuration > 0 ? primaryDuration : 60;
         };
 
         const getGraphCoordinate = (sample, index, series) => {
@@ -454,7 +454,7 @@
             }
 
             return index / Math.max(1, series.length - 1)
-                * Math.max(getSeriesDuration(series), 1);
+                * Math.max(getSeriesDuration(series), getGraphDomainEnd('temporal'));
         };
 
         const formatGraphCoordinate = coordinate => {

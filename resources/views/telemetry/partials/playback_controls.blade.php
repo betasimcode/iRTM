@@ -3,12 +3,12 @@
     class="mb-4 w-full bg-[var(--card)] p-4"
     aria-label="Reproductor de telemetría GPS"
 >
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-3" id="telemetry-playback-heading">
         <div>
             <h3 class="text-sm font-semibold text-[var(--text-title)]">Recorrido de vuelta</h3>
-            <p class="text-xs text-[var(--text-muted)]">Reproduce la trazada GPS sobre el circuito</p>
+            <p id="telemetry-playback-description" class="text-xs text-[var(--text-muted)]">Reproduce la trazada GPS sobre el circuito</p>
         </div>
-        <label class="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+        <label id="telemetry-playback-speed-control" class="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             Velocidad
             <select
                 id="telemetry-lap-speed"
@@ -25,7 +25,7 @@
         </label>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div id="telemetry-playback-time-controls" class="flex flex-wrap items-center gap-2">
         <button
             id="telemetry-lap-play"
             type="button"
@@ -47,7 +47,7 @@
         >
             ↺ Reiniciar
         </button>
-        <span id="telemetry-lap-progress-label" class="ml-auto min-w-12 text-right text-sm font-semibold tabular-nums text-[var(--text-title)]">0%</span>
+        <span id="telemetry-lap-progress-label" class="ml-auto min-w-24 text-right text-sm font-semibold tabular-nums text-[var(--text-title)]">00:00.000</span>
     </div>
 
     <input
@@ -58,10 +58,10 @@
         step="0.1"
         value="0"
         class="mt-4 w-full cursor-pointer accent-cyan-500"
-        aria-label="Posición de reproducción en la vuelta"
+        aria-label="Posición temporal de reproducción en la vuelta"
     >
     <div class="mt-1 flex justify-between text-xs text-[var(--text-muted)]">
-        <span>Salida / meta</span>
-        <span>Fin de vuelta</span>
+        <span id="telemetry-lap-progress-start">00:00.000 · Salida/meta</span>
+        <span id="telemetry-lap-progress-end">Fin de vuelta</span>
     </div>
 </div>

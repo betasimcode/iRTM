@@ -25,28 +25,30 @@
         </label>
     </div>
 
-    <div id="telemetry-playback-time-controls" class="flex flex-wrap items-center gap-2">
-        <button
-            id="telemetry-lap-play"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
-        >
-            <span aria-hidden="true">▶</span> Reproducir
-        </button>
-        <button
-            id="telemetry-lap-pause"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-title)] hover:bg-[var(--bg)]"
-        >
-            <span aria-hidden="true">Ⅱ</span> Pausa
-        </button>
-        <button
-            id="telemetry-lap-restart"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-title)] hover:bg-[var(--bg)]"
-        >
-            ↺ Reiniciar
-        </button>
+    <div class="flex flex-wrap items-center gap-2">
+        <div id="telemetry-playback-time-controls" class="flex flex-wrap items-center gap-2">
+            <button
+                id="telemetry-lap-play"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+            >
+                <span aria-hidden="true">▶</span> Reproducir
+            </button>
+            <button
+                id="telemetry-lap-pause"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-title)] hover:bg-[var(--bg)]"
+            >
+                <span aria-hidden="true">Ⅱ</span> Pausa
+            </button>
+            <button
+                id="telemetry-lap-restart"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-title)] hover:bg-[var(--bg)]"
+            >
+                ↺ Reiniciar
+            </button>
+        </div>
         <span id="telemetry-lap-progress-label" class="ml-auto min-w-24 text-right text-sm font-semibold tabular-nums text-[var(--text-title)]">00:00.000</span>
     </div>
 

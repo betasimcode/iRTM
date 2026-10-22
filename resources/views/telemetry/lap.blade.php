@@ -609,6 +609,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('stint', mainStintId);
+        const selectedLap = params.get('lap');
+        if (selectedLap) {
+            url.searchParams.set('lap', selectedLap);
+        }
 
         if (search.trim() !== '') {
             url.searchParams.set('q', search.trim());

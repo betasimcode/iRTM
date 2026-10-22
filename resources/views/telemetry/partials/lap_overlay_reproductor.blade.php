@@ -397,11 +397,114 @@
                 : null,
         }));
 
-        // Intervalo horizontal compartido por todas las gráficas.
-        // Los valores representan la distancia normalizada de la vuelta.
+        // El modo se conserva en el navegador, pero el temporal sigue siendo el predeterminado.
+        const REFERENCE_MODE_STORAGE_KEY = 'irtm.telemetry.referenceMode';
+        let referenceMode = 'temporal';
+        try {
+            referenceMode = window.localStorage.getItem(REFERENCE_MODE_STORAGE_KEY) === 'spatial'
+                ? 'spatial'
+                : 'temporal';
+        } catch (error) {
+            // El modo predeterminado continúa disponible si storage está bloqueado.
+        }
+
+        let spatialPct = 0;
+
+        const normalizeLapPct = value => {
+            const raw = Number(value);
+            if (!Number.isFinite(raw)) return null;
+            const normalized = raw > 1 && raw <= 100 ? raw / 100 : raw;
+            return normalized >= 0 && normalized <= 1 ? normalized : null;
+        };
+
+        const getSeriesDuration = series => {
+            if (!Array.isArray(series) || series.length < 2) return 0;
+            const first = Number(series[0]?.session_time);
+            const last = Number(series[series.length - 1]?.session_time);
+            return Number.isFinite(first) && Number.isFinite(last) && last > first
+                ? last - first
+                : 0;
+        };
+
+        const getGraphDomainEnd = (mode = referenceMode) => {
+            if (mode === 'spatial') return 1;
+            return Math.max(
+                getSeriesDuration(validSamples),
+                getSeriesDuration(referenceSamples),
+                1
+            );
+        };
+
+        const getGraphCoordinate = (sample, index, series) => {
+            if (referenceMode === 'spatial') {
+                const pct = normalizeLapPct(sample?.lap_dist_pct);
+                return pct ?? index / Math.max(1, series.length - 1);
+            }
+
+            const time = Number(sample?.session_time);
+            const startTime = Number(series[0]?.session_time);
+            if (Number.isFinite(time) && Number.isFinite(startTime)) {
+                return Math.max(0, time - startTime);
+            }
+
+            return index / Math.max(1, series.length - 1)
+                * Math.max(getSeriesDuration(series), 1);
+        };
+
+        const formatGraphCoordinate = coordinate => {
+            if (referenceMode === 'spatial') {
+                const range = graphViewport.end - graphViewport.start;
+                return `${(coordinate * 100).toFixed(range < 0.1 ? 1 : 0)}%`;
+            }
+
+            const milliseconds = Math.max(0, Math.round(coordinate * 1000));
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.floor((milliseconds % 60000) / 1000);
+            const ms = milliseconds % 1000;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        };
+
+        const getIndexAtPct = (series, targetPct) => {
+            if (!Array.isArray(series) || series.length < 2) return 0;
+            const target = Math.max(0, Math.min(1, targetPct));
+            const getPct = (sample, index) =>
+                normalizeLapPct(sample?.lap_dist_pct) ?? index / (series.length - 1);
+
+            let previousIndex = 0;
+            let previousPct = getPct(series[0], 0);
+
+            for (let index = 1; index < series.length; index++) {
+                const currentPct = getPct(series[index], index);
+                if (currentPct >= target) {
+                    const span = currentPct - previousPct;
+                    const fraction = span > 0
+                        ? (target - previousPct) / span
+                        : 0;
+                    return previousIndex + Math.max(0, Math.min(1, fraction));
+                }
+                previousIndex = index;
+                previousPct = currentPct;
+            }
+
+            return series.length - 1;
+        };
+
+        const getCurrentGraphCoordinate = () => {
+            if (referenceMode === 'spatial') return spatialPct;
+
+            const lastIndex = Math.max(0, validSamples.length - 1);
+            const index = Math.max(0, Math.min(lastIndex, playbackIndex));
+            const lower = Math.floor(index);
+            const upper = Math.min(lower + 1, lastIndex);
+            const fraction = index - lower;
+            const first = getGraphCoordinate(validSamples[lower] ?? {}, lower, validSamples);
+            const second = getGraphCoordinate(validSamples[upper] ?? {}, upper, validSamples);
+            return first + (second - first) * fraction;
+        };
+
         const graphViewport = {
             start: 0,
-            end: 1,
+            end: getGraphDomainEnd(referenceMode),
         };
 
         // Durante la reproducción, desplaza la ventana visible sin alterar el zoom.
@@ -430,7 +533,7 @@
             const range = graphViewport.end - graphViewport.start;
 
             // Con la vuelta completa visible no hace falta desplazar la gráfica.
-            if (range >= 0.999) return;
+            if (range >= getGraphDomainEnd() * 0.999) return;
 
             const cursorRatio = (distance - graphViewport.start) / range;
             const targetRatio = 0.65;
@@ -457,9 +560,10 @@
         const clampGraphViewport = () => {
             const range = graphViewport.end - graphViewport.start;
 
-            if (range >= 1) {
+            const domainEnd = getGraphDomainEnd();
+            if (range >= domainEnd) {
                 graphViewport.start = 0;
-                graphViewport.end = 1;
+                graphViewport.end = domainEnd;
                 return;
             }
 
@@ -468,13 +572,13 @@
                 graphViewport.start = 0;
             }
 
-            if (graphViewport.end > 1) {
-                graphViewport.start -= graphViewport.end - 1;
-                graphViewport.end = 1;
+            if (graphViewport.end > domainEnd) {
+                graphViewport.start -= graphViewport.end - domainEnd;
+                graphViewport.end = domainEnd;
             }
 
             graphViewport.start = Math.max(0, graphViewport.start);
-            graphViewport.end = Math.min(1, graphViewport.end);
+            graphViewport.end = Math.min(domainEnd, graphViewport.end);
         };
 
         const resetGraphZoom = () => {
@@ -490,9 +594,10 @@
 
         const zoomGraphAt = (distance, factor) => {
             const oldRange = graphViewport.end - graphViewport.start;
+            const domainEnd = getGraphDomainEnd();
             const newRange = Math.max(
-                GRAPH_MIN_RANGE,
-                Math.min(1, oldRange * factor)
+                domainEnd * 0.005,
+                Math.min(domainEnd, oldRange * factor)
             );
 
             const anchor = Math.max(

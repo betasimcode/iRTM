@@ -227,15 +227,14 @@
 
         updateLapColorPreview();
 
-        // Selector independiente para el color de la vuelta de referencia.
-        if (lapColorTrigger?.parentElement) {
-            const referenceColorHost = document.getElementById(
-                'reference-lap-color-host'
-            );
+                // Selector independiente para el color de la vuelta de referencia.
+        const referenceColorHost = document.getElementById(
+            'reference-lap-color-host'
+        );
 
-            if (referenceColorHost) {
-                const colorContainer = referenceColorHost;
-                colorContainer.style.position = 'relative';
+        if (referenceColorHost) {
+            const colorContainer = referenceColorHost;
+            colorContainer.style.position = 'relative';
 
             const referenceColorTrigger = document.createElement('button');
             referenceColorTrigger.type = 'button';
@@ -261,21 +260,6 @@
             ].join(';');
 
             referenceColorTrigger.appendChild(referenceColorPreview);
-
-            const referenceColorPreview = document.createElement('span');
-            referenceColorPreview.style.cssText = [
-                'display:inline-block',
-                'width:14px',
-                'height:14px',
-                'border-radius:50%',
-                'background:' + getActiveReferenceLapColor(),
-                'border:1px solid rgba(148,163,184,.6)'
-            ].join(';');
-
-            referenceColorTrigger.appendChild(referenceColorPreview);
-            referenceColorTrigger.appendChild(
-                document.createTextNode(' Referencia')
-            );
 
             const referenceColorMenu = document.createElement('div');
             referenceColorMenu.id = 'reference-lap-color-menu';

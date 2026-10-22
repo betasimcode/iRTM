@@ -81,7 +81,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="max-w-40 rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Lap time</p>
 
@@ -117,10 +117,11 @@
                     <select
                         id="reference_lap"
                         name="reference_lap"
+                        default="---"
                         class="min-w-0 flex-1 rounded-lg border border-[var(--border)]
                             bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
                     >
-                        <option value="">Sin referencia</option>
+                        <option value="">---</option>
 
                         @foreach ($referenceLapOptions as $lapOption)
                             @php

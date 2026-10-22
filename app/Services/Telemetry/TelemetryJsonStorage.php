@@ -1,6 +1,6 @@
 <?php
 
-namespace App\\Services\\Telemetry;
+namespace App\Services\Telemetry;
 
 use JsonException;
 use RuntimeException;

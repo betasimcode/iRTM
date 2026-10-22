@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\\Unit\\Services\\Telemetry;
+namespace Tests\Unit\Services\Telemetry;
 
-use App\\Services\\Telemetry\\TelemetryJsonStorage;
+use App\Services\Telemetry\TelemetryJsonStorage;
 use RuntimeException;
-use Tests\\TestCase;
+use Tests\TestCase;
 
 class TelemetryJsonStorageTest extends TestCase
 {

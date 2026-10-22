@@ -392,7 +392,7 @@
             sessionTime: Number.isFinite(Number(sample.session_time))
                 ? Number(sample.session_time)
                 : null,
-            lapDistPct: Number.isFinite(Number(sample.lap_dist_pct))
+            lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
                 ? Number(sample.lap_dist_pct)
                 : null,
         }));
@@ -411,6 +411,7 @@
         let spatialPct = 0;
 
         const normalizeLapPct = value => {
+            if (value === null || value === undefined || value === '') return null;
             const raw = Number(value);
             if (!Number.isFinite(raw)) return null;
             const normalized = raw > 1 && raw <= 100 ? raw / 100 : raw;
@@ -419,6 +420,7 @@
 
         const getSeriesDuration = series => {
             if (!Array.isArray(series) || series.length < 2) return 0;
+            if (series[0]?.session_time == null || series[series.length - 1]?.session_time == null) return 0;
             const first = Number(series[0]?.session_time);
             const last = Number(series[series.length - 1]?.session_time);
             return Number.isFinite(first) && Number.isFinite(last) && last > first
@@ -441,6 +443,10 @@
                 return pct ?? index / Math.max(1, series.length - 1);
             }
 
+            if (sample?.session_time == null || series[0]?.session_time == null) {
+                return index / Math.max(1, series.length - 1)
+                    * Math.max(getSeriesDuration(series), 1);
+            }
             const time = Number(sample?.session_time);
             const startTime = Number(series[0]?.session_time);
             if (Number.isFinite(time) && Number.isFinite(startTime)) {
@@ -590,6 +596,25 @@
             ctx.lineWidth = 1.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
+
+            const cursorXValue = getCurrentGraphCoordinate();
+            if (
+                Number.isFinite(cursorXValue) &&
+                cursorXValue >= graphViewport.start &&
+                cursorXValue <= graphViewport.end
+            ) {
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.x - cursorXValue) < Math.abs(best.x - cursorXValue)
+                        ? point
+                        : best
+                );
+
+                ctx.beginPath();
+                ctx.arc(xAt(cursorXValue), yAt(nearest.value), 3, 0, Math.PI * 2);
+                ctx.fillStyle = getActiveReferenceLapColor();
+                ctx.fill();
+            }
+
             ctx.restore();
         };
 
@@ -1607,7 +1632,7 @@
                     * radians * 6371000 * cosLat,
                 y: (Number(sample.position.lat) - originLat)
                     * radians * 6371000,
-                lapDistPct: Number.isFinite(Number(sample.lap_dist_pct))
+                lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
                     ? Number(sample.lap_dist_pct)
                     : null,
                 sessionTime: Number.isFinite(Number(sample.session_time))
@@ -2779,6 +2804,9 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
 
             referenceMode = mode;
+            if (referenceMode === 'spatial') {
+                isFollowEnabled = false;
+            }
 
             try {
                 window.localStorage.setItem(REFERENCE_MODE_STORAGE_KEY, mode);

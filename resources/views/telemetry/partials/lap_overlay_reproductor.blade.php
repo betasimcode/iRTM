@@ -445,7 +445,7 @@
 
             if (sample?.session_time == null || series[0]?.session_time == null) {
                 return index / Math.max(1, series.length - 1)
-                    * Math.max(getSeriesDuration(series), 1);
+                    * Math.max(getSeriesDuration(series), getGraphDomainEnd('temporal'));
             }
             const time = Number(sample?.session_time);
             const startTime = Number(series[0]?.session_time);

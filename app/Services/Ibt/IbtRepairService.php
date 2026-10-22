@@ -3,6 +3,7 @@
 namespace App\Services\Ibt;
 
 use App\Models\Stint;
+use App\Services\Telemetry\TelemetryJsonStorage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -45,6 +46,7 @@ class IbtRepairService
 
         try {
             $processor = app(IbtProcessor::class);
+            $jsonStorage = app(TelemetryJsonStorage::class);
 
             /*
              * FASE 1: generar y validar primero los metadatos estáticos.
@@ -61,18 +63,15 @@ class IbtRepairService
                 $sessionJsonPath
             );
 
-            if (!is_file($sessionJsonPath) || filesize($sessionJsonPath) === 0) {
+            if (!$jsonStorage->exists($sessionJsonPath)) {
                 throw new RuntimeException(
                     'Fase 1 fallida: no se ha generado session.json.'
                 );
             }
 
-            $sessionJson = json_decode(
-                file_get_contents($sessionJsonPath),
-                true
-            );
+            $sessionJson = $jsonStorage->readJson($sessionJsonPath);
 
-            if (!is_array($sessionJson) || json_last_error() !== JSON_ERROR_NONE) {
+            if (!is_array($sessionJson)) {
                 throw new RuntimeException(
                     'Fase 1 fallida: session.json no contiene JSON válido.'
                 );
@@ -155,17 +154,13 @@ class IbtRepairService
 
                 if (
                     !in_array($lapNumber, $generatedLaps, true)
-                    || !is_file($path)
-                    || filesize($path) === 0
+                    || !$jsonStorage->exists($path)
                 ) {
                     $missing[] = $lapNumber;
                     continue;
                 }
 
-                $json = json_decode(
-                    file_get_contents($path),
-                    true
-                );
+                $json = $jsonStorage->readJson($path);
 
                 if (
                     !is_array($json)
@@ -190,10 +185,8 @@ class IbtRepairService
 
 
             if (
-                !is_file($lapsJsonPath)
-                || filesize($lapsJsonPath) === 0
-                || !is_file($sessionJsonPath)
-                || filesize($sessionJsonPath) === 0
+                !$jsonStorage->exists($lapsJsonPath)
+                || !$jsonStorage->exists($sessionJsonPath)
             ) {
                 throw new RuntimeException(
                     'No se han generado los JSON principales.'

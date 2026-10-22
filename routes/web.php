@@ -80,6 +80,9 @@ Route::group([
         Route::get('/telemetry/lap', [TelemetryLapController::class, 'index'])
             ->name('telemetry.lap');
 
+        Route::get('/telemetry/lap/references', [TelemetryLapController::class, 'references'])
+            ->name('telemetry.lap.references');
+
         Route::get('/telemetry/theme.css', function () {
                 $theme = auth()->user()->theme ?? 'theme-dark';
 

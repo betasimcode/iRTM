@@ -6,6 +6,7 @@ use App\Models\Stint;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use App\Services\Ibt\IbtProcessor;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 class TelemetryLapController extends Controller
@@ -191,4 +192,152 @@ class TelemetryLapController extends Controller
             'referenceLapOptions' => $referenceLapOptions,
         ]);
     }
+
+
+public function references(Request $request): JsonResponse
+{
+    $mainStintId = $request->integer('stint');
+    $search = trim((string) $request->query('q', ''));
+
+    if ($mainStintId < 1) {
+        return response()->json([
+            'data' => [],
+            'message' => 'Debes indicar el stint principal.',
+        ], 422);
+    }
+
+    $mainStint = Stint::query()->findOrFail($mainStintId);
+
+    $query = Stint::query()
+        ->with('user')
+        ->where('id', '!=', $mainStint->id)
+        ->where('car_id', $mainStint->car_id)
+        ->where('track_id', $mainStint->track_id)
+        ->where('visibility', 'public')
+        ->where('status', 'validated')
+        ->whereNotNull('created_at')
+        ->orderByDesc('created_at');
+
+    if ($search !== '') {
+        $query->where(function ($builder) use ($search) {
+            if (ctype_digit($search)) {
+                $builder->orWhere('id', (int) $search);
+            }
+
+            $builder->orWhereHas('user', function ($users) use ($search) {
+                $users->where('name', 'like', '%' . $search . '%');
+            });
+        });
+    }
+
+    // Se limita el volumen inicial para no leer un catálogo completo
+    // de IBT/JSON en cada búsqueda. Aquí solo se leen los JSON de vueltas.
+    $stints = $query->limit(50)->get();
+
+    $data = [];
+
+    foreach ($stints as $candidate) {
+        $date = $candidate->created_at;
+
+        if (!$date) {
+            continue;
+        }
+
+        $directory = storage_path(
+            'app/private/telemetry/' .
+            $date->format('Y/m') .
+            '/user_' . $candidate->user_id .
+            '/stint_' . $candidate->id
+        );
+
+        $lapsPath = $directory . '/stint_' .
+            $candidate->id . '_laps.json';
+
+        if (!is_file($lapsPath)) {
+            continue;
+        }
+
+        $decoded = json_decode(
+            file_get_contents($lapsPath),
+            true
+        );
+
+        if (!is_array($decoded) || !isset($decoded['laps'])
+            || !is_array($decoded['laps'])) {
+            continue;
+        }
+
+        $validLaps = [];
+
+        foreach ($decoded['laps'] as $lap) {
+            if (!is_array($lap)) {
+                continue;
+            }
+
+            $number = (int) (
+                $lap['candidate_lap'] ?? $lap['lap'] ?? 0
+            );
+
+            $lapTime = $lap['lap_time'] ?? null;
+
+            if (
+                $number < 1 ||
+                !is_numeric($lapTime) ||
+                (float) $lapTime <= 5 ||
+                !empty($lap['is_pit_lap'])
+            ) {
+                continue;
+            }
+
+            $validLaps[] = [
+                'number' => $number,
+                'lap_time' => (float) $lapTime,
+                'lap_time_label' => gmdate(
+                    'i:s.',
+                    (int) $lapTime
+                ) . str_pad(
+                    (string) (int) round(
+                        (((float) $lapTime) - floor((float) $lapTime))
+                        * 1000
+                    ),
+                    3,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+            ];
+        }
+
+        if (count($validLaps) === 0) {
+            continue;
+        }
+
+        $data[] = [
+            'stint_id' => $candidate->id,
+            'driver' => $candidate->user?->name ?? 'Piloto desconocido',
+            'date' => $date->format('d/m/Y H:i'),
+            'laps' => $validLaps,
+        ];
+    }
+
+    return response()->json([
+        'data' => $data,
+        'count' => count($data),
+    ]);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

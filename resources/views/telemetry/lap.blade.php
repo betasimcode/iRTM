@@ -114,38 +114,57 @@
                 <p class="text-xs text-[var(--text-muted)]">Reference lap</p>
 
                 <div class="mt-1 flex min-w-0 items-center gap-2">
-                    <select
+                    <input
+                        type="hidden"
                         id="reference_lap"
-                        name="reference_lap"
-                        default="---"
-                        class="min-w-0 flex-1 rounded-lg border border-[var(--border)]
-                            bg-[var(--bg)] p-2 text-sm text-[var(--text)]"
+                        value="{{ $referenceLapNumber ?? '' }}"
                     >
-                        <option value="">---</option>
 
-                        @foreach ($referenceLapOptions as $lapOption)
-                            @php
-                                $optionNumber = (int) (
-                                    $lapOption['candidate_lap']
-                                    ?? $lapOption['lap']
-                                    ?? 0
-                                );
-                            @endphp
+                    <input
+                        type="hidden"
+                        id="reference_stint"
+                        value="{{ $referenceStintId ?? '' }}"
+                    >
 
-                            <option
-                                value="{{ $optionNumber }}"
-                                @selected($referenceLapNumber === $optionNumber)
-                            >
-                                Vuelta {{ $optionNumber }}
-                                — {{ laptime((float) $lapOption['lap_time'], 3) }} s
-                            </option>
-                        @endforeach
-                    </select>
+                    <span
+                        id="reference-lap-label"
+                        class="min-w-0 flex-1 truncate rounded-lg border
+                            border-[var(--border)] bg-[var(--bg)] p-2
+                            text-sm text-[var(--text)]"
+                    >{{ isset($referenceLapNumber) ? 'Vuelta ' . $referenceLapNumber : '---' }}</span>
 
                     <div
                         id="reference-lap-color-host"
                         class="relative flex shrink-0 items-center"
                     ></div>
+
+                    <button
+                        type="button"
+                        id="reference-lap-search"
+                        class="flex shrink-0 items-center gap-2 rounded-lg
+                            border border-[var(--border)] px-3 py-2
+                            text-sm font-semibold text-[var(--text-title)]
+                            hover:border-[var(--accent)]"
+                        aria-label="Buscar vuelta de referencia"
+                        title="Buscar vuelta de referencia"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        Buscar
+                    </button>
                 </div>
             </div>
 
@@ -220,7 +239,19 @@
             name="lap"
             value="{{ $selectedLapNumber }}"
         >
+        <input
+            type="hidden"
+            name="reference_stint"
+            id="comparison_reference_stint"
+            value="{{ $referenceStintId ?? '' }}"
+        >
 
+        <input
+            type="hidden"
+            name="reference_lap"
+            id="comparison_reference_lap"
+            value="{{ $referenceLapNumber ?? '' }}"
+        >
         <div class="min-w-56 flex-1">
             <label
                 for="reference_lap"
@@ -291,6 +322,355 @@
 </div>
 
 
+{{-- MODAL: CATÁLOGO DE VUELTAS DE REFERENCIA --}}
+<div
+    id="reference-lap-modal"
+    class="fixed inset-0 z-[100] hidden items-center justify-center
+           bg-black/70 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="reference-lap-modal-title"
+>
+    <div
+        id="reference-lap-modal-panel"
+        class="flex max-h-[85vh] w-full max-w-3xl flex-col
+               overflow-hidden rounded-2xl border
+               border-[var(--border)] bg-[var(--card)] shadow-2xl"
+    >
+        {{-- Cabecera --}}
+        <div
+            class="flex items-center justify-between gap-4
+                   border-b border-[var(--border)] p-4"
+        >
+            <div>
+                <h2
+                    id="reference-lap-modal-title"
+                    class="text-lg font-semibold text-[var(--text-title)]"
+                >
+                    Buscar vuelta de referencia
+                </h2>
+
+                <p class="mt-1 text-sm text-[var(--text-muted)]">
+                    Selecciona un stint y después una vuelta.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                id="reference-lap-modal-close"
+                class="flex h-9 w-9 shrink-0 items-center justify-center
+                       rounded-lg border border-[var(--border)]
+                       text-xl text-[var(--text)] hover:border-[var(--accent)]"
+                aria-label="Cerrar catálogo"
+                title="Cerrar"
+            >
+                &times;
+            </button>
+        </div>
+
+        {{-- Búsqueda --}}
+        <div class="border-b border-[var(--border)] p-4">
+            <label
+                for="reference-lap-search-input"
+                class="mb-2 block text-xs font-semibold uppercase
+                       tracking-wider text-[var(--text-muted)]"
+            >
+                Buscar por stint o piloto
+            </label>
+
+            <input
+                type="search"
+                id="reference-lap-search-input"
+                autocomplete="off"
+                placeholder="Ej.: 1089 o nombre del piloto"
+                class="w-full rounded-lg border border-[var(--border)]
+                       bg-[var(--bg)] px-3 py-2.5 text-sm
+                       text-[var(--text)] outline-none
+                       focus:border-[var(--accent)]"
+            >
+
+            <p class="mt-2 text-xs text-[var(--text-muted)]">
+                Solo se mostrarán referencias compatibles con el coche
+                y el circuito de la vuelta principal.
+            </p>
+        </div>
+
+        {{-- Resultados del catálogo --}}
+        <div
+            id="reference-lap-results"
+            class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+            aria-live="polite"
+        >
+            <p
+                id="reference-lap-results-status"
+                class="py-8 text-center text-sm text-[var(--text-muted)]"
+            >
+                Introduce un término de búsqueda para consultar el catálogo.
+            </p>
+        </div>
+
+        {{-- Pie --}}
+        <div
+            class="flex items-center justify-between gap-3
+                   border-t border-[var(--border)] p-4"
+        >
+            <span
+                id="reference-lap-results-count"
+                class="text-xs text-[var(--text-muted)]"
+            >
+                Catálogo de referencias
+            </span>
+
+            <button
+                type="button"
+                id="reference-lap-modal-cancel"
+                class="rounded-lg border border-[var(--border)]
+                       px-4 py-2 text-sm font-semibold
+                       text-[var(--text-title)] hover:border-[var(--accent)]"
+            >
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('reference-lap-modal');
+    const panel = document.getElementById('reference-lap-modal-panel');
+    const openButton = document.getElementById('reference-lap-search');
+    const closeButton = document.getElementById('reference-lap-modal-close');
+    const cancelButton = document.getElementById('reference-lap-modal-cancel');
+    const searchInput = document.getElementById('reference-lap-search-input');
+    const results = document.getElementById('reference-lap-results');
+
+    if (!modal || !panel || !openButton || !searchInput || !results) {
+        return;
+    }
+
+    let previousFocus = null;
+
+    function openModal() {
+        previousFocus = document.activeElement;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        searchInput.focus();
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+        if (previousFocus instanceof HTMLElement) {
+            previousFocus.focus();
+        }
+    }
+
+    openButton.addEventListener('click', openModal);
+    closeButton?.addEventListener('click', closeModal);
+    cancelButton?.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', event => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    panel.addEventListener('click', event => {
+        event.stopPropagation();
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+
+
+    const resultsStatus = document.getElementById(
+        'reference-lap-results-status'
+    );
+    const resultsCount = document.getElementById(
+        'reference-lap-results-count'
+    );
+
+    const referenceStintInput = document.getElementById('reference_stint');
+    const referenceLapInput = document.getElementById('reference_lap');
+    const referenceLabel = document.getElementById('reference-lap-label');
+
+    const comparisonStintInput = document.getElementById(
+        'comparison_reference_stint'
+    );
+    const comparisonLapInput = document.getElementById(
+        'comparison_reference_lap'
+    );
+
+    const endpoint = @json(route('telemetry.lap.references'));
+
+    let searchTimer = null;
+    let activeRequest = null;
+
+    function setStatus(message) {
+        results.replaceChildren();
+
+        const paragraph = document.createElement('p');
+        paragraph.className =
+            'py-8 text-center text-sm text-[var(--text-muted)]';
+        paragraph.textContent = message;
+
+        results.appendChild(paragraph);
+
+    }
+
+    function renderResults(stints) {
+        results.replaceChildren();
+
+        if (!Array.isArray(stints) || stints.length === 0) {
+            setStatus('No se encontraron stints con vueltas válidas.');
+            resultsCount.textContent = '0 stints';
+            return;
+        }
+
+        let totalLaps = 0;
+
+        stints.forEach(stint => {
+            const card = document.createElement('section');
+            card.className =
+                'rounded-xl border border-[var(--border)] p-3';
+
+            const heading = document.createElement('div');
+            heading.className =
+                'mb-3 flex flex-wrap items-center justify-between gap-2';
+
+            const title = document.createElement('h3');
+            title.className =
+                'font-semibold text-[var(--text-title)]';
+            title.textContent =
+                `Stint #${stint.stint_id} · ${stint.driver}`;
+
+            const date = document.createElement('span');
+            date.className = 'text-xs text-[var(--text-muted)]';
+            date.textContent = stint.date ?? '';
+
+            heading.append(title, date);
+            card.appendChild(heading);
+
+            const lapList = document.createElement('div');
+            lapList.className = 'flex flex-wrap gap-2';
+
+            (stint.laps ?? []).forEach(lap => {
+                totalLaps++;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className =
+                    'rounded-lg border border-[var(--border)] px-3 py-2 ' +
+                    'text-sm text-[var(--text)] hover:border-[var(--accent)]';
+
+                button.textContent =
+                    `Vuelta ${lap.number} · ${lap.lap_time_label}`;
+
+                button.addEventListener('click', () => {
+                    selectReference(stint, lap);
+                });
+
+                lapList.appendChild(button);
+            });
+
+            card.appendChild(lapList);
+            results.appendChild(card);
+        });
+
+        resultsCount.textContent =
+            `${stints.length} stints · ${totalLaps} vueltas`;
+    }
+
+    async function loadReferences(search = '') {
+        const params = new URLSearchParams(window.location.search);
+        const mainStintId = params.get('stint');
+
+        if (!mainStintId) {
+            setStatus('No se ha podido identificar el stint principal.');
+            resultsCount.textContent = 'Sin resultados';
+            return;
+        }
+
+        if (activeRequest) {
+            activeRequest.abort();
+        }
+
+        activeRequest = new AbortController();
+
+        setStatus('Buscando referencias compatibles...');
+        resultsCount.textContent = 'Consultando catálogo';
+
+        const url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('stint', mainStintId);
+
+        if (search.trim() !== '') {
+            url.searchParams.set('q', search.trim());
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                signal: activeRequest.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP ${response.status}`);
+            }
+
+            const payload = await response.json();
+            renderResults(payload.data ?? []);
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return;
+            }
+
+            setStatus(
+                'No se pudo cargar el catálogo. Comprueba la conexión e inténtalo de nuevo.'
+            );
+            resultsCount.textContent = 'Error de consulta';
+            console.error('Error al cargar referencias:', error);
+        }
+    }
+
+    function selectReference(stint, lap) {
+        referenceStintInput.value = String(stint.stint_id);
+        referenceLapInput.value = String(lap.number);
+
+        comparisonStintInput.value = String(stint.stint_id);
+        comparisonLapInput.value = String(lap.number);
+
+        referenceLabel.textContent =
+            `#${stint.stint_id} · V${lap.number} · ${lap.lap_time_label}`;
+
+        closeModal();
+    }
+
+    openButton.addEventListener('click', () => {
+        loadReferences(searchInput.value);
+    });
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+
+        searchTimer = setTimeout(() => {
+            loadReferences(searchInput.value);
+        }, 300);
+    });
+
+});
+</script>
 
 
 

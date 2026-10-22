@@ -2663,6 +2663,18 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             stopPlayback();
             playbackIndex = getIndexAtPct(points, spatialPct);
 
+            // Si el cursor llega desde el mapa fuera de la zona ampliada,
+            // desplazar la ventana de las gráficas conservando su nivel de zoom.
+            const visibleRange = graphViewport.end - graphViewport.start;
+            if (
+                visibleRange < getGraphDomainEnd() * 0.999 &&
+                (spatialPct < graphViewport.start || spatialPct > graphViewport.end)
+            ) {
+                graphViewport.start = spatialPct - visibleRange / 2;
+                graphViewport.end = graphViewport.start + visibleRange;
+                clampGraphViewport();
+            }
+
             drawOverlay();
             updatePlaybackControls();
         };

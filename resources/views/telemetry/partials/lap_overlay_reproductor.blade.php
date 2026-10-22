@@ -92,8 +92,37 @@
         const lapColorTrigger = document.getElementById('lap-color-trigger');
         const lapColorPreview = document.getElementById('lap-color-preview');
 
-        // Conserva los cambios manuales mientras permanezca activa la página.
+        // Colores manuales asociados a una vuelta; se conservan entre recargas.
         const manualLapColors = new Map();
+        const LAP_COLOR_STORAGE_KEY = 'irtm.telemetry.manualLapColors';
+
+        try {
+            const savedColors = JSON.parse(
+                window.localStorage.getItem(LAP_COLOR_STORAGE_KEY) ?? '{}'
+            );
+
+            Object.entries(savedColors).forEach(([key, color]) => {
+                if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) {
+                    manualLapColors.set(key, color);
+                }
+            });
+        } catch (error) {
+            // La telemetría sigue funcionando aunque el navegador bloquee storage.
+            console.warn('[LapOverlay] No se pudieron recuperar colores guardados.');
+        }
+
+        const saveManualLapColor = (key, color) => {
+            manualLapColors.set(key, color);
+
+            try {
+                window.localStorage.setItem(
+                    LAP_COLOR_STORAGE_KEY,
+                    JSON.stringify(Object.fromEntries(manualLapColors))
+                );
+            } catch (error) {
+                console.warn('[LapOverlay] No se pudo persistir el color seleccionado.');
+            }
+        };
 
         const getSelectedLapKey = () => {
             if (lapSelector?.value) {
@@ -187,7 +216,7 @@
 
                         if (!key) return;
 
-                        manualLapColors.set(key, preset.value);
+                        saveManualLapColor(key, preset.value);
                         updateLapColorPreview();
                         updateVehicleColor();
                         colorMenu.classList.add('hidden');
@@ -243,7 +272,10 @@
             referenceColorTrigger.className =
                 'flex h-9 w-9 items-center justify-center rounded-lg ' +
                 'border border-[var(--border)]';
-            referenceColorTrigger.title = 'Color de la vuelta de referencia';
+            referenceColorTrigger.title =
+                `Color de referencia: ${lapColorPresets.find(
+                    color => color.value === getActiveReferenceLapColor()
+                )?.name ?? 'Personalizado'}`;
             referenceColorTrigger.setAttribute(
                 'aria-label',
                 'Cambiar color de la vuelta de referencia'
@@ -299,7 +331,7 @@
                 option.addEventListener('click', () => {
                     if (referenceLapNumber == null) return;
 
-                    manualLapColors.set(
+                    saveManualLapColor(
                         `reference:${referenceStintId ?? ''}:${referenceLapNumber}`,
                         preset.value
                     );

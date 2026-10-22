@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Stint;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
-use App\Services\Ibt\IbtProcessor;
+use App\Services\Telemetry\TelemetryJsonStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,6 +32,7 @@ class TelemetryLapController extends Controller
         $referenceLapTelemetry = [];
         $referenceLapNumber = null;
         $referenceLapOptions = [];
+        $referenceStintId = $request->integer('reference_stint') ?: null;
 
         if ($stintId > 0) {
             $stint = Stint::query()
@@ -106,77 +107,146 @@ class TelemetryLapController extends Controller
             )
             : null;
 
-        // Preparar las vueltas válidas que pueden utilizarse como referencia.
-        $referenceLapOptions = array_values(array_filter(
-            $laps,
-            function (array $lap) use ($selectedLapNumber): bool {
-                $number = (int) (
-                    $lap['candidate_lap'] ?? $lap['lap'] ?? 0
-                );
-
-                $lapTime = $lap['lap_time'] ?? null;
-
-                return $number > 0
-                    && $number !== $selectedLapNumber
-                    && is_numeric($lapTime)
-                    && (float) $lapTime > 5
-                    && empty($lap['is_pit_lap']);
-            }
-        ));
-
+        // La selección puede apuntar al mismo stint o a otro compatible.
         $requestedReference = $request->integer('reference_lap');
+        $referenceStint = null;
+        $referenceLaps = [];
 
-        foreach ($referenceLapOptions as $option) {
+        if ($referenceStintId !== null) {
+            if ($referenceStintId === $stint->id) {
+                $referenceStint = $stint;
+                $referenceLaps = $laps;
+            } else {
+                $referenceStint = Stint::query()
+                    ->whereKey($referenceStintId)
+                    ->where('car_id', $stint->car_id)
+                    ->where('track_id', $stint->track_id)
+                    ->where('visibility', 'public')
+                    ->where('status', 'validated')
+                    ->whereNotNull('created_at')
+                    ->first();
+
+                if ($referenceStint) {
+                    $referenceDate = $referenceStint->created_at;
+                    $referenceDirectory = storage_path(
+                        'app/private/telemetry/' .
+                        $referenceDate->format('Y/m') .
+                        '/user_' . $referenceStint->user_id .
+                        '/stint_' . $referenceStint->id
+                    );
+                    $referenceLapsPath = $referenceDirectory .
+                        '/stint_' . $referenceStint->id . '_laps.json';
+
+                    if (is_file($referenceLapsPath)) {
+                        $referenceDecoded = json_decode(
+                            file_get_contents($referenceLapsPath),
+                            true
+                        );
+                        if (is_array($referenceDecoded)
+                            && isset($referenceDecoded['laps'])
+                            && is_array($referenceDecoded['laps'])) {
+                            $referenceLaps = $referenceDecoded['laps'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Si no se envía reference_stint, conservar compatibilidad con enlaces
+        // antiguos que solo contienen reference_lap: buscar primero en el stint actual.
+        if ($referenceStintId === null && $requestedReference > 0) {
+            $referenceStint = $stint;
+            $referenceLaps = $laps;
+            $referenceStintId = $stint->id;
+        }
+
+        foreach ($referenceLaps as $option) {
+            if (!is_array($option)) {
+                continue;
+            }
+
             $optionNumber = (int) (
                 $option['candidate_lap'] ?? $option['lap'] ?? 0
             );
+            $lapTime = $option['lap_time'] ?? null;
 
-            if ($optionNumber === $requestedReference) {
+            if (
+                $optionNumber === $requestedReference &&
+                $optionNumber > 0 &&
+                ($referenceStintId !== $stint->id || $optionNumber !== $selectedLapNumber) &&
+                is_numeric($lapTime) &&
+                (float) $lapTime > 5 &&
+                empty($option['is_pit_lap'])
+            ) {
                 $referenceLapNumber = $optionNumber;
                 break;
             }
         }
+
     }
 
     if ($stint && $selectedLap) {
         $stintDate = $stint->created_at;
 
         if ($stintDate) {
-            $ibtRelativePath = sprintf(
-                'telemetry/%s/%s/user_%s/stint_%s/stint_%s.ibt',
-                $stintDate->format('Y'),
-                $stintDate->format('m'),
-                $stint->user_id,
-                $stint->id,
-                $stint->id
+            $directory = storage_path(
+                'app/private/telemetry/' .
+                $stintDate->format('Y/m') .
+                '/user_' . $stint->user_id .
+                '/stint_' . $stint->id
             );
 
-            if (Storage::exists($ibtRelativePath)) {
-                // El IBT usa el número nativo de vuelta.
-                $rawLapNumber = (int) (
-                    $selectedLap['candidate_lap']
-                    ?? $selectedLap['lap']
-                    ?? 0
+            $jsonStorage = app(TelemetryJsonStorage::class);
+            $rawLapNumber = (int) (
+                $selectedLap['candidate_lap']
+                ?? $selectedLap['lap']
+                ?? 0
+            );
+
+            if ($rawLapNumber > 0) {
+                $lapPath = $directory . '/laps/' . sprintf(
+                    'lap_%03d.json',
+                    $rawLapNumber
                 );
 
-                if ($rawLapNumber > 0) {
-                    $ibtPath = Storage::path($ibtRelativePath);
-                    $processor = app(IbtProcessor::class);
+                if ($jsonStorage->exists($lapPath)) {
+                    $lapPayload = $jsonStorage->readJson($lapPath);
+                    $lapTelemetry = $lapPayload['samples'] ?? [];
+                }
+            }
 
-                    $lapTelemetry = $processor->extractLapTelemetry(
-                        $ibtPath,
-                        $rawLapNumber
+            if ($referenceLapNumber !== null && $referenceStintId !== null) {
+                $referenceStint = $referenceStintId === $stint->id
+                    ? $stint
+                    : Stint::query()
+                        ->whereKey($referenceStintId)
+                        ->where('car_id', $stint->car_id)
+                        ->where('track_id', $stint->track_id)
+                        ->where('visibility', 'public')
+                        ->where('status', 'validated')
+                        ->whereNotNull('created_at')
+                        ->first();
+
+                if ($referenceStint && $referenceStint->created_at) {
+                    $referenceDirectory = storage_path(
+                        'app/private/telemetry/' .
+                        $referenceStint->created_at->format('Y/m') .
+                        '/user_' . $referenceStint->user_id .
+                        '/stint_' . $referenceStint->id
                     );
 
-                    if ($referenceLapNumber !== null) {
-                        $referenceLapTelemetry = $processor->extractLapTelemetry(
-                            $ibtPath,
-                            $referenceLapNumber
-                        );
+                    $referencePath = $referenceDirectory . '/laps/' . sprintf(
+                        'lap_%03d.json',
+                        $referenceLapNumber
+                    );
+
+                    if ($jsonStorage->exists($referencePath)) {
+                        $referencePayload = $jsonStorage->readJson($referencePath);
+                        $referenceLapTelemetry = $referencePayload['samples'] ?? [];
                     }
                 }
+            }
         }
-    }
     }
 
         return view('telemetry.lap', [
@@ -189,6 +259,7 @@ class TelemetryLapController extends Controller
             'selectedLapNumber' => $selectedLapNumber,
             'referenceLapTelemetry' => $referenceLapTelemetry,
             'referenceLapNumber' => $referenceLapNumber,
+            'referenceStintId' => $referenceStintId,
             'referenceLapOptions' => $referenceLapOptions,
         ]);
     }
@@ -235,6 +306,75 @@ public function references(Request $request): JsonResponse
     $stints = $query->limit(50)->get();
 
     $data = [];
+
+    // El stint principal también es una fuente de referencias: se excluye
+    // únicamente la vuelta que se está analizando, no el stint completo.
+    $mainDate = $mainStint->created_at;
+    if ($mainDate) {
+        $mainDirectory = storage_path(
+            'app/private/telemetry/' .
+            $mainDate->format('Y/m') .
+            '/user_' . $mainStint->user_id .
+            '/stint_' . $mainStint->id
+        );
+        $mainLapsPath = $mainDirectory . '/stint_' .
+            $mainStint->id . '_laps.json';
+
+        if (is_file($mainLapsPath)) {
+            $mainDecoded = json_decode(file_get_contents($mainLapsPath), true);
+            if (is_array($mainDecoded) && isset($mainDecoded['laps'])
+                && is_array($mainDecoded['laps'])) {
+                $mainLaps = [];
+                $selectedLapNumber = $request->integer('lap');
+
+                foreach ($mainDecoded['laps'] as $lap) {
+                    if (!is_array($lap)) {
+                        continue;
+                    }
+                    $number = (int) ($lap['candidate_lap'] ?? $lap['lap'] ?? 0);
+                    $lapTime = $lap['lap_time'] ?? null;
+
+                    if (
+                        $number < 1 ||
+                        $number === $selectedLapNumber ||
+                        !is_numeric($lapTime) ||
+                        (float) $lapTime <= 5 ||
+                        !empty($lap['is_pit_lap'])
+                    ) {
+                        continue;
+                    }
+
+                    $mainLaps[] = [
+                        'number' => $number,
+                        'lap_time' => (float) $lapTime,
+                        'lap_time_label' => gmdate('i:s.', (int) $lapTime)
+                            . str_pad(
+                                (string) (int) round(
+                                    (((float) $lapTime) - floor((float) $lapTime)) * 1000
+                                ),
+                                3,
+                                '0',
+                                STR_PAD_LEFT
+                            ),
+                    ];
+                }
+
+                $searchMatchesMain = $search === ''
+                    || (ctype_digit($search) && (int) $search === $mainStint->id)
+                    || stripos((string) ($mainStint->user?->name ?? ''), $search) !== false;
+
+                if ($mainLaps && $searchMatchesMain) {
+                    $data[] = [
+                        'stint_id' => $mainStint->id,
+                        'driver' => $mainStint->user?->name ?? 'Piloto actual',
+                        'date' => $mainDate->format('d/m/Y H:i'),
+                        'is_current' => true,
+                        'laps' => $mainLaps,
+                    ];
+                }
+            }
+        }
+    }
 
     foreach ($stints as $candidate) {
         $date = $candidate->created_at;
@@ -313,6 +453,7 @@ public function references(Request $request): JsonResponse
 
         $data[] = [
             'stint_id' => $candidate->id,
+            'is_current' => false,
             'driver' => $candidate->user?->name ?? 'Piloto desconocido',
             'date' => $date->format('d/m/Y H:i'),
             'laps' => $validLaps,

@@ -2,6 +2,7 @@
 /** UPDATE 1741**/
 namespace App\Services\Ibt;
 
+use App\Services\Telemetry\TelemetryJsonStorage;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -1360,7 +1361,7 @@ class IbtProcessor
 
         if (file_put_contents($outputPath, $json . PHP_EOL, LOCK_EX) === false) {
             throw new RuntimeException(
-                "No se pudo escribir session.json: {$outputPath}"
+                "No se pudo escribir el JSON: {$outputPath}"
             );
         }
 
@@ -3072,17 +3073,10 @@ class IbtProcessor
                 JSON_THROW_ON_ERROR
             );
 
-            if (
-                file_put_contents(
-                    $outputPath,
-                    $json . PHP_EOL,
-                    LOCK_EX
-                ) === false
-            ) {
-                throw new \RuntimeException(
-                    "No se pudo escribir: {$outputPath}"
-                );
-            }
+            app(TelemetryJsonStorage::class)->write(
+                $outputPath,
+                $json . PHP_EOL
+            );
 
             $generated++;
             $generatedLaps[] = $lapNumber;

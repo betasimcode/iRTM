@@ -73,7 +73,7 @@
                 </label>
                 <select name="category"
                 class="w-full bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2 rounded text-[var(--text)]">
-                @foreach(['','GT3','GT4','GT','F1','F2','F3','F4','TCR'] as $car_cat)
+                @foreach(['GTP','LMP2','LMP3','GT3','PORSCHE CUP','FERRARI CHALLENGUE','GT4','GT','F1','F2','SF23','SFL','F3','F4','RF1600','RT2000','FORMULA VEE','TCR','LOTUS79'] as $car_cat)
                 <option value="{{ $car_cat }}"
                 {{ old('category', $car->category) == $car_cat ? 'selected' : '' }}>
                 {{ $car_cat }}

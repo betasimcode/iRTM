@@ -428,13 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const referenceLapInput = document.getElementById('reference_lap');
     const referenceLabel = document.getElementById('reference-lap-label');
 
-    const comparisonStintInput = document.getElementById(
-        'comparison_reference_stint'
-    );
-    const comparisonLapInput = document.getElementById(
-        'comparison_reference_lap'
-    );
-
     const endpoint = @json(route('telemetry.lap.references'));
 
     let searchTimer = null;

@@ -131,7 +131,7 @@
                         class="min-w-0 flex-1 truncate rounded-lg border
                             border-[var(--border)] bg-[var(--bg)] p-2
                             text-sm text-[var(--text)]"
-                    >{{ isset($referenceLapNumber) ? 'Vuelta ' . $referenceLapNumber : '---' }}</span>
+                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · Vuelta ' . $referenceLapNumber : '---' }}</span>
 
                     <div
                         id="reference-lap-color-host"

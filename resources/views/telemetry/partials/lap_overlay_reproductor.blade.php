@@ -389,7 +389,7 @@
         const points = validSamples.map(sample => ({
             lat: Number(sample.position.lat),
             lon: Number(sample.position.lon),
-            sessionTime: Number.isFinite(Number(sample.session_time))
+            sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
                 ? Number(sample.session_time)
                 : null,
             lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
@@ -833,16 +833,7 @@
                 validSamples.length - 1
             );
 
-            const currentSample = validSamples[sampleIndex];
-            const rawCurrentDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawCurrentDistance)
-                ? (
-                    rawCurrentDistance > 1 && rawCurrentDistance <= 100
-                        ? rawCurrentDistance / 100
-                        : rawCurrentDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1089,7 +1080,7 @@
                 currentDistance >= graphViewport.start &&
                 currentDistance <= graphViewport.end
             ) {
-                const cursorX = xAt(Math.max(0, Math.min(1, currentDistance)));
+                const cursorX = xAt(Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance)));
 
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
@@ -1281,7 +1272,7 @@
                 currentDistance <= graphViewport.end
             ) {
                 const cursorX = xAt(
-                    Math.max(0, Math.min(1, currentDistance))
+                    Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
                 const nearest = data.reduce((best, point) =>
@@ -1470,6 +1461,11 @@
         let previousFrameTime = null;
         let playbackSpeed = Number(speedSelect?.value ?? 1);
 
+        if (referenceMode === 'spatial') {
+            spatialPct = normalizeLapPct(points[0]?.lapDistPct) ?? 0;
+            playbackIndex = getIndexAtPct(points, spatialPct);
+        }
+
         const hasSessionTimes = points.every(point => point.sessionTime !== null);
         const sessionDuration = hasSessionTimes
             ? points[points.length - 1].sessionTime - points[0].sessionTime
@@ -1635,7 +1631,7 @@
                 lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
                     ? Number(sample.lap_dist_pct)
                     : null,
-                sessionTime: Number.isFinite(Number(sample.session_time))
+                sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
                     ? Number(sample.session_time)
                     : null,
             }));

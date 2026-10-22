@@ -518,15 +518,7 @@
             );
 
             const sample = validSamples[sampleIndex];
-            const rawDistance = Number(sample?.lap_dist_pct);
-
-            const distance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const distance = getGraphCoordinate(sample, sampleIndex, validSamples);
 
             if (!Number.isFinite(distance)) return;
 
@@ -557,6 +549,50 @@
             drawBrakeGraph();
         };
 
+        const buildGraphData = (series, field, normalize = value => Number(value), validate = () => true) =>
+            series.map((sample, index) => {
+                const value = normalize(sample?.[field]);
+                const x = getGraphCoordinate(sample, index, series);
+
+                if (!Number.isFinite(x) || !Number.isFinite(value) || !validate(value, sample)) {
+                    return null;
+                }
+
+                return { x, value, index, sample };
+            }).filter(Boolean).sort((a, b) => a.x - b.x);
+
+        const drawReferenceSeries = (ctx, data, xAt, yAt, plot, stepped = false) => {
+            if (data.length < 2 || referenceLapNumber == null) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(plot.left, plot.top, plot.width, plot.height);
+            ctx.clip();
+            ctx.beginPath();
+            ctx.moveTo(xAt(data[0].x), yAt(data[0].value));
+
+            for (let index = 1; index < data.length; index++) {
+                const previous = data[index - 1];
+                const current = data[index];
+                const x = xAt(current.x);
+
+                if (stepped) {
+                    ctx.lineTo(x, yAt(previous.value));
+                    if (current.value !== previous.value) {
+                        ctx.lineTo(x, yAt(current.value));
+                    }
+                } else {
+                    ctx.lineTo(x, yAt(current.value));
+                }
+            }
+
+            ctx.strokeStyle = getActiveReferenceLapColor();
+            ctx.lineWidth = 1.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.restore();
+        };
+
         const clampGraphViewport = () => {
             const range = graphViewport.end - graphViewport.start;
 
@@ -583,7 +619,7 @@
 
         const resetGraphZoom = () => {
             graphViewport.start = 0;
-            graphViewport.end = 1;
+            graphViewport.end = getGraphDomainEnd();
             redrawAllGraphs();
         };
 
@@ -659,37 +695,19 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawSpeed = Number(sample.speed_kph);
+            const data = buildGraphData(
+                validSamples,
+                'speed_kph',
+                value => Number(value),
+                value => value >= 0
+            ).map(point => ({ ...point, speed: point.value }));
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        !Number.isFinite(rawSpeed) ||
-                        rawSpeed < 0
-                    ) {
-                        return null;
-                    }
-
-                    // lap_dist_pct normalmente se expresa entre 0 y 1.
-                    // Si llega en porcentaje, convertirlo al mismo rango.
-                    const distance = rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance;
-
-                    if (distance < 0 || distance > 1) {
-                        return null;
-                    }
-
-                    return {
-                        x: distance,
-                        speed: rawSpeed,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                'speed_kph',
+                value => Number(value),
+                value => value >= 0
+            ).map(point => ({ ...point, speed: point.value }));
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';
@@ -698,7 +716,11 @@
                 return;
             }
 
-            const maxSpeed = Math.max(50, ...data.map(point => point.speed));
+            const maxSpeed = Math.max(
+                50,
+                ...data.map(point => point.speed),
+                ...referenceData.map(point => point.speed)
+            );
             const minSpeed = 0;
 
             const padding = { top: 10, right: 10, bottom: 24, left: 38 };
@@ -748,9 +770,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -776,6 +796,11 @@
             ctx.lineJoin = 'round';
             ctx.stroke();
             ctx.restore();
+
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            });
 
             // Cursor asociado al índice de reproducción actual.
             const sampleIndex = Math.min(
@@ -857,38 +882,19 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawGear = Number(sample.gear);
-                    const time = Number(sample.session_time);
+            const data = buildGraphData(
+                validSamples,
+                'gear',
+                value => Number(value),
+                (value, sample) => sample.gear != null && value >= -1 && value <= 10
+            ).map(point => ({ ...point, gear: point.value, time: Number(point.sample.session_time) }));
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        sample.gear == null ||
-                        !Number.isFinite(rawGear) ||
-                        rawGear < -1 ||
-                        rawGear > 10
-                    ) {
-                        return null;
-                    }
-
-                    const distance =
-                        rawDistance > 1 && rawDistance <= 100
-                            ? rawDistance / 100
-                            : rawDistance;
-
-                    if (distance < 0 || distance > 1) return null;
-
-                    return {
-                        x: distance,
-                        gear: rawGear,
-                        time,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                'gear',
+                value => Number(value),
+                (value, sample) => sample.gear != null && value >= -1 && value <= 10
+            ).map(point => ({ ...point, gear: point.value, time: Number(point.sample.session_time) }));
 
             // Filtro visual de neutral transitorio.
             // Solo afecta a la serie representada en la gráfica.
@@ -949,7 +955,7 @@
                 return;
             }
 
-            const gears = data.map(point => point.gear);
+            const gears = [...data, ...referenceData].map(point => point.gear);
             const minGear = Math.min(0, ...gears);
             const maxGear = Math.max(1, ...gears);
 
@@ -1000,9 +1006,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -1041,6 +1045,11 @@
             ctx.stroke();
             ctx.restore();
 
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            }, true);
+
             // Cursor compartido con Speed y el mapa.
             const sampleIndex = Math.min(
                 Math.floor(playbackIndex),
@@ -1048,15 +1057,7 @@
             );
 
             const currentSample = validSamples[sampleIndex];
-            const rawDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1123,45 +1124,24 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawValue = sample[pedal] == null
-                        ? NaN
-                        : Number(sample[pedal]);
+            const normalizePedal = raw => {
+                const value = Number(raw);
+                return value > 1 && value <= 100 ? value / 100 : value;
+            };
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        !Number.isFinite(rawValue)
-                    ) {
-                        return null;
-                    }
+            const data = buildGraphData(
+                validSamples,
+                pedal,
+                normalizePedal,
+                value => value >= 0 && value <= 1
+            );
 
-                    const distance =
-                        rawDistance > 1 && rawDistance <= 100
-                            ? rawDistance / 100
-                            : rawDistance;
-
-                    // Admite señales expresadas como fracción o porcentaje.
-                    const value = rawValue > 1 && rawValue <= 100
-                        ? rawValue / 100
-                        : rawValue;
-
-                    if (
-                        distance < 0 || distance > 1 ||
-                        value < 0 || value > 1
-                    ) {
-                        return null;
-                    }
-
-                    return {
-                        x: distance,
-                        value,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                pedal,
+                normalizePedal,
+                value => value >= 0 && value <= 1
+            );
 
             const padding = {
                 top: 12,
@@ -1218,9 +1198,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -1258,6 +1236,11 @@
             ctx.stroke();
             ctx.restore();
 
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            });
+
             // Posición actual sincronizada con el reproductor.
             const sampleIndex = Math.min(
                 Math.floor(playbackIndex),
@@ -1265,15 +1248,7 @@
             );
 
             const currentSample = validSamples[sampleIndex];
-            const rawDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&

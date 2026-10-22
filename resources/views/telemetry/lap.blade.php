@@ -170,11 +170,32 @@
 
 
             <div class="rounded-lg bg-[var(--bg)] p-3">
-
                 <p class="text-xs text-[var(--text-muted)]">Reference mode</p>
 
+                <div class="mt-2 grid grid-cols-2 gap-1"
+                     id="telemetry-reference-mode"
+                     role="group"
+                     aria-label="Modo de análisis de referencia">
+                    <button
+                        type="button"
+                        id="reference-mode-temporal"
+                        data-reference-mode="temporal"
+                        aria-pressed="true"
+                        class="rounded-md border border-cyan-500 bg-cyan-600 px-2 py-2 text-xs font-semibold text-white"
+                    >Temporal</button>
+                    <button
+                        type="button"
+                        id="reference-mode-spatial"
+                        data-reference-mode="spatial"
+                        aria-pressed="false"
+                        class="rounded-md border border-[var(--border)] px-2 py-2 text-xs font-semibold text-[var(--text)] hover:border-[var(--accent)]"
+                    >Espacial</button>
+                </div>
 
-
+                <p id="reference-mode-description"
+                   class="mt-2 text-[11px] leading-tight text-[var(--text-muted)]">
+                    Sincronización por tiempo transcurrido.
+                </p>
             </div>
 
 

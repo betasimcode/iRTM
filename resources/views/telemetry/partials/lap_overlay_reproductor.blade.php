@@ -34,6 +34,7 @@
 
         const referenceSamples = @js($referenceLapTelemetry ?? []);
         const referenceLapNumber = @js($referenceLapNumber ?? null);
+        const referenceStintId = @js($referenceStintId ?? null);
 
         const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
 
@@ -118,7 +119,7 @@
                 return DEFAULT_REFERENCE_LAP_COLOR;
             }
 
-            const key = `reference:${referenceLapNumber}`;
+            const key = `reference:${referenceStintId ?? ''}:${referenceLapNumber}`;
 
             return manualLapColors.get(key) ??
                 DEFAULT_REFERENCE_LAP_COLOR;
@@ -247,7 +248,8 @@
                 'aria-label',
                 'Cambiar color de la vuelta de referencia'
             );
-            referenceColorTrigger.disabled = referenceLapNumber == null;
+            referenceColorTrigger.disabled = referenceLapNumber == null || referenceSamples.length === 0;
+            referenceColorTrigger.classList.toggle('opacity-40', referenceColorTrigger.disabled);
 
             const referenceColorPreview = document.createElement('span');
             referenceColorPreview.style.cssText = [
@@ -298,7 +300,7 @@
                     if (referenceLapNumber == null) return;
 
                     manualLapColors.set(
-                        `reference:${referenceLapNumber}`,
+                        `reference:${referenceStintId ?? ''}:${referenceLapNumber}`,
                         preset.value
                     );
 

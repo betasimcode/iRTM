@@ -1662,18 +1662,23 @@
             const pointerY = event.clientY - rect.top;
             let nearest = null;
 
-            [...mainMapDrawPoints, ...referenceMapDrawPoints].forEach(point => {
-                const screenX = point.x * view.zoom + view.panX;
-                const screenY = point.y * view.zoom + view.panY;
-                const distance = (screenX - pointerX) ** 2 + (screenY - pointerY) ** 2;
+            const inspectPoints = points => {
+                points.forEach(point => {
+                    const screenX = point.x * view.zoom + view.panX;
+                    const screenY = point.y * view.zoom + view.panY;
+                    const distance = (screenX - pointerX) ** 2 + (screenY - pointerY) ** 2;
 
-                if (nearest === null || distance < nearest.distance) {
-                    nearest = {
-                        distance,
-                        pct: normalizeLapPct(point.lapDistPct),
-                    };
-                }
-            });
+                    if (nearest === null || distance < nearest.distance) {
+                        nearest = {
+                            distance,
+                            pct: normalizeLapPct(point.lapDistPct),
+                        };
+                    }
+                });
+            };
+
+            inspectPoints(mainMapDrawPoints);
+            inspectPoints(referenceMapDrawPoints);
 
             if (nearest && nearest.pct !== null) {
                 setSpatialPosition(nearest.pct);
@@ -1726,7 +1731,8 @@
                     y: height / 2
                         + rotatedY * calibration.scale
                         + height * calibration.offset_y_pct / 100,
-                    lapDistPct: points[index]?.lapDistPct ?? null,
+                    lapDistPct: normalizeLapPct(points[index]?.lapDistPct)
+                        ?? index / Math.max(1, projected.length - 1),
                 };
             });
 
@@ -1740,7 +1746,7 @@
 
 
 
-            const referenceDrawPoints = referenceProjected.map(point => {
+            const referenceDrawPoints = referenceProjected.map((point, index) => {
                 const x = (point.x - centerX) * fitScale;
                 const y = -(point.y - centerY) * fitScale;
 
@@ -1754,7 +1760,8 @@
                     y: height / 2
                         + rotatedY * calibration.scale
                         + height * calibration.offset_y_pct / 100,
-                    lapDistPct: point.lapDistPct,
+                    lapDistPct: normalizeLapPct(point.lapDistPct)
+                        ?? index / Math.max(1, referenceProjected.length - 1),
                     sessionTime: point.sessionTime,
                 };
             });
@@ -2988,7 +2995,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                         endDistance
                     );
 
-                    if (selectionEnd - selectionStart >= GRAPH_MIN_RANGE) {
+                    if (selectionEnd - selectionStart >= getGraphDomainEnd() * GRAPH_MIN_RANGE) {
                         graphViewport.start = selectionStart;
                         graphViewport.end = selectionEnd;
 

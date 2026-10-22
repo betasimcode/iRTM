@@ -259,6 +259,7 @@ class TelemetryLapController extends Controller
             'selectedLapNumber' => $selectedLapNumber,
             'referenceLapTelemetry' => $referenceLapTelemetry,
             'referenceLapNumber' => $referenceLapNumber,
+            'referenceStintId' => $referenceStintId,
             'referenceLapOptions' => $referenceLapOptions,
         ]);
     }

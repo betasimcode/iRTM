@@ -468,7 +468,7 @@
             if (!Array.isArray(series) || series.length < 2) return 0;
             const target = Math.max(0, Math.min(1, targetPct));
             const getPct = (sample, index) =>
-                normalizeLapPct(sample?.lap_dist_pct) ?? index / (series.length - 1);
+                normalizeLapPct(sample?.lap_dist_pct ?? sample?.lapDistPct) ?? index / (series.length - 1);
 
             let previousIndex = 0;
             let previousPct = getPct(series[0], 0);
@@ -825,7 +825,7 @@
                 currentDistance <= graphViewport.end
             ) {
                 const cursorX = xAt(
-                    Math.max(0, Math.min(1, currentDistance))
+                    Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
                 ctx.beginPath();
@@ -1462,6 +1462,8 @@
         let dragStart = null;
 
         let isFollowEnabled = false;
+        let mainMapDrawPoints = [];
+        let referenceMapDrawPoints = [];
 
         const applyContainerTransform = () => {
             container.style.transformOrigin = '0 0';
@@ -1520,6 +1522,11 @@
         viewport.addEventListener('pointerdown', event => {
             if (event.button !== 0 || isFollowEnabled) return;
 
+            if (referenceMode === 'spatial' && !event.shiftKey) {
+                updateSpatialPositionFromMap(event);
+                return;
+            }
+
             isDragging = true;
             dragStart = {
                 x: event.clientX,
@@ -1533,11 +1540,16 @@
         });
 
         viewport.addEventListener('pointermove', event => {
-            if (!isDragging || !dragStart) return;
+            if (isDragging && dragStart) {
+                view.panX = dragStart.panX + event.clientX - dragStart.x;
+                view.panY = dragStart.panY + event.clientY - dragStart.y;
+                updateView();
+                return;
+            }
 
-            view.panX = dragStart.panX + event.clientX - dragStart.x;
-            view.panY = dragStart.panY + event.clientY - dragStart.y;
-            updateView();
+            if (referenceMode === 'spatial' && event.buttons === 0) {
+                updateSpatialPositionFromMap(event);
+            }
         });
 
         const endDrag = () => {
@@ -1621,6 +1633,32 @@
             return;
         }
 
+        const updateSpatialPositionFromMap = event => {
+            if (referenceMode !== 'spatial') return;
+
+            const rect = viewport.getBoundingClientRect();
+            const pointerX = event.clientX - rect.left;
+            const pointerY = event.clientY - rect.top;
+            let nearest = null;
+
+            [...mainMapDrawPoints, ...referenceMapDrawPoints].forEach(point => {
+                const screenX = point.x * view.zoom + view.panX;
+                const screenY = point.y * view.zoom + view.panY;
+                const distance = (screenX - pointerX) ** 2 + (screenY - pointerY) ** 2;
+
+                if (nearest === null || distance < nearest.distance) {
+                    nearest = {
+                        distance,
+                        pct: normalizeLapPct(point.lapDistPct),
+                    };
+                }
+            });
+
+            if (nearest && nearest.pct !== null) {
+                setSpatialPosition(nearest.pct);
+            }
+        };
+
         const drawOverlay = () => {
             const width = viewport.clientWidth;
             const height = viewport.clientHeight;
@@ -1653,7 +1691,7 @@
             const cosAngle = Math.cos(angle);
             const sinAngle = Math.sin(angle);
 
-            const drawPoints = projected.map(point => {
+            const drawPoints = projected.map((point, index) => {
                 const x = (point.x - centerX) * fitScale;
                 const y = -(point.y - centerY) * fitScale;
 
@@ -1667,8 +1705,11 @@
                     y: height / 2
                         + rotatedY * calibration.scale
                         + height * calibration.offset_y_pct / 100,
+                    lapDistPct: points[index]?.lapDistPct ?? null,
                 };
             });
+
+            mainMapDrawPoints = drawPoints;
 
             context.lineJoin = 'round';
             context.lineCap = 'round';
@@ -1696,6 +1737,8 @@
                     sessionTime: point.sessionTime,
                 };
             });
+
+            referenceMapDrawPoints = referenceDrawPoints;
 
             // Trazada completa de la vuelta de referencia.
 
@@ -1738,15 +1781,17 @@
                         / Math.max(1, points.length - 1);
                 }
 
-                const visibleCount = Math.max(
-                    1,
-                    Math.min(
-                        referenceDrawPoints.length - 1,
-                        Math.floor(
-                            refProgress * (referenceDrawPoints.length - 1)
+                const visibleCount = referenceMode === 'spatial'
+                    ? referenceDrawPoints.length - 1
+                    : Math.max(
+                        1,
+                        Math.min(
+                            referenceDrawPoints.length - 1,
+                            Math.floor(
+                                refProgress * (referenceDrawPoints.length - 1)
+                            )
                         )
-                    )
-                );
+                    );
 
                 context.save();
                 context.beginPath();
@@ -1811,7 +1856,23 @@
                 let refY;
                 let refAngle;
 
-                if (hasTimeData) {
+                if (referenceMode === 'spatial') {
+                    const refProgress = getIndexAtPct(referenceDrawPoints, spatialPct);
+                    const refIndex = Math.min(
+                        Math.floor(refProgress),
+                        referenceDrawPoints.length - 2
+                    );
+                    const refFraction = refProgress - refIndex;
+                    const refStart = referenceDrawPoints[refIndex];
+                    const refEnd = referenceDrawPoints[refIndex + 1];
+
+                    refX = refStart.x + (refEnd.x - refStart.x) * refFraction;
+                    refY = refStart.y + (refEnd.y - refStart.y) * refFraction;
+                    refAngle = Math.atan2(
+                        refEnd.y - refStart.y,
+                        refEnd.x - refStart.x
+                    );
+                } else if (hasTimeData) {
                     // Tiempo transcurrido desde el inicio de la vuelta principal.
                     const targetElapsed =
                         mainStartTime +
@@ -1937,11 +1998,14 @@
 
             // Trazada de la vuelta con su color asignado.
             const completedIndex = Math.floor(playbackIndex);
+            const traceEndIndex = referenceMode === 'spatial'
+                ? drawPoints.length - 1
+                : completedIndex;
             context.lineWidth = 0.1;
             context.strokeStyle = getActiveLapColor();
             context.beginPath();
             context.moveTo(drawPoints[0].x, drawPoints[0].y);
-            for (let index = 1; index <= completedIndex && index < drawPoints.length; index++) {
+            for (let index = 1; index <= traceEndIndex && index < drawPoints.length; index++) {
                 context.lineTo(drawPoints[index].x, drawPoints[index].y);
             }
 
@@ -1960,7 +2024,11 @@
                 view.panY = height / 2 - currentPoint.y * view.zoom;
                 applyContainerTransform();
             }
-            if (playbackIndex > completedIndex && nextIndex !== completedIndex) {
+            if (
+                referenceMode === 'temporal' &&
+                playbackIndex > completedIndex &&
+                nextIndex !== completedIndex
+            ) {
                 context.lineTo(currentPoint.x, currentPoint.y);
             }
             context.stroke();

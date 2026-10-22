@@ -225,79 +225,6 @@
 
 
 
-{{-- COMPARATIVA DE VUELTAS --}}
-<section class="rounded-xl border border-[var(--border)]
-                bg-[var(--card)] p-4">
-    <form
-        method="GET"
-        action="{{ route('telemetry.lap') }}"
-        class="flex flex-wrap items-end gap-4"
-    >
-        <input type="hidden" name="stint" value="{{ $stint->id }}">
-        <input
-            type="hidden"
-            name="lap"
-            value="{{ $selectedLapNumber }}"
-        >
-        <input
-            type="hidden"
-            name="reference_stint"
-            id="comparison_reference_stint"
-            value="{{ $referenceStintId ?? '' }}"
-        >
-
-        <input
-            type="hidden"
-            name="reference_lap"
-            id="comparison_reference_lap"
-            value="{{ $referenceLapNumber ?? '' }}"
-        >
-        <div class="min-w-56 flex-1">
-            <label
-                for="reference_lap"
-                class="mb-2 block text-xs uppercase tracking-wider
-                       text-[var(--text-muted)]"
-            >
-                Vuelta de referencia
-            </label>
-
-
-        </div>
-
-        <button
-            type="submit"
-            class="rounded-lg border border-[var(--border)]
-                   px-4 py-2 text-sm font-semibold
-                   text-[var(--text-title)] hover:border-[var(--accent)]"
-        >
-            Comparar
-        </button>
-
-        <div class="min-w-40">
-            <p class="text-xs uppercase tracking-wider
-                      text-[var(--text-muted)]">
-                Diferencia en este punto
-            </p>
-
-            <p
-                id="telemetry-lap-delta"
-                class="mt-1 font-mono-timing text-lg font-semibold
-                       text-[var(--text-title)]"
-            >
-                —
-            </p>
-        </div>
-    </form>
-
-    @if ($referenceLapNumber !== null)
-        <p class="mt-3 text-xs text-[var(--text-muted)]">
-            Referencia: vuelta {{ $referenceLapNumber }}.
-            Diferencia positiva: la vuelta principal pierde tiempo.
-            Diferencia negativa: la vuelta principal gana tiempo.
-        </p>
-    @endif
-</section>
-
 {{-- TOOLS + TRACK MAP + GRAPHICS --}}
     <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
 
@@ -652,13 +579,18 @@ document.addEventListener('DOMContentLoaded', () => {
         referenceStintInput.value = String(stint.stint_id);
         referenceLapInput.value = String(lap.number);
 
-        comparisonStintInput.value = String(stint.stint_id);
-        comparisonLapInput.value = String(lap.number);
-
         referenceLabel.textContent =
             `#${stint.stint_id} · V${lap.number} · ${lap.lap_time_label}`;
 
+        // La selección recarga la vista con ambos identificadores para que
+        // Laravel resuelva las muestras y el overlay se inicialice con ellas.
+        const params = new URLSearchParams(window.location.search);
+        params.set('reference_stint', String(stint.stint_id));
+        params.set('reference_lap', String(lap.number));
+
         closeModal();
+        window.location.assign(`${window.location.pathname}?${params.toString()}`);
+
     }
 
     openButton.addEventListener('click', () => {

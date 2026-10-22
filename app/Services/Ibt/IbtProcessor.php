@@ -1359,7 +1359,11 @@ class IbtProcessor
             );
         }
 
-        app(TelemetryJsonStorage::class)->write($outputPath, $json . PHP_EOL);
+        if (file_put_contents($outputPath, $json . PHP_EOL, LOCK_EX) === false) {
+            throw new RuntimeException(
+                "No se pudo escribir el JSON: {$outputPath}"
+            );
+        }
 
         return $payload;
     }
@@ -1805,7 +1809,17 @@ class IbtProcessor
             );
         }
 
-        app(TelemetryJsonStorage::class)->write($outputPath, $json . PHP_EOL);
+        $written = file_put_contents(
+            $outputPath,
+            $json . PHP_EOL,
+            LOCK_EX
+        );
+
+        if ($written === false) {
+            throw new RuntimeException(
+                "No se pudo escribir el archivo JSON: {$outputPath}"
+            );
+        }
 
         return $payload;
     }

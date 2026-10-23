@@ -3025,6 +3025,164 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 `${String(ms).padStart(3, '0')}`;
         };
 
+        const meanSuspensionValue = (channel, source = 'ride_height_m') => {
+            const values = validSamples
+                .map(sample => source === 'ride_height_m'
+                    ? getRideHeight(sample, channel)
+                    : (
+                        hasNumericValue(sample?.suspension?.[source]?.[channel])
+                            ? Number(sample.suspension[source][channel]) * 1000
+                            : null
+                    )
+                )
+                .filter(value => value !== null);
+
+            return values.length
+                ? values.reduce((sum, value) => sum + value, 0) / values.length
+                : null;
+        };
+
+        const suspensionBaseline = {
+            lf: meanSuspensionValue('lf'),
+            rf: meanSuspensionValue('rf'),
+            lr: meanSuspensionValue('lr'),
+            rr: meanSuspensionValue('rr'),
+            cf: meanSuspensionValue('cf'),
+            cr: meanSuspensionValue('cr'),
+            shockLf: meanSuspensionValue('lf', 'shock_deflection_m'),
+            shockRf: meanSuspensionValue('rf', 'shock_deflection_m'),
+        };
+
+        const updateSuspensionMotion = (currentSample, nextSample, fraction) => {
+            const widget = document.getElementById('telemetry-suspension-motion');
+            if (!widget) return;
+
+            if (!currentSample?.suspension?.ride_height_m) {
+                widget.classList.add('hidden');
+                return;
+            }
+
+            const interpolateChannel = (source, channel) => {
+                const firstRaw = currentSample?.suspension?.[source]?.[channel];
+                const nextRaw = nextSample?.suspension?.[source]?.[channel];
+                const first = hasNumericValue(firstRaw) ? Number(firstRaw) * 1000 : null;
+                const next = hasNumericValue(nextRaw) ? Number(nextRaw) * 1000 : null;
+
+                if (first !== null && next !== null) {
+                    return first + (next - first) * fraction;
+                }
+
+                return first ?? next;
+            };
+
+            const heightFor = channel => {
+                if (suspensionGraphMode === 'axles') {
+                    if (channel === 'lf' || channel === 'rf') return interpolateChannel('ride_height_m', 'cf');
+                    if (channel === 'lr' || channel === 'rr') return interpolateChannel('ride_height_m', 'cr');
+                }
+
+                return interpolateChannel('ride_height_m', channel);
+            };
+
+            const height = {
+                lf: heightFor('lf'),
+                rf: heightFor('rf'),
+                lr: heightFor('lr'),
+                rr: heightFor('rr'),
+            };
+
+            const heightMean = values => {
+                const numeric = values.filter(value => value !== null);
+                return numeric.length
+                    ? numeric.reduce((sum, value) => sum + value, 0) / numeric.length
+                    : null;
+            };
+
+            const frontMean = heightMean([height.lf, height.rf]);
+            const baselineFront = suspensionGraphMode === 'axles'
+                ? suspensionBaseline.cf
+                : heightMean([suspensionBaseline.lf, suspensionBaseline.rf]);
+
+            const deltaLf = height.lf !== null && suspensionBaseline.lf !== null
+                ? height.lf - suspensionBaseline.lf
+                : 0;
+            const deltaRf = height.rf !== null && suspensionBaseline.rf !== null
+                ? height.rf - suspensionBaseline.rf
+                : 0;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+            const bodyY = frontMean !== null && baselineFront !== null
+                ? clamp((baselineFront - frontMean) * 0.85, -12, 12)
+                : 0;
+            const rollDeg = suspensionGraphMode === 'wheels'
+                ? clamp((deltaLf - deltaRf) * 0.18, -4, 4)
+                : 0;
+
+            const chassis = document.getElementById('telemetry-suspension-motion-chassis');
+            if (chassis) {
+                chassis.setAttribute(
+                    'transform',
+                    `translate(0 ${bodyY.toFixed(2)}) rotate(${rollDeg.toFixed(2)} 90 34)`
+                );
+            }
+
+            const shockOffset = channel => {
+                const current = interpolateChannel('shock_deflection_m', channel);
+                const baseline = channel === 'lf'
+                    ? suspensionBaseline.shockLf
+                    : suspensionBaseline.shockRf;
+
+                return current !== null && baseline !== null
+                    ? clamp(-(current - baseline) * 0.45, -5, 5)
+                    : 0;
+            };
+
+            const leftWheelOffset = shockOffset('lf');
+            const rightWheelOffset = shockOffset('rf');
+
+            const leftWheel = document.getElementById('telemetry-suspension-motion-left-wheel');
+            const rightWheel = document.getElementById('telemetry-suspension-motion-right-wheel');
+            const leftStrut = document.getElementById('telemetry-suspension-motion-left-strut');
+            const rightStrut = document.getElementById('telemetry-suspension-motion-right-strut');
+
+            leftWheel?.setAttribute('transform', `translate(0 ${leftWheelOffset.toFixed(2)})`);
+            rightWheel?.setAttribute('transform', `translate(0 ${rightWheelOffset.toFixed(2)})`);
+
+            leftStrut?.setAttribute('y1', String(43 + bodyY));
+            leftStrut?.setAttribute('y2', String(58 + leftWheelOffset));
+            rightStrut?.setAttribute('y1', String(43 + bodyY));
+            rightStrut?.setAttribute('y2', String(58 + rightWheelOffset));
+
+            const cornerReadouts = document.getElementById('telemetry-suspension-motion-corner-readouts');
+            const axleReadouts = document.getElementById('telemetry-suspension-motion-axle-readouts');
+            cornerReadouts?.classList.toggle('hidden', suspensionGraphMode !== 'wheels');
+            axleReadouts?.classList.toggle('hidden', suspensionGraphMode !== 'axles');
+
+            const setReadout = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value === null ? '—' : `${value.toFixed(1)} mm`;
+            };
+
+            if (suspensionGraphMode === 'axles') {
+                setReadout('telemetry-suspension-motion-frh', height.lf);
+                setReadout('telemetry-suspension-motion-rrh', height.lr);
+            } else {
+                setReadout('telemetry-suspension-motion-lf', height.lf);
+                setReadout('telemetry-suspension-motion-rf', height.rf);
+                setReadout('telemetry-suspension-motion-lr', height.lr);
+                setReadout('telemetry-suspension-motion-rr', height.rr);
+            }
+
+            const status = document.getElementById('telemetry-suspension-motion-status');
+            if (status) status.textContent = referenceMode === 'spatial' ? 'POSITION' : 'TIME';
+
+            widget.classList.toggle(
+                'hidden',
+                suspensionGraphMode === 'none' ||
+                [height.lf, height.rf, height.lr, height.rr].every(value => value === null)
+            );
+        };
+
         const updateTelemetryIndicators = () => {
             if (!validSamples.length) return;
 
@@ -3038,6 +3196,8 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             const currentSample = validSamples[index];
             const nextSample = validSamples[nextIndex];
+
+            updateSuspensionMotion(currentSample, nextSample, fraction);
 
             updatePedalDisplay('clutch', currentSample, nextSample, fraction);
             updatePedalDisplay('brake', currentSample, nextSample, fraction);

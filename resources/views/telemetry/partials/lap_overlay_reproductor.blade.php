@@ -690,16 +690,24 @@
             );
         };
 
-        // Indicadores actuales: vuelta principal, diferencia y vuelta de referencia.
+        // Actualiza los tres indicadores HTML de la cabecera, fuera del canvas.
         const drawCurrentComparison = (
-            ctx,
-            width,
-            top,
+            graphKey,
             mainPoint,
             referencePoint,
             options = {}
         ) => {
-            if (!mainPoint) return;
+            const mainBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-main`
+            );
+            const deltaBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-delta`
+            );
+            const referenceBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-reference`
+            );
+
+            if (!mainBox || !deltaBox || !referenceBox) return;
 
             const {
                 valueOf = point => point.value,
@@ -708,68 +716,57 @@
                 deltaSuffix = '',
                 invertDeltaColor = false,
                 canCompare = () => true,
-                compactFormatValue = value => String(value),
-                compactDeltaSuffix = deltaSuffix,
             } = options;
 
-            const mainValue = Number(valueOf(mainPoint));
-            if (!Number.isFinite(mainValue)) return;
+            const mainValue = mainPoint ? Number(valueOf(mainPoint)) : NaN;
+            mainBox.style.color = getActiveLapColor();
+            referenceBox.style.color = getActiveReferenceLapColor();
+            deltaBox.style.color = 'var(--text-muted)';
 
-            const compact = width < 420;
-            const mainText = compact
-                ? compactFormatValue(mainValue)
-                : formatValue(mainValue);
+            if (!Number.isFinite(mainValue)) {
+                mainBox.textContent = '—';
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
+                return;
+            }
 
-            ctx.save();
-            ctx.font = `bold ${compact ? 10 : 11}px sans-serif`;
-            ctx.textBaseline = 'top';
-            ctx.textAlign = 'right';
-            ctx.fillStyle = getActiveLapColor();
+            mainBox.textContent = formatValue(mainValue);
 
-            if (!referencePoint || referenceLapNumber == null) {
-                ctx.fillText(mainText, width - 10, top);
-                ctx.restore();
+            if (
+                !referencePoint ||
+                referenceLapNumber == null ||
+                referenceSamples.length === 0
+            ) {
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
                 return;
             }
 
             const referenceValue = Number(valueOf(referencePoint));
             if (!Number.isFinite(referenceValue)) {
-                ctx.fillText(mainText, width - 10, top);
-                ctx.restore();
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
                 return;
             }
 
-            const mainRounded = Math.round(mainValue * scale);
-            const referenceRounded = Math.round(referenceValue * scale);
-            const difference = mainRounded - referenceRounded;
-            const mainX = compact ? width * 0.58 : width - 200;
-            const differenceX = compact ? width * 0.79 : width - 105;
+            referenceBox.textContent = formatValue(referenceValue);
 
-            ctx.fillText(mainText, mainX, top);
+            const difference =
+                Math.round(mainValue * scale) -
+                Math.round(referenceValue * scale);
 
-            if (difference !== 0 && canCompare(mainValue, referenceValue)) {
-                const isPositive = difference > 0;
-                const useGreen = invertDeltaColor ? !isPositive : isPositive;
-                const suffix = compact ? compactDeltaSuffix : deltaSuffix;
-
-                ctx.textAlign = 'center';
-                ctx.fillStyle = useGreen ? '#22c55e' : '#ef4444';
-                ctx.fillText(
-                    `${difference > 0 ? '+' : ''}${difference}${suffix}`,
-                    differenceX,
-                    top
-                );
+            if (difference === 0 || !canCompare(mainValue, referenceValue)) {
+                deltaBox.textContent = '';
+                return;
             }
 
-            ctx.textAlign = 'right';
-            ctx.fillStyle = getActiveReferenceLapColor();
-            ctx.fillText(
-                compact ? compactFormatValue(referenceValue) : formatValue(referenceValue),
-                width - 10,
-                top
-            );
+            const useGreen = invertDeltaColor
+                ? difference < 0
+                : difference > 0;
 
-            ctx.restore();
+            deltaBox.style.color = useGreen ? '#22c55e' : '#ef4444';
+            deltaBox.textContent =
+                `${difference > 0 ? '+' : ''}${difference}${deltaSuffix}`;
         };
 
         const clampGraphViewport = () => {
@@ -1014,18 +1011,13 @@
                 ctx.fill();
 
                 drawCurrentComparison(
-                    ctx,
-                    width,
-                    padding.top,
+                    'speed',
                     nearest,
                     referenceNearest,
                     {
                         valueOf: point => point.speed,
-                        formatValue: value => `${Math.round(value)} km/h`,
-                        compactFormatValue: value => String(Math.round(value)),
+                        formatValue: value => String(Math.round(value)),
                         scale: 1,
-                        deltaSuffix: ' km/h',
-                        compactDeltaSuffix: '',
                     }
                 );
             }
@@ -1267,16 +1259,14 @@
                     value === 0 ? 'N' : value === -1 ? 'R' : String(value);
 
                 drawCurrentComparison(
-                    ctx,
-                    width,
-                    padding.top,
+                    'gears',
                     nearest,
                     referenceNearest,
                     {
                         valueOf: point => point.gear,
-                        formatValue: value => `Marcha ${formatGear(value)}`,
-                        compactFormatValue: value => formatGear(value),
+                        formatValue: value => formatGear(value),
                         scale: 1,
+                        canCompare: (main, reference) => main > 0 && reference > 0,
                     }
                 );
             }
@@ -1459,15 +1449,12 @@
                 ctx.fill();
 
                 drawCurrentComparison(
-                    ctx,
-                    width,
-                    padding.top,
+                    pedal,
                     nearest,
                     referenceNearest,
                     {
                         valueOf: point => point.value,
                         formatValue: value => `${Math.round(value * 100)}%`,
-                        compactFormatValue: value => `${Math.round(value * 100)}%`,
                         scale: 100,
                         deltaSuffix: '%',
                         invertDeltaColor: pedal === 'brake',

@@ -37,7 +37,7 @@
         const referenceStintId = @js($referenceStintId ?? null);
         const selectedLapDurationSeconds = @js($selectedLap['lap_time'] ?? null);
 
-        const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
+        const DEFAULT_REFERENCE_LAP_COLOR = '#A855F7';
 
         const sectorSegments = @js(
             $sessionData['sectors']['segments'] ?? []
@@ -78,15 +78,14 @@
         const speedSelect = document.getElementById('telemetry-lap-speed');
 
 
-        // Paleta fija compartida por trazadas y gráficas.
+        // Paleta de vueltas: rojo y verde quedan reservados para freno y acelerador.
         const lapColorPresets = [
-            { name: 'Red', value: '#EF4444' },
-            { name: 'Blue', value: '#3B82F6' },
-            { name: 'Violet', value: '#A855F7' },
-            { name: 'Green', value: '#22C55E' },
-            { name: 'Yellow', value: '#FACC15' },
-            { name: 'Cian', value: '#06B6D4' },
-            { name: 'Orange', value: '#F59E0B' },
+            { name: 'Blanco', value: '#FFFFFF' },
+            { name: 'Negro', value: '#111827' },
+            { name: 'Azul', value: '#3B82F6' },
+            { name: 'Amarillo', value: '#FACC15' },
+            { name: 'Naranja', value: '#F59E0B' },
+            { name: 'Violeta', value: '#A855F7' },
         ];
 
         const lapSelector = document.getElementById('lap');

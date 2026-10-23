@@ -35,6 +35,7 @@
         const referenceSamples = @js($referenceLapTelemetry ?? []);
         const referenceLapNumber = @js($referenceLapNumber ?? null);
         const referenceStintId = @js($referenceStintId ?? null);
+        const selectedLapDurationSeconds = @js($selectedLap['lap_time'] ?? null);
 
         const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
 
@@ -433,8 +434,11 @@
 
             // El cronómetro de la comparativa temporal termina con la vuelta principal.
             // Si faltan tiempos válidos, el reproductor usa su fallback de 60 segundos.
+            const metadataDuration = Number(selectedLapDurationSeconds);
             const primaryDuration = getSeriesDuration(validSamples);
-            return primaryDuration > 0 ? primaryDuration : 60;
+            return Number.isFinite(metadataDuration) && metadataDuration > 0
+                ? metadataDuration
+                : primaryDuration > 0 ? primaryDuration : 60;
         };
 
         const getGraphCoordinate = (sample, index, series) => {
@@ -1508,8 +1512,12 @@
         const sessionDuration = hasSessionTimes
             ? points[points.length - 1].sessionTime - points[0].sessionTime
             : 0;
-        // Si el IBT no trae tiempos utilizables, reproducimos la vuelta en 60 segundos.
-        const playbackDuration = sessionDuration > 0 ? sessionDuration : 60;
+        // Preferir la duración de vuelta validada en el resumen; recurrir a
+        // las muestras solo si el resumen no dispone de un tiempo utilizable.
+        const metadataPlaybackDuration = Number(selectedLapDurationSeconds);
+        const playbackDuration = Number.isFinite(metadataPlaybackDuration) && metadataPlaybackDuration > 0
+            ? metadataPlaybackDuration
+            : sessionDuration > 0 ? sessionDuration : 60;
 
         // Estado de navegación independiente de la calibración del circuito.
         const view = { zoom: 1, panX: 0, panY: 0 };
@@ -1689,10 +1697,13 @@
             y: (point.lat - originLat) * radians * 6371000,
         }));
 
-        const minX = Math.min(...projected.map(p => p.x));
-        const maxX = Math.max(...projected.map(p => p.x));
-        const minY = Math.min(...projected.map(p => p.y));
-        const maxY = Math.max(...projected.map(p => p.y));
+        // Encuadrar ambas trayectorias para que la referencia no quede
+        // recortada cuando se abre más o sigue una línea distinta.
+        const allProjected = [...projected, ...referenceProjected];
+        const minX = Math.min(...allProjected.map(p => p.x));
+        const maxX = Math.max(...allProjected.map(p => p.x));
+        const minY = Math.min(...allProjected.map(p => p.y));
+        const maxY = Math.max(...allProjected.map(p => p.y));
 
         const rangeX = maxX - minX;
         const rangeY = maxY - minY;

@@ -319,6 +319,14 @@
             </button>
 
             <button type="button"
+                @click="graphics.suspension = !graphics.suspension"
+                :aria-pressed="graphics.suspension"
+                :class="graphics.suspension ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
+                <span class="block text-lg">↕</span>Suspensión
+            </button>
+
+            <button type="button"
                 @click="graphics.setup = !graphics.setup"
                 :aria-pressed="graphics.setup"
                 :class="graphics.setup ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"

@@ -2880,8 +2880,15 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                     Math.floor(playbackIndex),
                     Math.max(0, points.length - 1)
                 );
-                spatialPct = normalizeLapPct(points[mainIndex]?.lapDistPct)
-                    ?? mainIndex / Math.max(1, points.length - 1);
+                const nextIndex = Math.min(mainIndex + 1, points.length - 1);
+                const fraction = playbackIndex - mainIndex;
+                const currentPct = normalizeLapPct(points[mainIndex]?.lapDistPct);
+                const nextPct = normalizeLapPct(points[nextIndex]?.lapDistPct);
+
+                spatialPct = currentPct !== null && nextPct !== null
+                    ? currentPct + (nextPct - currentPct) * fraction
+                    : mainIndex / Math.max(1, points.length - 1);
+
                 playbackIndex = getIndexAtPct(points, spatialPct);
             } else if (mode === 'temporal' && referenceMode === 'spatial') {
                 playbackIndex = getIndexAtPct(points, spatialPct);

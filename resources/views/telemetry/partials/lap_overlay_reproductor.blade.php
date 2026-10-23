@@ -37,7 +37,7 @@
         const referenceStintId = @js($referenceStintId ?? null);
         const selectedLapDurationSeconds = @js($selectedLap['lap_time'] ?? null);
 
-        const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
+        const DEFAULT_REFERENCE_LAP_COLOR = '#A855F7';
 
         const sectorSegments = @js(
             $sessionData['sectors']['segments'] ?? []
@@ -78,16 +78,18 @@
         const speedSelect = document.getElementById('telemetry-lap-speed');
 
 
-        // Paleta fija compartida por trazadas y gráficas.
+        // Paleta de vueltas: rojo y verde quedan reservados para freno y acelerador.
         const lapColorPresets = [
-            { name: 'Red', value: '#EF4444' },
-            { name: 'Blue', value: '#3B82F6' },
-            { name: 'Violet', value: '#A855F7' },
-            { name: 'Green', value: '#22C55E' },
-            { name: 'Yellow', value: '#FACC15' },
-            { name: 'Cian', value: '#06B6D4' },
-            { name: 'Orange', value: '#F59E0B' },
+            { name: 'Blanco', value: '#FFFFFF' },
+            { name: 'Negro', value: '#111827' },
+            { name: 'Azul', value: '#3B82F6' },
+            { name: 'Amarillo', value: '#FACC15' },
+            { name: 'Naranja', value: '#F59E0B' },
+            { name: 'Violeta', value: '#A855F7' },
         ];
+        const allowedLapColors = new Set(
+            lapColorPresets.map(preset => preset.value.toUpperCase())
+        );
 
         const lapSelector = document.getElementById('lap');
         const lapColorTrigger = document.getElementById('lap-color-trigger');
@@ -103,10 +105,24 @@
             );
 
             Object.entries(savedColors).forEach(([key, color]) => {
-                if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) {
-                    manualLapColors.set(key, color);
+                // Ignorar colores antiguos (rojo, verde y cian) que ya no
+                // están permitidos para las trazadas de las vueltas.
+                if (
+                    typeof color === 'string' &&
+                    allowedLapColors.has(color.toUpperCase())
+                ) {
+                    manualLapColors.set(key, color.toUpperCase());
                 }
             });
+
+            // Retirar del almacenamiento las selecciones que pertenecían
+            // a la paleta anterior, no solo ocultarlas en el selector.
+            if (Object.keys(savedColors).length !== manualLapColors.size) {
+                window.localStorage.setItem(
+                    LAP_COLOR_STORAGE_KEY,
+                    JSON.stringify(Object.fromEntries(manualLapColors))
+                );
+            }
         } catch (error) {
             // La telemetría sigue funcionando aunque el navegador bloquee storage.
             console.warn('[LapOverlay] No se pudieron recuperar colores guardados.');
@@ -1002,7 +1018,11 @@
                             neutralIndex <= neutralEnd;
                             neutralIndex++
                         ) {
+                            // La serie principal dibuja con .gear, pero la referencia
+                            // utiliza .value dentro de drawReferenceSeries().
+                            // Sin sincronizar ambos campos, el N original seguía visible.
                             series[neutralIndex].gear = previous.gear;
+                            series[neutralIndex].value = previous.gear;
                         }
                     }
 

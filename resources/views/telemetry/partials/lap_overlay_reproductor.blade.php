@@ -1697,13 +1697,12 @@
             y: (point.lat - originLat) * radians * 6371000,
         }));
 
-        // Encuadrar ambas trayectorias para que la referencia no quede
-        // recortada cuando se abre más o sigue una línea distinta.
-        const allProjected = [...projected, ...referenceProjected];
-        const minX = Math.min(...allProjected.map(p => p.x));
-        const maxX = Math.max(...allProjected.map(p => p.x));
-        const minY = Math.min(...allProjected.map(p => p.y));
-        const maxY = Math.max(...allProjected.map(p => p.y));
+        // Mantener la calibración del mapa basada en la vuelta principal.
+        // La referencia utiliza la misma transformación, sin desplazar el mapa.
+        const minX = Math.min(...projected.map(p => p.x));
+        const maxX = Math.max(...projected.map(p => p.x));
+        const minY = Math.min(...projected.map(p => p.y));
+        const maxY = Math.max(...projected.map(p => p.y));
 
         const rangeX = maxX - minX;
         const rangeY = maxY - minY;

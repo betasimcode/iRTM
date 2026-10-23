@@ -985,6 +985,21 @@
             );
 
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+
+            // Los valores se mantienen actualizados aunque el cursor quede fuera
+            // de la ventana ampliada visible en la gráfica.
+            drawCurrentComparison(
+                'speed',
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.speed,
+                    formatValue: value => String(Math.round(value)),
+                    scale: 1,
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1002,24 +1017,12 @@
                 ctx.lineWidth = 0.5;
                 ctx.stroke();
 
-                const nearest = findNearestGraphPoint(data, currentDistance);
-                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                drawCurrentComparison(
-                    'speed',
-                    nearest,
-                    referenceNearest,
-                    {
-                        valueOf: point => point.speed,
-                        formatValue: value => String(Math.round(value)),
-                        scale: 1,
-                    }
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };
@@ -1232,6 +1235,22 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+            const formatGear = value =>
+                value === 0 ? 'N' : value === -1 ? 'R' : String(value);
+
+            drawCurrentComparison(
+                'gears',
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.gear,
+                    formatValue: value => formatGear(value),
+                    scale: 1,
+                    canCompare: (main, reference) => main > 0 && reference > 0,
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1247,28 +1266,12 @@
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                const nearest = findNearestGraphPoint(data, currentDistance);
-                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                const formatGear = value =>
-                    value === 0 ? 'N' : value === -1 ? 'R' : String(value);
-
-                drawCurrentComparison(
-                    'gears',
-                    nearest,
-                    referenceNearest,
-                    {
-                        valueOf: point => point.gear,
-                        formatValue: value => formatGear(value),
-                        scale: 1,
-                        canCompare: (main, reference) => main > 0 && reference > 0,
-                    }
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };
@@ -1423,6 +1426,21 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+
+            drawCurrentComparison(
+                pedal,
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.value,
+                    formatValue: value => `${Math.round(value * 100)}%`,
+                    scale: 100,
+                    deltaSuffix: '%',
+                    invertDeltaColor: pedal === 'brake',
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1433,9 +1451,6 @@
                     Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
-                const nearest = findNearestGraphPoint(data, currentDistance);
-                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
                 ctx.lineTo(cursorX, height - padding.bottom);
@@ -1443,23 +1458,12 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                drawCurrentComparison(
-                    pedal,
-                    nearest,
-                    referenceNearest,
-                    {
-                        valueOf: point => point.value,
-                        formatValue: value => `${Math.round(value * 100)}%`,
-                        scale: 100,
-                        deltaSuffix: '%',
-                        invertDeltaColor: pedal === 'brake',
-                    }
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };

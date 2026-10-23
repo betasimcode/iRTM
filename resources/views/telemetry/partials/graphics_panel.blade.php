@@ -46,11 +46,32 @@
                        bg-[var(--bg)] p-3"
             >
                 <div class="mb-2 flex min-w-0 items-center justify-between gap-2">
-                    <h3
-                        class="min-w-0 text-xs font-semibold
-                               text-[var(--text-title)]"
-                        x-text="item.label"
-                    ></h3>
+                    <div class="flex min-w-0 items-center gap-3">
+                        <h3
+                            class="min-w-0 text-xs font-semibold
+                                   text-[var(--text-title)]"
+                            x-text="item.label"
+                        ></h3>
+
+                        <div
+                            x-show="item.key === 'speed'"
+                            class="flex shrink-0 items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-2 py-1"
+                            role="group"
+                            aria-label="Velocidad máxima de ambas vueltas"
+                        >
+                            <span class="text-[9px] font-bold uppercase tracking-wide text-[var(--text-muted)]">MAX SPEED</span>
+                            <span
+                                id="telemetry-graph-max-speed-main"
+                                class="flex h-6 min-w-[36px] items-center justify-center rounded border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
+                                style="color: #FFFFFF"
+                            >—</span>
+                            <span
+                                id="telemetry-graph-max-speed-reference"
+                                class="flex h-6 min-w-[36px] items-center justify-center rounded border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
+                                style="color: #A855F7"
+                            >—</span>
+                        </div>
+                    </div>
 
                     <div
                         x-show="['speed', 'gears', 'throttle', 'brake'].includes(item.key)"

@@ -256,7 +256,7 @@
     {{-- GRAPHICS --}}
     <section class="space-y-2">
         <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
-            <span class="text-base">⌁</span> GRAPHICS
+            <span class="text-base">⌁</span> CHANNELS
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
@@ -338,7 +338,7 @@
 
     {{-- DATOS REALES DE LA VUELTA --}}
 
-    <div
+    {{-- <div
 
         x-show="tools.speed || tools.gear"
 
@@ -416,7 +416,7 @@
 
         @endif
 
-    </div>
+    </div> --}}
 
 
 
@@ -472,15 +472,5 @@
 </div>
 
             </div>
-
-
-
-            <p class="mt-5 text-xs leading-relaxed text-[var(--text-muted)]">
-
-                Selecciona las herramientas que quieras mostrar durante
-
-                el análisis de la vuelta.
-
-            </p>
 
         </aside>

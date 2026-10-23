@@ -850,6 +850,40 @@
         const speedGraphCanvas = document.getElementById('telemetry-graphics-speed');
         let speedGraphContext = null;
 
+        const updateMaxSpeedIndicators = (mainData, referenceData) => {
+            const mainIndicator = document.getElementById(
+                'telemetry-graph-max-speed-main'
+            );
+            const referenceIndicator = document.getElementById(
+                'telemetry-graph-max-speed-reference'
+            );
+
+            if (!mainIndicator || !referenceIndicator) return;
+
+            const getMaxSpeed = series => series.reduce(
+                (maximum, point) => Number.isFinite(point.speed)
+                    ? Math.max(maximum, point.speed)
+                    : maximum,
+                Number.NEGATIVE_INFINITY
+            );
+
+            const mainMaxSpeed = getMaxSpeed(mainData);
+            const referenceMaxSpeed = getMaxSpeed(referenceData);
+
+            mainIndicator.style.color = getActiveLapColor();
+            mainIndicator.textContent = Number.isFinite(mainMaxSpeed)
+                ? String(Math.round(mainMaxSpeed))
+                : '—';
+
+            referenceIndicator.style.color = getActiveReferenceLapColor();
+            referenceIndicator.textContent =
+                referenceLapNumber != null &&
+                referenceSamples.length > 0 &&
+                Number.isFinite(referenceMaxSpeed)
+                    ? String(Math.round(referenceMaxSpeed))
+                    : '—';
+        };
+
         const drawSpeedGraph = () => {
             const graph = document.getElementById('telemetry-graphics-speed');
 
@@ -884,6 +918,9 @@
                 value => Number(value),
                 value => value >= 0
             ).map(point => ({ ...point, speed: point.value }));
+
+            // El máximo se calcula sobre la vuelta completa, sin depender del cursor ni del zoom.
+            updateMaxSpeedIndicators(data, referenceData);
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';

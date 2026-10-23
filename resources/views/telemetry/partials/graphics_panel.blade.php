@@ -45,11 +45,35 @@
                 class="rounded-lg border border-[var(--border)]
                        bg-[var(--bg)] p-3"
             >
-                <h3
-                    class="mb-2 text-xs font-semibold
-                           text-[var(--text-title)]"
-                    x-text="item.label"
-                ></h3>
+                <div class="mb-2 flex min-w-0 items-center justify-between gap-2">
+                    <h3
+                        class="min-w-0 text-xs font-semibold
+                               text-[var(--text-title)]"
+                        x-text="item.label"
+                    ></h3>
+
+                    <div
+                        x-show="['speed', 'gears', 'throttle', 'brake'].includes(item.key)"
+                        class="grid shrink-0 grid-cols-[76px_66px_76px] gap-1"
+                        role="group"
+                        :aria-label="'Valores actuales de ' + item.label"
+                    >
+                        <span
+                            :id="'telemetry-graph-value-' + item.key + '-main'"
+                            class="flex h-7 w-full items-center justify-center overflow-hidden rounded-md border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
+                            style="color: #FFFFFF"
+                        >—</span>
+                        <span
+                            :id="'telemetry-graph-value-' + item.key + '-delta'"
+                            class="flex h-7 w-full items-center justify-center overflow-hidden rounded-md border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
+                        ></span>
+                        <span
+                            :id="'telemetry-graph-value-' + item.key + '-reference'"
+                            class="flex h-7 w-full items-center justify-center overflow-hidden rounded-md border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
+                            style="color: #A855F7"
+                        ></span>
+                    </div>
+                </div>
 
                 <template x-if="item.key === 'speed'">
                     <div class="w-full min-w-0">

@@ -110,10 +110,13 @@ class IbtRepairService
 
             $telemetryLaps = $processor->extractLaps($ibtPath);
 
+            // La ampliación de suspensión se activa solo durante la reparación
+            // para poder validar los IBT registrados antes de habilitarla en la ingesta.
             $lapTelemetryResult = $processor->writeLapTelemetryJson(
                 $ibtPath,
                 $lapTelemetryDirectory,
-                $telemetryLaps
+                $telemetryLaps,
+                true
             );
 
             Log::info('IBT REPAIR LAP DIAGNOSTICS', [

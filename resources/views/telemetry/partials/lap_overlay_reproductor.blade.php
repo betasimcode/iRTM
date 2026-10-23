@@ -105,8 +105,7 @@
             );
 
             Object.entries(savedColors).forEach(([key, color]) => {
-                // Ignorar colores antiguos (rojo, verde y cian) que ya no
-                // están permitidos para las trazadas de las vueltas.
+                // Ignorar colores antiguos que no pertenecen a la paleta aprobada.
                 if (
                     typeof color === 'string' &&
                     allowedLapColors.has(color.toUpperCase())
@@ -115,8 +114,6 @@
                 }
             });
 
-            // Retirar del almacenamiento las selecciones que pertenecían
-            // a la paleta anterior, no solo ocultarlas en el selector.
             if (Object.keys(savedColors).length !== manualLapColors.size) {
                 window.localStorage.setItem(
                     LAP_COLOR_STORAGE_KEY,
@@ -242,6 +239,7 @@
                         drawGearsGraph();
                         drawThrottleGraph();
                         drawBrakeGraph();
+                        drawSuspensionGraphs();
                     });
 
                     colorMenu.appendChild(option);
@@ -268,6 +266,7 @@
                     drawGearsGraph();
                     drawThrottleGraph();
                     drawBrakeGraph();
+                    drawSuspensionGraphs();
                 });
             }
         }
@@ -611,6 +610,7 @@
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         };
 
         const buildGraphData = (series, field, normalize = value => Number(value), validate = () => true) =>
@@ -674,6 +674,102 @@
             }
 
             ctx.restore();
+        };
+
+        // Selecciona el valor de cada vuelta en la misma coordenada del análisis.
+        const findNearestGraphPoint = (series, coordinate) => {
+            if (
+                !Array.isArray(series) ||
+                series.length === 0 ||
+                !Number.isFinite(coordinate)
+            ) {
+                return null;
+            }
+
+            return series.reduce((best, point) =>
+                Math.abs(point.x - coordinate) < Math.abs(best.x - coordinate)
+                    ? point
+                    : best
+            );
+        };
+
+        // Actualiza los tres indicadores HTML de la cabecera, fuera del canvas.
+        const drawCurrentComparison = (
+            graphKey,
+            mainPoint,
+            referencePoint,
+            options = {}
+        ) => {
+            const mainBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-main`
+            );
+            const deltaBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-delta`
+            );
+            const referenceBox = document.getElementById(
+                `telemetry-graph-value-${graphKey}-reference`
+            );
+
+            if (!mainBox || !deltaBox || !referenceBox) return;
+
+            const {
+                valueOf = point => point.value,
+                formatValue = value => String(value),
+                scale = 1,
+                deltaSuffix = '',
+                invertDeltaColor = false,
+                canCompare = () => true,
+            } = options;
+
+            const mainValue = mainPoint ? Number(valueOf(mainPoint)) : NaN;
+            mainBox.style.color = getActiveLapColor();
+            referenceBox.style.color = getActiveReferenceLapColor();
+            deltaBox.style.color = 'var(--text-muted)';
+
+            if (!Number.isFinite(mainValue)) {
+                mainBox.textContent = '—';
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
+                return;
+            }
+
+            mainBox.textContent = formatValue(mainValue);
+
+            if (
+                !referencePoint ||
+                referenceLapNumber == null ||
+                referenceSamples.length === 0
+            ) {
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
+                return;
+            }
+
+            const referenceValue = Number(valueOf(referencePoint));
+            if (!Number.isFinite(referenceValue)) {
+                deltaBox.textContent = '';
+                referenceBox.textContent = '';
+                return;
+            }
+
+            referenceBox.textContent = formatValue(referenceValue);
+
+            const difference =
+                Math.round(mainValue * scale) -
+                Math.round(referenceValue * scale);
+
+            if (difference === 0 || !canCompare(mainValue, referenceValue)) {
+                deltaBox.textContent = '';
+                return;
+            }
+
+            const useGreen = invertDeltaColor
+                ? difference < 0
+                : difference > 0;
+
+            deltaBox.style.color = useGreen ? '#22c55e' : '#ef4444';
+            deltaBox.textContent =
+                `${difference > 0 ? '+' : ''}${difference}${deltaSuffix}`;
         };
 
         const clampGraphViewport = () => {
@@ -757,6 +853,40 @@
         const speedGraphCanvas = document.getElementById('telemetry-graphics-speed');
         let speedGraphContext = null;
 
+        const updateMaxSpeedIndicators = (mainData, referenceData) => {
+            const mainIndicator = document.getElementById(
+                'telemetry-graph-max-speed-main'
+            );
+            const referenceIndicator = document.getElementById(
+                'telemetry-graph-max-speed-reference'
+            );
+
+            if (!mainIndicator || !referenceIndicator) return;
+
+            const getMaxSpeed = series => series.reduce(
+                (maximum, point) => Number.isFinite(point.speed)
+                    ? Math.max(maximum, point.speed)
+                    : maximum,
+                Number.NEGATIVE_INFINITY
+            );
+
+            const mainMaxSpeed = getMaxSpeed(mainData);
+            const referenceMaxSpeed = getMaxSpeed(referenceData);
+
+            mainIndicator.style.color = getActiveLapColor();
+            mainIndicator.textContent = Number.isFinite(mainMaxSpeed)
+                ? String(Math.round(mainMaxSpeed))
+                : '—';
+
+            referenceIndicator.style.color = getActiveReferenceLapColor();
+            referenceIndicator.textContent =
+                referenceLapNumber != null &&
+                referenceSamples.length > 0 &&
+                Number.isFinite(referenceMaxSpeed)
+                    ? String(Math.round(referenceMaxSpeed))
+                    : '—';
+        };
+
         const drawSpeedGraph = () => {
             const graph = document.getElementById('telemetry-graphics-speed');
 
@@ -791,6 +921,9 @@
                 value => Number(value),
                 value => value >= 0
             ).map(point => ({ ...point, speed: point.value }));
+
+            // El máximo se calcula sobre la vuelta completa, sin depender del cursor ni del zoom.
+            updateMaxSpeedIndicators(data, referenceData);
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';
@@ -892,6 +1025,21 @@
             );
 
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+
+            // Los valores se mantienen actualizados aunque el cursor quede fuera
+            // de la ventana ampliada visible en la gráfica.
+            drawCurrentComparison(
+                'speed',
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.speed,
+                    formatValue: value => String(Math.round(value)),
+                    scale: 1,
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -909,27 +1057,12 @@
                 ctx.lineWidth = 0.5;
                 ctx.stroke();
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex)
-                        < Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
-
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#38bdf8';
-                ctx.fillText(
-                    `${nearest.speed.toFixed(0)} km/h`,
-                    width - padding.right,
-                    padding.top
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };
@@ -1018,9 +1151,8 @@
                             neutralIndex <= neutralEnd;
                             neutralIndex++
                         ) {
-                            // La serie principal dibuja con .gear, pero la referencia
-                            // utiliza .value dentro de drawReferenceSeries().
-                            // Sin sincronizar ambos campos, el N original seguía visible.
+                            // drawReferenceSeries usa .value; sincronizar ambos campos
+                            // evita que el neutro transitorio vuelva a dibujarse en referencia.
                             series[neutralIndex].gear = previous.gear;
                             series[neutralIndex].value = previous.gear;
                         }
@@ -1143,6 +1275,22 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+            const formatGear = value =>
+                value === 0 ? 'N' : value === -1 ? 'R' : String(value);
+
+            drawCurrentComparison(
+                'gears',
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.gear,
+                    formatValue: value => formatGear(value),
+                    scale: 1,
+                    canCompare: (main, reference) => main > 0 && reference > 0,
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1158,28 +1306,12 @@
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex) <
-                    Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
-
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#a78bfa';
-
-                ctx.fillText(
-                    `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
-                    width - padding.right,
-                    padding.top
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };
@@ -1334,6 +1466,21 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
+            const nearest = findNearestGraphPoint(data, currentDistance);
+            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
+
+            drawCurrentComparison(
+                pedal,
+                nearest,
+                referenceNearest,
+                {
+                    valueOf: point => point.value,
+                    formatValue: value => `${Math.round(value * 100)}%`,
+                    scale: 100,
+                    deltaSuffix: '%',
+                    invertDeltaColor: pedal === 'brake',
+                }
+            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1344,13 +1491,6 @@
                     Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex) <
-                    Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
-
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
                 ctx.lineTo(cursorX, height - padding.bottom);
@@ -1358,20 +1498,12 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                ctx.beginPath();
-                ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fill();
-
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = color;
-                ctx.fillText(
-                    `${Math.round(nearest.value * 100)}%`,
-                    width - padding.right,
-                    padding.top
-                );
+                if (nearest) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
             }
 
         };
@@ -1381,6 +1513,272 @@
 
         const drawBrakeGraph = () =>
             drawPedalGraph('brake', '#ef4444');
+
+        // Las alturas se representan en mm; el JSON conserva los metros.
+        const hasNumericValue = value =>
+            value !== null &&
+            value !== undefined &&
+            value !== '' &&
+            Number.isFinite(Number(value));
+
+        const getRideHeight = (sample, channel) => {
+            const value = sample?.suspension?.ride_height_m?.[channel];
+            return hasNumericValue(value) ? Number(value) * 1000 : null;
+        };
+
+        // La vista debe poder mostrar una referencia reparada aunque la vuelta
+        // principal todavía proceda de un JSON antiguo sin bloque suspension.
+        const suspensionSourceSamples = [...validSamples, ...referenceSamples];
+        const wheelRideHeightKeys = ['lf', 'rf', 'lr', 'rr'];
+        const availableWheelChannels = wheelRideHeightKeys.filter(channel =>
+            suspensionSourceSamples.some(sample =>
+                hasNumericValue(sample?.suspension?.ride_height_m?.[channel])
+            )
+        );
+
+        const hasFrontAxleHeight = suspensionSourceSamples.some(sample =>
+            hasNumericValue(sample?.suspension?.ride_height_m?.cf)
+        );
+        const hasRearAxleHeight = suspensionSourceSamples.some(sample =>
+            hasNumericValue(sample?.suspension?.ride_height_m?.cr)
+        );
+
+        // Preferir cuatro esquinas; si no existen, utilizar alturas centrales
+        // delantera/trasera. Los canales ausentes no se inventan.
+        const suspensionGraphMode = availableWheelChannels.length >= 3
+            ? 'wheels'
+            : hasFrontAxleHeight || hasRearAxleHeight
+                ? 'axles'
+                : availableWheelChannels.length > 0 ? 'wheels' : 'none';
+
+        const suspensionGraphSpecs = [
+            { key: 'lf', canvas: 'telemetry-graphics-suspension-lf', main: 'telemetry-suspension-lf-main', reference: 'telemetry-suspension-lf-reference', channel: 'lf' },
+            { key: 'rf', canvas: 'telemetry-graphics-suspension-rf', main: 'telemetry-suspension-rf-main', reference: 'telemetry-suspension-rf-reference', channel: 'rf' },
+            { key: 'lr', canvas: 'telemetry-graphics-suspension-lr', main: 'telemetry-suspension-lr-main', reference: 'telemetry-suspension-lr-reference', channel: 'lr' },
+            { key: 'rr', canvas: 'telemetry-graphics-suspension-rr', main: 'telemetry-suspension-rr-main', reference: 'telemetry-suspension-rr-reference', channel: 'rr' },
+        ];
+
+        const axleGraphSpecs = [
+            { key: 'front', canvas: 'telemetry-graphics-suspension-front', main: 'telemetry-suspension-front-main', reference: 'telemetry-suspension-front-reference', channel: 'cf' },
+            { key: 'rear', canvas: 'telemetry-graphics-suspension-rear', main: 'telemetry-suspension-rear-main', reference: 'telemetry-suspension-rear-reference', channel: 'cr' },
+        ];
+
+        const buildRideHeightData = (series, channel) => series
+            .map((sample, index) => {
+                const value = getRideHeight(sample, channel);
+                const x = getGraphCoordinate(sample, index, series);
+                if (value === null || !Number.isFinite(x)) return null;
+                return { x, value, index, sample };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.x - b.x);
+
+        // Las muestras no cambian durante la reproducción: cachearlas evita
+        // reconstruir miles de puntos en cada frame del cursor.
+        const suspensionPlotCache = new Map();
+
+        const getSuspensionPlotData = spec => {
+            const cacheKey = `${referenceMode}:${spec.key}`;
+            if (suspensionPlotCache.has(cacheKey)) {
+                return suspensionPlotCache.get(cacheKey);
+            }
+
+            const mainData = buildRideHeightData(validSamples, spec.channel);
+            const referenceData = buildRideHeightData(referenceSamples, spec.channel);
+            const allValues = [
+                ...mainData.map(point => point.value),
+                ...referenceData.map(point => point.value),
+            ];
+
+            let minY = allValues.length ? Math.floor(Math.min(...allValues) - 1) : 0;
+            let maxY = allValues.length ? Math.ceil(Math.max(...allValues) + 1) : 1;
+            if (maxY - minY < 3) {
+                const midpoint = (maxY + minY) / 2;
+                minY = Math.floor(midpoint - 1.5);
+                maxY = Math.ceil(midpoint + 1.5);
+            }
+
+            const result = { mainData, referenceData, minY, maxY };
+            suspensionPlotCache.set(cacheKey, result);
+            return result;
+        };
+
+        const updateRideHeightReadout = (spec, mainPoint, referencePoint) => {
+            const mainElement = document.getElementById(spec.main);
+            const referenceElement = document.getElementById(spec.reference);
+            if (!mainElement || !referenceElement) return;
+
+            mainElement.style.color = getActiveLapColor();
+            referenceElement.style.color = getActiveReferenceLapColor();
+            mainElement.textContent = mainPoint ? mainPoint.value.toFixed(1) : '—';
+            referenceElement.textContent =
+                referenceLapNumber !== null && referencePoint
+                    ? referencePoint.value.toFixed(1)
+                    : '—';
+        };
+
+        const drawRideHeightGraph = spec => {
+            const graph = document.getElementById(spec.canvas);
+            if (!graph) return;
+
+            const width = graph.clientWidth;
+            const height = graph.clientHeight;
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            graph.width = Math.round(width * dpr);
+            graph.height = Math.round(height * dpr);
+
+            const ctx = graph.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const cached = getSuspensionPlotData(spec);
+            const { mainData, referenceData, minY, maxY } = cached;
+            const currentX = getCurrentGraphCoordinate();
+            const mainPoint = findNearestGraphPoint(mainData, currentX);
+            const referencePoint = findNearestGraphPoint(referenceData, currentX);
+            updateRideHeightReadout(spec, mainPoint, referencePoint);
+
+            if (mainData.length < 2 && referenceData.length < 2) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px sans-serif';
+                ctx.fillText('Sin datos de altura', 8, 18);
+                return;
+            }
+
+            const padding = { left: 34, right: 8, top: 8, bottom: 23 };
+            const plot = {
+                left: padding.left,
+                top: padding.top,
+                width: Math.max(1, width - padding.left - padding.right),
+                height: Math.max(1, height - padding.top - padding.bottom),
+            };
+
+            const domainRange = Math.max(0.000001, graphViewport.end - graphViewport.start);
+            const xAt = value =>
+                plot.left + ((value - graphViewport.start) / domainRange) * plot.width;
+            const yAt = value =>
+                plot.top + ((maxY - value) / Math.max(0.001, maxY - minY)) * plot.height;
+
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#94a3b8';
+
+            for (let tick = 0; tick <= 4; tick++) {
+                const ratio = tick / 4;
+                const y = plot.top + plot.height * ratio;
+                const value = maxY - (maxY - minY) * ratio;
+                ctx.beginPath();
+                ctx.moveTo(plot.left, y);
+                ctx.lineTo(plot.left + plot.width, y);
+                ctx.strokeStyle = 'rgba(148,163,184,0.18)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillText(value.toFixed(0), plot.left - 5, y);
+            }
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            [0, 0.5, 1].forEach(ratio => {
+                const value = graphViewport.start
+                    + (graphViewport.end - graphViewport.start) * ratio;
+                ctx.fillText(
+                    referenceMode === 'spatial'
+                        ? `${(value * 100).toFixed(0)}%`
+                        : formatGraphCoordinate(value),
+                    plot.left + plot.width * ratio,
+                    plot.top + plot.height + 5
+                );
+            });
+
+            const drawLine = (series, color, lineWidth) => {
+                if (series.length < 2) return;
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(plot.left, plot.top, plot.width, plot.height);
+                ctx.clip();
+                ctx.beginPath();
+
+                let started = false;
+                series.forEach(point => {
+                    const x = xAt(point.x);
+                    const y = yAt(point.value);
+                    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+                    if (!started) {
+                        ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+            };
+
+            drawLine(mainData, getActiveLapColor(), 1.6);
+            if (referenceLapNumber !== null) {
+                drawLine(referenceData, getActiveReferenceLapColor(), 1.5);
+            }
+
+            if (
+                Number.isFinite(currentX) &&
+                currentX >= graphViewport.start &&
+                currentX <= graphViewport.end
+            ) {
+                const cursorX = xAt(currentX);
+                ctx.beginPath();
+                ctx.moveTo(cursorX, plot.top);
+                ctx.lineTo(cursorX, plot.top + plot.height);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                if (mainPoint) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(mainPoint.value), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = getActiveLapColor();
+                    ctx.fill();
+                }
+                if (referenceLapNumber !== null && referencePoint) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(referencePoint.value), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = getActiveReferenceLapColor();
+                    ctx.fill();
+                }
+            }
+        };
+
+        const drawSuspensionGraphs = () => {
+            const wheelLayout = document.getElementById('telemetry-suspension-wheel-layout');
+            const axleLayout = document.getElementById('telemetry-suspension-axle-layout');
+            const noData = document.getElementById('telemetry-suspension-no-data');
+            const status = document.getElementById('telemetry-suspension-data-status');
+
+            wheelLayout?.classList.toggle('hidden', suspensionGraphMode !== 'wheels');
+            axleLayout?.classList.toggle('hidden', suspensionGraphMode !== 'axles');
+            noData?.classList.toggle('hidden', suspensionGraphMode !== 'none');
+
+            if (status) {
+                status.textContent = suspensionGraphMode === 'wheels'
+                    ? 'Ride height por rueda (mm) · Principal y referencia'
+                    : suspensionGraphMode === 'axles'
+                        ? 'Ride height delantero/trasero (mm) · modo por eje'
+                        : 'No hay canales ride height disponibles en esta vuelta';
+            }
+
+            const specs = suspensionGraphMode === 'wheels'
+                ? suspensionGraphSpecs
+                : suspensionGraphMode === 'axles' ? axleGraphSpecs : [];
+            specs.forEach(drawRideHeightGraph);
+        };
 
 
         const context = canvas.getContext('2d');
@@ -2649,6 +3047,164 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 `${String(ms).padStart(3, '0')}`;
         };
 
+        const meanSuspensionValue = (channel, source = 'ride_height_m') => {
+            const values = validSamples
+                .map(sample => source === 'ride_height_m'
+                    ? getRideHeight(sample, channel)
+                    : (
+                        hasNumericValue(sample?.suspension?.[source]?.[channel])
+                            ? Number(sample.suspension[source][channel]) * 1000
+                            : null
+                    )
+                )
+                .filter(value => value !== null);
+
+            return values.length
+                ? values.reduce((sum, value) => sum + value, 0) / values.length
+                : null;
+        };
+
+        const suspensionBaseline = {
+            lf: meanSuspensionValue('lf'),
+            rf: meanSuspensionValue('rf'),
+            lr: meanSuspensionValue('lr'),
+            rr: meanSuspensionValue('rr'),
+            cf: meanSuspensionValue('cf'),
+            cr: meanSuspensionValue('cr'),
+            shockLf: meanSuspensionValue('lf', 'shock_deflection_m'),
+            shockRf: meanSuspensionValue('rf', 'shock_deflection_m'),
+        };
+
+        const updateSuspensionMotion = (currentSample, nextSample, fraction) => {
+            const widget = document.getElementById('telemetry-suspension-motion');
+            if (!widget) return;
+
+            if (!currentSample?.suspension?.ride_height_m) {
+                widget.classList.add('hidden');
+                return;
+            }
+
+            const interpolateChannel = (source, channel) => {
+                const firstRaw = currentSample?.suspension?.[source]?.[channel];
+                const nextRaw = nextSample?.suspension?.[source]?.[channel];
+                const first = hasNumericValue(firstRaw) ? Number(firstRaw) * 1000 : null;
+                const next = hasNumericValue(nextRaw) ? Number(nextRaw) * 1000 : null;
+
+                if (first !== null && next !== null) {
+                    return first + (next - first) * fraction;
+                }
+
+                return first ?? next;
+            };
+
+            const heightFor = channel => {
+                if (suspensionGraphMode === 'axles') {
+                    if (channel === 'lf' || channel === 'rf') return interpolateChannel('ride_height_m', 'cf');
+                    if (channel === 'lr' || channel === 'rr') return interpolateChannel('ride_height_m', 'cr');
+                }
+
+                return interpolateChannel('ride_height_m', channel);
+            };
+
+            const height = {
+                lf: heightFor('lf'),
+                rf: heightFor('rf'),
+                lr: heightFor('lr'),
+                rr: heightFor('rr'),
+            };
+
+            const heightMean = values => {
+                const numeric = values.filter(value => value !== null);
+                return numeric.length
+                    ? numeric.reduce((sum, value) => sum + value, 0) / numeric.length
+                    : null;
+            };
+
+            const frontMean = heightMean([height.lf, height.rf]);
+            const baselineFront = suspensionGraphMode === 'axles'
+                ? suspensionBaseline.cf
+                : heightMean([suspensionBaseline.lf, suspensionBaseline.rf]);
+
+            const deltaLf = height.lf !== null && suspensionBaseline.lf !== null
+                ? height.lf - suspensionBaseline.lf
+                : 0;
+            const deltaRf = height.rf !== null && suspensionBaseline.rf !== null
+                ? height.rf - suspensionBaseline.rf
+                : 0;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+            const bodyY = frontMean !== null && baselineFront !== null
+                ? clamp((baselineFront - frontMean) * 0.85, -12, 12)
+                : 0;
+            const rollDeg = suspensionGraphMode === 'wheels'
+                ? clamp((deltaLf - deltaRf) * 0.18, -4, 4)
+                : 0;
+
+            const chassis = document.getElementById('telemetry-suspension-motion-chassis');
+            if (chassis) {
+                chassis.setAttribute(
+                    'transform',
+                    `translate(0 ${bodyY.toFixed(2)}) rotate(${rollDeg.toFixed(2)} 90 34)`
+                );
+            }
+
+            const shockOffset = channel => {
+                const current = interpolateChannel('shock_deflection_m', channel);
+                const baseline = channel === 'lf'
+                    ? suspensionBaseline.shockLf
+                    : suspensionBaseline.shockRf;
+
+                return current !== null && baseline !== null
+                    ? clamp(-(current - baseline) * 0.45, -5, 5)
+                    : 0;
+            };
+
+            const leftWheelOffset = shockOffset('lf');
+            const rightWheelOffset = shockOffset('rf');
+
+            const leftWheel = document.getElementById('telemetry-suspension-motion-left-wheel');
+            const rightWheel = document.getElementById('telemetry-suspension-motion-right-wheel');
+            const leftStrut = document.getElementById('telemetry-suspension-motion-left-strut');
+            const rightStrut = document.getElementById('telemetry-suspension-motion-right-strut');
+
+            leftWheel?.setAttribute('transform', `translate(0 ${leftWheelOffset.toFixed(2)})`);
+            rightWheel?.setAttribute('transform', `translate(0 ${rightWheelOffset.toFixed(2)})`);
+
+            leftStrut?.setAttribute('y1', String(43 + bodyY));
+            leftStrut?.setAttribute('y2', String(58 + leftWheelOffset));
+            rightStrut?.setAttribute('y1', String(43 + bodyY));
+            rightStrut?.setAttribute('y2', String(58 + rightWheelOffset));
+
+            const cornerReadouts = document.getElementById('telemetry-suspension-motion-corner-readouts');
+            const axleReadouts = document.getElementById('telemetry-suspension-motion-axle-readouts');
+            cornerReadouts?.classList.toggle('hidden', suspensionGraphMode !== 'wheels');
+            axleReadouts?.classList.toggle('hidden', suspensionGraphMode !== 'axles');
+
+            const setReadout = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value === null ? '—' : `${value.toFixed(1)} mm`;
+            };
+
+            if (suspensionGraphMode === 'axles') {
+                setReadout('telemetry-suspension-motion-frh', height.lf);
+                setReadout('telemetry-suspension-motion-rrh', height.lr);
+            } else {
+                setReadout('telemetry-suspension-motion-lf', height.lf);
+                setReadout('telemetry-suspension-motion-rf', height.rf);
+                setReadout('telemetry-suspension-motion-lr', height.lr);
+                setReadout('telemetry-suspension-motion-rr', height.rr);
+            }
+
+            const status = document.getElementById('telemetry-suspension-motion-status');
+            if (status) status.textContent = referenceMode === 'spatial' ? 'POSITION' : 'TIME';
+
+            widget.classList.toggle(
+                'hidden',
+                suspensionGraphMode === 'none' ||
+                [height.lf, height.rf, height.lr, height.rr].every(value => value === null)
+            );
+        };
+
         const updateTelemetryIndicators = () => {
             if (!validSamples.length) return;
 
@@ -2662,6 +3218,8 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             const currentSample = validSamples[index];
             const nextSample = validSamples[nextIndex];
+
+            updateSuspensionMotion(currentSample, nextSample, fraction);
 
             updatePedalDisplay('clutch', currentSample, nextSample, fraction);
             updatePedalDisplay('brake', currentSample, nextSample, fraction);
@@ -2734,6 +3292,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         };
 
 
@@ -2997,6 +3556,12 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 ['telemetry-graphics-gears', drawGearsGraph],
                 ['telemetry-graphics-throttle', drawThrottleGraph],
                 ['telemetry-graphics-brake', drawBrakeGraph],
+                ['telemetry-graphics-suspension-lf', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rf', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-lr', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rr', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-front', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rear', drawSuspensionGraphs],
             ];
 
             graphCanvases.forEach(([id, draw]) => {
@@ -3015,6 +3580,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         });
 
         const boundGraphCanvases = new WeakSet();
@@ -3136,7 +3702,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             if (
                 button &&
-                /Speed|Gears|Throttle|Brake/.test(button.textContent)
+                /Speed|Gears|Throttle|Brake|Suspensi[oó]n/.test(button.textContent)
             ) {
                 requestAnimationFrame(observeGraphics);
             }

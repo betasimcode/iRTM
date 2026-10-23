@@ -39,6 +39,7 @@
             { key: 'steering', label: 'Dirección' },
             { key: 'sectors', label: 'Comparativa de sectores' },
             { key: 'setup', label: 'Setup' },
+            { key: 'suspension', label: 'Suspensión' },
         ]" :key="item.key">
             <section
                 x-show="graphics[item.key]"
@@ -143,7 +144,98 @@
 
 
 
+                            <template x-if="item.key === 'suspension'">
+                    <div class="w-full min-w-0">
+                        <p id="telemetry-suspension-data-status"
+                           class="mb-2 text-[11px] text-[var(--text-muted)]">
+                            Altura de carrocería (mm) · Principal y referencia
+                        </p>
+
+                        <div id="telemetry-suspension-wheel-layout"
+                             class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold">LF · Delantera izquierda</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-lf-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-lf-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-lf" class="block w-full" style="height:145px" aria-label="Ride height rueda delantera izquierda"></canvas>
+                            </div>
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold">RF · Delantera derecha</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-rf-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-rf-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-rf" class="block w-full" style="height:145px" aria-label="Ride height rueda delantera derecha"></canvas>
+                            </div>
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold">LR · Trasera izquierda</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-lr-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-lr-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-lr" class="block w-full" style="height:145px" aria-label="Ride height rueda trasera izquierda"></canvas>
+                            </div>
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold">RR · Trasera derecha</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-rr-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-rr-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-rr" class="block w-full" style="height:145px" aria-label="Ride height rueda trasera derecha"></canvas>
+                            </div>
+                        </div>
+
+                        <div id="telemetry-suspension-axle-layout"
+                             class="hidden grid grid-cols-1 gap-3">
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between">
+                                    <span class="text-xs font-semibold">FRH · Front RH</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-front-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-front-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-front" class="block w-full" style="height:180px" aria-label="Ride height delantera"></canvas>
+                            </div>
+                            <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
+                                <div class="mb-1 flex items-center justify-between">
+                                    <span class="text-xs font-semibold">RRH · Rear RH</span>
+                                    <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
+                                </div>
+                                <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
+                                    <span id="telemetry-suspension-rear-main" class="text-blue-400">—</span>
+                                    <span id="telemetry-suspension-rear-reference" class="text-purple-400">—</span>
+                                </div>
+                                <canvas id="telemetry-graphics-suspension-rear" class="block w-full" style="height:180px" aria-label="Ride height trasera"></canvas>
+                            </div>
+                        </div>
+
+                        <p id="telemetry-suspension-no-data"
+                           class="hidden rounded-md border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">
+                            Este IBT no contiene canales de ride height disponibles para representar.
+                        </p>
+                    </div>
+                </template>
+
+
+
             </section>
+
         </template>
     </div>
 </section>

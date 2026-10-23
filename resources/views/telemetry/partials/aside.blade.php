@@ -256,7 +256,7 @@
     {{-- GRAPHICS --}}
     <section class="space-y-2">
         <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
-            <span class="text-base">⌁</span> CHANNELS
+            <span class="text-base">⌁</span> GRAPHICS
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
@@ -319,6 +319,14 @@
             </button>
 
             <button type="button"
+                @click="graphics.suspension = !graphics.suspension"
+                :aria-pressed="graphics.suspension"
+                :class="graphics.suspension ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
+                class="rounded-lg border p-2 text-center text-xs">
+                <span class="block text-lg">↕</span>Suspensión
+            </button>
+
+            <button type="button"
                 @click="graphics.setup = !graphics.setup"
                 :aria-pressed="graphics.setup"
                 :class="graphics.setup ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
@@ -338,7 +346,7 @@
 
     {{-- DATOS REALES DE LA VUELTA --}}
 
-    {{-- <div
+    <div
 
         x-show="tools.speed || tools.gear"
 
@@ -416,7 +424,7 @@
 
         @endif
 
-    </div> --}}
+    </div>
 
 
 
@@ -472,5 +480,15 @@
 </div>
 
             </div>
+
+
+
+            <p class="mt-5 text-xs leading-relaxed text-[var(--text-muted)]">
+
+                Selecciona las herramientas que quieras mostrar durante
+
+                el análisis de la vuelta.
+
+            </p>
 
         </aside>

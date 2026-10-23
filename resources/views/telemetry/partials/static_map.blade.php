@@ -78,11 +78,17 @@
                     <text x="165" y="10" fill="#cbd5e1" font-size="8">R</text>
                 </svg>
 
-                <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] tabular-nums">
+                <div id="telemetry-suspension-motion-corner-readouts"
+                     class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] tabular-nums">
                     <span><b class="text-sky-300">LF</b> <span id="telemetry-suspension-motion-lf">—</span></span>
                     <span><b class="text-sky-300">RF</b> <span id="telemetry-suspension-motion-rf">—</span></span>
                     <span><b class="text-slate-400">LR</b> <span id="telemetry-suspension-motion-lr">—</span></span>
                     <span><b class="text-slate-400">RR</b> <span id="telemetry-suspension-motion-rr">—</span></span>
+                </div>
+                <div id="telemetry-suspension-motion-axle-readouts"
+                     class="mt-1 hidden grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] tabular-nums">
+                    <span><b class="text-sky-300">FRH</b> <span id="telemetry-suspension-motion-frh">—</span></span>
+                    <span><b class="text-slate-400">RRH</b> <span id="telemetry-suspension-motion-rrh">—</span></span>
                 </div>
                 <p class="mt-1 text-[9px] leading-tight text-slate-400">Esquema visual, no geometría física exacta.</p>
             </section>

@@ -87,6 +87,9 @@
             { name: 'Naranja', value: '#F59E0B' },
             { name: 'Violeta', value: '#A855F7' },
         ];
+        const allowedLapColors = new Set(
+            lapColorPresets.map(preset => preset.value.toUpperCase())
+        );
 
         const lapSelector = document.getElementById('lap');
         const lapColorTrigger = document.getElementById('lap-color-trigger');
@@ -102,10 +105,24 @@
             );
 
             Object.entries(savedColors).forEach(([key, color]) => {
-                if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) {
-                    manualLapColors.set(key, color);
+                // Ignorar colores antiguos (rojo, verde y cian) que ya no
+                // están permitidos para las trazadas de las vueltas.
+                if (
+                    typeof color === 'string' &&
+                    allowedLapColors.has(color.toUpperCase())
+                ) {
+                    manualLapColors.set(key, color.toUpperCase());
                 }
             });
+
+            // Retirar del almacenamiento las selecciones que pertenecían
+            // a la paleta anterior, no solo ocultarlas en el selector.
+            if (Object.keys(savedColors).length !== manualLapColors.size) {
+                window.localStorage.setItem(
+                    LAP_COLOR_STORAGE_KEY,
+                    JSON.stringify(Object.fromEntries(manualLapColors))
+                );
+            }
         } catch (error) {
             // La telemetría sigue funcionando aunque el navegador bloquee storage.
             console.warn('[LapOverlay] No se pudieron recuperar colores guardados.');

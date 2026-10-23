@@ -200,7 +200,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Fecha</p>
 
@@ -214,7 +214,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Aire / pista</p>
 
@@ -228,7 +228,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Estado pista</p>
 

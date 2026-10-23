@@ -1002,7 +1002,11 @@
                             neutralIndex <= neutralEnd;
                             neutralIndex++
                         ) {
+                            // La serie principal dibuja con .gear, pero la referencia
+                            // utiliza .value dentro de drawReferenceSeries().
+                            // Sin sincronizar ambos campos, el N original seguía visible.
                             series[neutralIndex].gear = previous.gear;
+                            series[neutralIndex].value = previous.gear;
                         }
                     }
 

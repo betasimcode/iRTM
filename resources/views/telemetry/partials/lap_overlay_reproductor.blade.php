@@ -955,56 +955,63 @@
             ).map(point => ({ ...point, gear: point.value, time: Number(point.sample.session_time) }));
 
             // Filtro visual de neutral transitorio.
-            // Solo afecta a la serie representada en la gráfica.
+            // Se aplica por separado a ambas series y solo afecta a la representación.
             const MAX_TRANSIENT_NEUTRAL_SECONDS = 0.06;
 
-            for (let index = 1; index < data.length - 1;) {
-                if (data[index].gear !== 0) {
-                    index++;
-                    continue;
-                }
-
-                const neutralStart = index;
-                let neutralEnd = index;
-
-                while (
-                    neutralEnd + 1 < data.length &&
-                    data[neutralEnd + 1].gear === 0
-                ) {
-                    neutralEnd++;
-                }
-
-                const previous = data[neutralStart - 1];
-                const next = data[neutralEnd + 1];
-
-                const startTime = data[neutralStart].time;
-                const endTime = data[neutralEnd].time;
-
-                const neutralDuration =
-                    Number.isFinite(startTime) && Number.isFinite(endTime)
-                        ? endTime - startTime
-                        : Infinity;
-
-                const isTransientShift =
-                    next &&
-                    previous.gear > 0 &&
-                    next.gear > 0 &&
-                    previous.gear !== next.gear &&
-                    neutralDuration >= 0 &&
-                    neutralDuration <= MAX_TRANSIENT_NEUTRAL_SECONDS;
-
-                if (isTransientShift) {
-                    for (
-                        let neutralIndex = neutralStart;
-                        neutralIndex <= neutralEnd;
-                        neutralIndex++
-                    ) {
-                        data[neutralIndex].gear = previous.gear;
+            const filterTransientNeutral = series => {
+                for (let index = 1; index < series.length - 1;) {
+                    if (series[index].gear !== 0) {
+                        index++;
+                        continue;
                     }
-                }
 
-                index = neutralEnd + 1;
-            }
+                    const neutralStart = index;
+                    let neutralEnd = index;
+
+                    while (
+                        neutralEnd + 1 < series.length &&
+                        series[neutralEnd + 1].gear === 0
+                    ) {
+                        neutralEnd++;
+                    }
+
+                    const previous = series[neutralStart - 1];
+                    const next = series[neutralEnd + 1];
+
+                    const startTime = series[neutralStart].time;
+                    const endTime = series[neutralEnd].time;
+
+                    const neutralDuration =
+                        Number.isFinite(startTime) && Number.isFinite(endTime)
+                            ? endTime - startTime
+                            : Infinity;
+
+                    // Solo corregimos el N breve producido durante un cambio
+                    // entre dos marchas reales distintas; no ocultamos una N sostenida.
+                    const isTransientShift =
+                        next &&
+                        previous.gear > 0 &&
+                        next.gear > 0 &&
+                        previous.gear !== next.gear &&
+                        neutralDuration >= 0 &&
+                        neutralDuration <= MAX_TRANSIENT_NEUTRAL_SECONDS;
+
+                    if (isTransientShift) {
+                        for (
+                            let neutralIndex = neutralStart;
+                            neutralIndex <= neutralEnd;
+                            neutralIndex++
+                        ) {
+                            series[neutralIndex].gear = previous.gear;
+                        }
+                    }
+
+                    index = neutralEnd + 1;
+                }
+            };
+
+            filterTransientNeutral(data);
+            filterTransientNeutral(referenceData);
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';

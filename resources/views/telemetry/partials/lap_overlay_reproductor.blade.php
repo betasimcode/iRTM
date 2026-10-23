@@ -1570,6 +1570,36 @@
             .filter(Boolean)
             .sort((a, b) => a.x - b.x);
 
+        // Las muestras no cambian durante la reproducción: cachearlas evita
+        // reconstruir miles de puntos en cada frame del cursor.
+        const suspensionPlotCache = new Map();
+
+        const getSuspensionPlotData = spec => {
+            const cacheKey = `${referenceMode}:${spec.key}`;
+            if (suspensionPlotCache.has(cacheKey)) {
+                return suspensionPlotCache.get(cacheKey);
+            }
+
+            const mainData = buildRideHeightData(validSamples, spec.channel);
+            const referenceData = buildRideHeightData(referenceSamples, spec.channel);
+            const allValues = [
+                ...mainData.map(point => point.value),
+                ...referenceData.map(point => point.value),
+            ];
+
+            let minY = allValues.length ? Math.floor(Math.min(...allValues) - 1) : 0;
+            let maxY = allValues.length ? Math.ceil(Math.max(...allValues) + 1) : 1;
+            if (maxY - minY < 3) {
+                const midpoint = (maxY + minY) / 2;
+                minY = Math.floor(midpoint - 1.5);
+                maxY = Math.ceil(midpoint + 1.5);
+            }
+
+            const result = { mainData, referenceData, minY, maxY };
+            suspensionPlotCache.set(cacheKey, result);
+            return result;
+        };
+
         const updateRideHeightReadout = (spec, mainPoint, referencePoint) => {
             const mainElement = document.getElementById(spec.main);
             const referenceElement = document.getElementById(spec.reference);
@@ -1601,31 +1631,18 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const mainData = buildRideHeightData(validSamples, spec.channel);
-            const referenceData = buildRideHeightData(referenceSamples, spec.channel);
+            const cached = getSuspensionPlotData(spec);
+            const { mainData, referenceData, minY, maxY } = cached;
             const currentX = getCurrentGraphCoordinate();
             const mainPoint = findNearestGraphPoint(mainData, currentX);
             const referencePoint = findNearestGraphPoint(referenceData, currentX);
             updateRideHeightReadout(spec, mainPoint, referencePoint);
 
-            const allValues = [
-                ...mainData.map(point => point.value),
-                ...referenceData.map(point => point.value),
-            ];
-
-            if (allValues.length < 2) {
+            if (mainData.length < 2 && referenceData.length < 2) {
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '11px sans-serif';
                 ctx.fillText('Sin datos de altura', 8, 18);
                 return;
-            }
-
-            let minY = Math.floor(Math.min(...allValues) - 1);
-            let maxY = Math.ceil(Math.max(...allValues) + 1);
-            if (maxY - minY < 3) {
-                const midpoint = (maxY + minY) / 2;
-                minY = Math.floor(midpoint - 1.5);
-                maxY = Math.ceil(midpoint + 1.5);
             }
 
             const padding = { left: 34, right: 8, top: 8, bottom: 23 };

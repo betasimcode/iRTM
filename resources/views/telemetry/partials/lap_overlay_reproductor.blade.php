@@ -105,7 +105,8 @@
             );
 
             Object.entries(savedColors).forEach(([key, color]) => {
-                // Ignorar colores antiguos que no pertenecen a la paleta aprobada.
+                // Ignorar colores antiguos (rojo, verde y cian) que ya no
+                // están permitidos para las trazadas de las vueltas.
                 if (
                     typeof color === 'string' &&
                     allowedLapColors.has(color.toUpperCase())
@@ -114,6 +115,8 @@
                 }
             });
 
+            // Retirar del almacenamiento las selecciones que pertenecían
+            // a la paleta anterior, no solo ocultarlas en el selector.
             if (Object.keys(savedColors).length !== manualLapColors.size) {
                 window.localStorage.setItem(
                     LAP_COLOR_STORAGE_KEY,
@@ -673,102 +676,6 @@
             ctx.restore();
         };
 
-        // Selecciona el valor de cada vuelta en la misma coordenada del análisis.
-        const findNearestGraphPoint = (series, coordinate) => {
-            if (
-                !Array.isArray(series) ||
-                series.length === 0 ||
-                !Number.isFinite(coordinate)
-            ) {
-                return null;
-            }
-
-            return series.reduce((best, point) =>
-                Math.abs(point.x - coordinate) < Math.abs(best.x - coordinate)
-                    ? point
-                    : best
-            );
-        };
-
-        // Actualiza los tres indicadores HTML de la cabecera, fuera del canvas.
-        const drawCurrentComparison = (
-            graphKey,
-            mainPoint,
-            referencePoint,
-            options = {}
-        ) => {
-            const mainBox = document.getElementById(
-                `telemetry-graph-value-${graphKey}-main`
-            );
-            const deltaBox = document.getElementById(
-                `telemetry-graph-value-${graphKey}-delta`
-            );
-            const referenceBox = document.getElementById(
-                `telemetry-graph-value-${graphKey}-reference`
-            );
-
-            if (!mainBox || !deltaBox || !referenceBox) return;
-
-            const {
-                valueOf = point => point.value,
-                formatValue = value => String(value),
-                scale = 1,
-                deltaSuffix = '',
-                invertDeltaColor = false,
-                canCompare = () => true,
-            } = options;
-
-            const mainValue = mainPoint ? Number(valueOf(mainPoint)) : NaN;
-            mainBox.style.color = getActiveLapColor();
-            referenceBox.style.color = getActiveReferenceLapColor();
-            deltaBox.style.color = 'var(--text-muted)';
-
-            if (!Number.isFinite(mainValue)) {
-                mainBox.textContent = '—';
-                deltaBox.textContent = '';
-                referenceBox.textContent = '';
-                return;
-            }
-
-            mainBox.textContent = formatValue(mainValue);
-
-            if (
-                !referencePoint ||
-                referenceLapNumber == null ||
-                referenceSamples.length === 0
-            ) {
-                deltaBox.textContent = '';
-                referenceBox.textContent = '';
-                return;
-            }
-
-            const referenceValue = Number(valueOf(referencePoint));
-            if (!Number.isFinite(referenceValue)) {
-                deltaBox.textContent = '';
-                referenceBox.textContent = '';
-                return;
-            }
-
-            referenceBox.textContent = formatValue(referenceValue);
-
-            const difference =
-                Math.round(mainValue * scale) -
-                Math.round(referenceValue * scale);
-
-            if (difference === 0 || !canCompare(mainValue, referenceValue)) {
-                deltaBox.textContent = '';
-                return;
-            }
-
-            const useGreen = invertDeltaColor
-                ? difference < 0
-                : difference > 0;
-
-            deltaBox.style.color = useGreen ? '#22c55e' : '#ef4444';
-            deltaBox.textContent =
-                `${difference > 0 ? '+' : ''}${difference}${deltaSuffix}`;
-        };
-
         const clampGraphViewport = () => {
             const range = graphViewport.end - graphViewport.start;
 
@@ -850,40 +757,6 @@
         const speedGraphCanvas = document.getElementById('telemetry-graphics-speed');
         let speedGraphContext = null;
 
-        const updateMaxSpeedIndicators = (mainData, referenceData) => {
-            const mainIndicator = document.getElementById(
-                'telemetry-graph-max-speed-main'
-            );
-            const referenceIndicator = document.getElementById(
-                'telemetry-graph-max-speed-reference'
-            );
-
-            if (!mainIndicator || !referenceIndicator) return;
-
-            const getMaxSpeed = series => series.reduce(
-                (maximum, point) => Number.isFinite(point.speed)
-                    ? Math.max(maximum, point.speed)
-                    : maximum,
-                Number.NEGATIVE_INFINITY
-            );
-
-            const mainMaxSpeed = getMaxSpeed(mainData);
-            const referenceMaxSpeed = getMaxSpeed(referenceData);
-
-            mainIndicator.style.color = getActiveLapColor();
-            mainIndicator.textContent = Number.isFinite(mainMaxSpeed)
-                ? String(Math.round(mainMaxSpeed))
-                : '—';
-
-            referenceIndicator.style.color = getActiveReferenceLapColor();
-            referenceIndicator.textContent =
-                referenceLapNumber != null &&
-                referenceSamples.length > 0 &&
-                Number.isFinite(referenceMaxSpeed)
-                    ? String(Math.round(referenceMaxSpeed))
-                    : '—';
-        };
-
         const drawSpeedGraph = () => {
             const graph = document.getElementById('telemetry-graphics-speed');
 
@@ -918,9 +791,6 @@
                 value => Number(value),
                 value => value >= 0
             ).map(point => ({ ...point, speed: point.value }));
-
-            // El máximo se calcula sobre la vuelta completa, sin depender del cursor ni del zoom.
-            updateMaxSpeedIndicators(data, referenceData);
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';
@@ -1022,21 +892,6 @@
             );
 
             const currentDistance = getCurrentGraphCoordinate();
-            const nearest = findNearestGraphPoint(data, currentDistance);
-            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-
-            // Los valores se mantienen actualizados aunque el cursor quede fuera
-            // de la ventana ampliada visible en la gráfica.
-            drawCurrentComparison(
-                'speed',
-                nearest,
-                referenceNearest,
-                {
-                    valueOf: point => point.speed,
-                    formatValue: value => String(Math.round(value)),
-                    scale: 1,
-                }
-            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1054,12 +909,27 @@
                 ctx.lineWidth = 0.5;
                 ctx.stroke();
 
-                if (nearest) {
-                    ctx.beginPath();
-                    ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fill();
-                }
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex)
+                        < Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
+
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
+
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(
+                    `${nearest.speed.toFixed(0)} km/h`,
+                    width - padding.right,
+                    padding.top
+                );
             }
 
         };
@@ -1148,8 +1018,9 @@
                             neutralIndex <= neutralEnd;
                             neutralIndex++
                         ) {
-                            // drawReferenceSeries usa .value; sincronizar ambos campos
-                            // evita que el neutro transitorio vuelva a dibujarse en referencia.
+                            // La serie principal dibuja con .gear, pero la referencia
+                            // utiliza .value dentro de drawReferenceSeries().
+                            // Sin sincronizar ambos campos, el N original seguía visible.
                             series[neutralIndex].gear = previous.gear;
                             series[neutralIndex].value = previous.gear;
                         }
@@ -1272,22 +1143,6 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
-            const nearest = findNearestGraphPoint(data, currentDistance);
-            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-            const formatGear = value =>
-                value === 0 ? 'N' : value === -1 ? 'R' : String(value);
-
-            drawCurrentComparison(
-                'gears',
-                nearest,
-                referenceNearest,
-                {
-                    valueOf: point => point.gear,
-                    formatValue: value => formatGear(value),
-                    scale: 1,
-                    canCompare: (main, reference) => main > 0 && reference > 0,
-                }
-            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1303,12 +1158,28 @@
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                if (nearest) {
-                    ctx.beginPath();
-                    ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fill();
-                }
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex) <
+                    Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
+
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
+
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#a78bfa';
+
+                ctx.fillText(
+                    `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
+                    width - padding.right,
+                    padding.top
+                );
             }
 
         };
@@ -1463,21 +1334,6 @@
 
             const currentSample = validSamples[sampleIndex];
             const currentDistance = getCurrentGraphCoordinate();
-            const nearest = findNearestGraphPoint(data, currentDistance);
-            const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
-
-            drawCurrentComparison(
-                pedal,
-                nearest,
-                referenceNearest,
-                {
-                    valueOf: point => point.value,
-                    formatValue: value => `${Math.round(value * 100)}%`,
-                    scale: 100,
-                    deltaSuffix: '%',
-                    invertDeltaColor: pedal === 'brake',
-                }
-            );
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1488,6 +1344,13 @@
                     Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.index - playbackIndex) <
+                    Math.abs(best.index - playbackIndex)
+                        ? point
+                        : best
+                );
+
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
                 ctx.lineTo(cursorX, height - padding.bottom);
@@ -1495,12 +1358,20 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                if (nearest) {
-                    ctx.beginPath();
-                    ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fill();
-                }
+                ctx.beginPath();
+                ctx.arc(cursorX, yAt(nearest.value), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fill();
+
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = color;
+                ctx.fillText(
+                    `${Math.round(nearest.value * 100)}%`,
+                    width - padding.right,
+                    padding.top
+                );
             }
 
         };

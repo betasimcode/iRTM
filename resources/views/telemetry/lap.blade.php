@@ -40,6 +40,7 @@
             steering: false,
             sectors: false,
             setup: false,
+            suspension: false,
         },
 
     }"

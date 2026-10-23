@@ -608,6 +608,7 @@
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         };
 
         const buildGraphData = (series, field, normalize = value => Number(value), validate = () => true) =>
@@ -1510,6 +1511,252 @@
 
         const drawBrakeGraph = () =>
             drawPedalGraph('brake', '#ef4444');
+
+        // Las alturas se representan en mm; el JSON conserva los metros.
+        const hasNumericValue = value =>
+            value !== null &&
+            value !== undefined &&
+            value !== '' &&
+            Number.isFinite(Number(value));
+
+        const getRideHeight = (sample, channel) => {
+            const value = sample?.suspension?.ride_height_m?.[channel];
+            return hasNumericValue(value) ? Number(value) * 1000 : null;
+        };
+
+        const wheelRideHeightKeys = ['lf', 'rf', 'lr', 'rr'];
+        const availableWheelChannels = wheelRideHeightKeys.filter(channel =>
+            validSamples.some(sample =>
+                hasNumericValue(sample?.suspension?.ride_height_m?.[channel])
+            )
+        );
+
+        const hasFrontAxleHeight = validSamples.some(sample =>
+            hasNumericValue(sample?.suspension?.ride_height_m?.cf)
+        );
+        const hasRearAxleHeight = validSamples.some(sample =>
+            hasNumericValue(sample?.suspension?.ride_height_m?.cr)
+        );
+
+        // Preferir cuatro esquinas; si no existen, utilizar alturas centrales
+        // delantera/trasera. Los canales ausentes no se inventan.
+        const suspensionGraphMode = availableWheelChannels.length >= 3
+            ? 'wheels'
+            : hasFrontAxleHeight || hasRearAxleHeight
+                ? 'axles'
+                : availableWheelChannels.length > 0 ? 'wheels' : 'none';
+
+        const suspensionGraphSpecs = [
+            { key: 'lf', canvas: 'telemetry-graphics-suspension-lf', main: 'telemetry-suspension-lf-main', reference: 'telemetry-suspension-lf-reference', channel: 'lf' },
+            { key: 'rf', canvas: 'telemetry-graphics-suspension-rf', main: 'telemetry-suspension-rf-main', reference: 'telemetry-suspension-rf-reference', channel: 'rf' },
+            { key: 'lr', canvas: 'telemetry-graphics-suspension-lr', main: 'telemetry-suspension-lr-main', reference: 'telemetry-suspension-lr-reference', channel: 'lr' },
+            { key: 'rr', canvas: 'telemetry-graphics-suspension-rr', main: 'telemetry-suspension-rr-main', reference: 'telemetry-suspension-rr-reference', channel: 'rr' },
+        ];
+
+        const axleGraphSpecs = [
+            { key: 'front', canvas: 'telemetry-graphics-suspension-front', main: 'telemetry-suspension-front-main', reference: 'telemetry-suspension-front-reference', channel: 'cf' },
+            { key: 'rear', canvas: 'telemetry-graphics-suspension-rear', main: 'telemetry-suspension-rear-main', reference: 'telemetry-suspension-rear-reference', channel: 'cr' },
+        ];
+
+        const buildRideHeightData = (series, channel) => series
+            .map((sample, index) => {
+                const value = getRideHeight(sample, channel);
+                const x = getGraphCoordinate(sample, index, series);
+                if (value === null || !Number.isFinite(x)) return null;
+                return { x, value, index, sample };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.x - b.x);
+
+        const updateRideHeightReadout = (spec, mainPoint, referencePoint) => {
+            const mainElement = document.getElementById(spec.main);
+            const referenceElement = document.getElementById(spec.reference);
+            if (!mainElement || !referenceElement) return;
+
+            mainElement.style.color = getActiveLapColor();
+            referenceElement.style.color = getActiveReferenceLapColor();
+            mainElement.textContent = mainPoint ? mainPoint.value.toFixed(1) : '—';
+            referenceElement.textContent =
+                referenceLapNumber !== null && referencePoint
+                    ? referencePoint.value.toFixed(1)
+                    : '—';
+        };
+
+        const drawRideHeightGraph = spec => {
+            const graph = document.getElementById(spec.canvas);
+            if (!graph) return;
+
+            const width = graph.clientWidth;
+            const height = graph.clientHeight;
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            graph.width = Math.round(width * dpr);
+            graph.height = Math.round(height * dpr);
+
+            const ctx = graph.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const mainData = buildRideHeightData(validSamples, spec.channel);
+            const referenceData = buildRideHeightData(referenceSamples, spec.channel);
+            const currentX = getCurrentGraphCoordinate();
+            const mainPoint = findNearestGraphPoint(mainData, currentX);
+            const referencePoint = findNearestGraphPoint(referenceData, currentX);
+            updateRideHeightReadout(spec, mainPoint, referencePoint);
+
+            const allValues = [
+                ...mainData.map(point => point.value),
+                ...referenceData.map(point => point.value),
+            ];
+
+            if (allValues.length < 2) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px sans-serif';
+                ctx.fillText('Sin datos de altura', 8, 18);
+                return;
+            }
+
+            let minY = Math.floor(Math.min(...allValues) - 1);
+            let maxY = Math.ceil(Math.max(...allValues) + 1);
+            if (maxY - minY < 3) {
+                const midpoint = (maxY + minY) / 2;
+                minY = Math.floor(midpoint - 1.5);
+                maxY = Math.ceil(midpoint + 1.5);
+            }
+
+            const padding = { left: 34, right: 8, top: 8, bottom: 23 };
+            const plot = {
+                left: padding.left,
+                top: padding.top,
+                width: Math.max(1, width - padding.left - padding.right),
+                height: Math.max(1, height - padding.top - padding.bottom),
+            };
+
+            const domainRange = Math.max(0.000001, graphViewport.end - graphViewport.start);
+            const xAt = value =>
+                plot.left + ((value - graphViewport.start) / domainRange) * plot.width;
+            const yAt = value =>
+                plot.top + ((maxY - value) / Math.max(0.001, maxY - minY)) * plot.height;
+
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#94a3b8';
+
+            for (let tick = 0; tick <= 4; tick++) {
+                const ratio = tick / 4;
+                const y = plot.top + plot.height * ratio;
+                const value = maxY - (maxY - minY) * ratio;
+                ctx.beginPath();
+                ctx.moveTo(plot.left, y);
+                ctx.lineTo(plot.left + plot.width, y);
+                ctx.strokeStyle = 'rgba(148,163,184,0.18)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillText(value.toFixed(0), plot.left - 5, y);
+            }
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            [0, 0.5, 1].forEach(ratio => {
+                const value = graphViewport.start
+                    + (graphViewport.end - graphViewport.start) * ratio;
+                ctx.fillText(
+                    referenceMode === 'spatial'
+                        ? `${(value * 100).toFixed(0)}%`
+                        : formatGraphCoordinate(value),
+                    plot.left + plot.width * ratio,
+                    plot.top + plot.height + 5
+                );
+            });
+
+            const drawLine = (series, color, lineWidth) => {
+                if (series.length < 2) return;
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(plot.left, plot.top, plot.width, plot.height);
+                ctx.clip();
+                ctx.beginPath();
+
+                let started = false;
+                series.forEach(point => {
+                    const x = xAt(point.x);
+                    const y = yAt(point.value);
+                    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+                    if (!started) {
+                        ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+            };
+
+            drawLine(mainData, getActiveLapColor(), 1.6);
+            if (referenceLapNumber !== null) {
+                drawLine(referenceData, getActiveReferenceLapColor(), 1.5);
+            }
+
+            if (
+                Number.isFinite(currentX) &&
+                currentX >= graphViewport.start &&
+                currentX <= graphViewport.end
+            ) {
+                const cursorX = xAt(currentX);
+                ctx.beginPath();
+                ctx.moveTo(cursorX, plot.top);
+                ctx.lineTo(cursorX, plot.top + plot.height);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                if (mainPoint) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(mainPoint.value), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = getActiveLapColor();
+                    ctx.fill();
+                }
+                if (referenceLapNumber !== null && referencePoint) {
+                    ctx.beginPath();
+                    ctx.arc(cursorX, yAt(referencePoint.value), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = getActiveReferenceLapColor();
+                    ctx.fill();
+                }
+            }
+        };
+
+        const drawSuspensionGraphs = () => {
+            const wheelLayout = document.getElementById('telemetry-suspension-wheel-layout');
+            const axleLayout = document.getElementById('telemetry-suspension-axle-layout');
+            const noData = document.getElementById('telemetry-suspension-no-data');
+            const status = document.getElementById('telemetry-suspension-data-status');
+
+            wheelLayout?.classList.toggle('hidden', suspensionGraphMode !== 'wheels');
+            axleLayout?.classList.toggle('hidden', suspensionGraphMode !== 'axles');
+            noData?.classList.toggle('hidden', suspensionGraphMode !== 'none');
+
+            if (status) {
+                status.textContent = suspensionGraphMode === 'wheels'
+                    ? 'Ride height por rueda (mm) · Principal y referencia'
+                    : suspensionGraphMode === 'axles'
+                        ? 'Ride height delantero/trasero (mm) · modo por eje'
+                        : 'No hay canales ride height disponibles en esta vuelta';
+            }
+
+            const specs = suspensionGraphMode === 'wheels'
+                ? suspensionGraphSpecs
+                : suspensionGraphMode === 'axles' ? axleGraphSpecs : [];
+            specs.forEach(drawRideHeightGraph);
+        };
 
 
         const context = canvas.getContext('2d');
@@ -2863,6 +3110,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         };
 
 
@@ -3126,6 +3374,12 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 ['telemetry-graphics-gears', drawGearsGraph],
                 ['telemetry-graphics-throttle', drawThrottleGraph],
                 ['telemetry-graphics-brake', drawBrakeGraph],
+                ['telemetry-graphics-suspension-lf', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rf', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-lr', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rr', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-front', drawSuspensionGraphs],
+                ['telemetry-graphics-suspension-rear', drawSuspensionGraphs],
             ];
 
             graphCanvases.forEach(([id, draw]) => {
@@ -3144,6 +3398,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             drawGearsGraph();
             drawThrottleGraph();
             drawBrakeGraph();
+            drawSuspensionGraphs();
         });
 
         const boundGraphCanvases = new WeakSet();
@@ -3265,7 +3520,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             if (
                 button &&
-                /Speed|Gears|Throttle|Brake/.test(button.textContent)
+                /Speed|Gears|Throttle|Brake|Suspensi[oó]n/.test(button.textContent)
             ) {
                 requestAnimationFrame(observeGraphics);
             }

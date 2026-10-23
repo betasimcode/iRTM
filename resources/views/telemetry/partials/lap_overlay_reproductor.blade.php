@@ -105,8 +105,7 @@
             );
 
             Object.entries(savedColors).forEach(([key, color]) => {
-                // Ignorar colores antiguos (rojo, verde y cian) que ya no
-                // están permitidos para las trazadas de las vueltas.
+                // Ignorar colores antiguos que no pertenecen a la paleta aprobada.
                 if (
                     typeof color === 'string' &&
                     allowedLapColors.has(color.toUpperCase())
@@ -115,8 +114,6 @@
                 }
             });
 
-            // Retirar del almacenamiento las selecciones que pertenecían
-            // a la paleta anterior, no solo ocultarlas en el selector.
             if (Object.keys(savedColors).length !== manualLapColors.size) {
                 window.localStorage.setItem(
                     LAP_COLOR_STORAGE_KEY,
@@ -676,6 +673,105 @@
             ctx.restore();
         };
 
+        // Selecciona el valor de cada vuelta en la misma coordenada del análisis.
+        const findNearestGraphPoint = (series, coordinate) => {
+            if (
+                !Array.isArray(series) ||
+                series.length === 0 ||
+                !Number.isFinite(coordinate)
+            ) {
+                return null;
+            }
+
+            return series.reduce((best, point) =>
+                Math.abs(point.x - coordinate) < Math.abs(best.x - coordinate)
+                    ? point
+                    : best
+            );
+        };
+
+        // Indicadores actuales: vuelta principal, diferencia y vuelta de referencia.
+        const drawCurrentComparison = (
+            ctx,
+            width,
+            top,
+            mainPoint,
+            referencePoint,
+            options = {}
+        ) => {
+            if (!mainPoint) return;
+
+            const {
+                valueOf = point => point.value,
+                formatValue = value => String(value),
+                scale = 1,
+                deltaSuffix = '',
+                invertDeltaColor = false,
+                canCompare = () => true,
+                compactFormatValue = value => String(value),
+                compactDeltaSuffix = deltaSuffix,
+            } = options;
+
+            const mainValue = Number(valueOf(mainPoint));
+            if (!Number.isFinite(mainValue)) return;
+
+            const compact = width < 420;
+            const mainText = compact
+                ? compactFormatValue(mainValue)
+                : formatValue(mainValue);
+
+            ctx.save();
+            ctx.font = `bold ${compact ? 10 : 11}px sans-serif`;
+            ctx.textBaseline = 'top';
+            ctx.textAlign = 'right';
+            ctx.fillStyle = getActiveLapColor();
+
+            if (!referencePoint || referenceLapNumber == null) {
+                ctx.fillText(mainText, width - 10, top);
+                ctx.restore();
+                return;
+            }
+
+            const referenceValue = Number(valueOf(referencePoint));
+            if (!Number.isFinite(referenceValue)) {
+                ctx.fillText(mainText, width - 10, top);
+                ctx.restore();
+                return;
+            }
+
+            const mainRounded = Math.round(mainValue * scale);
+            const referenceRounded = Math.round(referenceValue * scale);
+            const difference = mainRounded - referenceRounded;
+            const mainX = compact ? width * 0.58 : width - 200;
+            const differenceX = compact ? width * 0.79 : width - 105;
+
+            ctx.fillText(mainText, mainX, top);
+
+            if (difference !== 0 && canCompare(mainValue, referenceValue)) {
+                const isPositive = difference > 0;
+                const useGreen = invertDeltaColor ? !isPositive : isPositive;
+                const suffix = compact ? compactDeltaSuffix : deltaSuffix;
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = useGreen ? '#22c55e' : '#ef4444';
+                ctx.fillText(
+                    `${difference > 0 ? '+' : ''}${difference}${suffix}`,
+                    differenceX,
+                    top
+                );
+            }
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = getActiveReferenceLapColor();
+            ctx.fillText(
+                compact ? compactFormatValue(referenceValue) : formatValue(referenceValue),
+                width - 10,
+                top
+            );
+
+            ctx.restore();
+        };
+
         const clampGraphViewport = () => {
             const range = graphViewport.end - graphViewport.start;
 
@@ -909,26 +1005,28 @@
                 ctx.lineWidth = 0.5;
                 ctx.stroke();
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex)
-                        < Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
+                const nearest = findNearestGraphPoint(data, currentDistance);
+                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
 
                 ctx.beginPath();
                 ctx.arc(cursorX, yAt(nearest.speed), 3.5, 0, Math.PI * 2);
                 ctx.fillStyle = '#f59e0b';
                 ctx.fill();
 
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#38bdf8';
-                ctx.fillText(
-                    `${nearest.speed.toFixed(0)} km/h`,
-                    width - padding.right,
-                    padding.top
+                drawCurrentComparison(
+                    ctx,
+                    width,
+                    padding.top,
+                    nearest,
+                    referenceNearest,
+                    {
+                        valueOf: point => point.speed,
+                        formatValue: value => `${Math.round(value)} km/h`,
+                        compactFormatValue: value => String(Math.round(value)),
+                        scale: 1,
+                        deltaSuffix: ' km/h',
+                        compactDeltaSuffix: '',
+                    }
                 );
             }
 
@@ -1018,9 +1116,8 @@
                             neutralIndex <= neutralEnd;
                             neutralIndex++
                         ) {
-                            // La serie principal dibuja con .gear, pero la referencia
-                            // utiliza .value dentro de drawReferenceSeries().
-                            // Sin sincronizar ambos campos, el N original seguía visible.
+                            // drawReferenceSeries usa .value; sincronizar ambos campos
+                            // evita que el neutro transitorio vuelva a dibujarse en referencia.
                             series[neutralIndex].gear = previous.gear;
                             series[neutralIndex].value = previous.gear;
                         }
@@ -1158,27 +1255,29 @@
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex) <
-                    Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
+                const nearest = findNearestGraphPoint(data, currentDistance);
+                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
 
                 ctx.beginPath();
                 ctx.arc(cursorX, yAt(nearest.gear), 3.5, 0, Math.PI * 2);
                 ctx.fillStyle = '#f59e0b';
                 ctx.fill();
 
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#a78bfa';
+                const formatGear = value =>
+                    value === 0 ? 'N' : value === -1 ? 'R' : String(value);
 
-                ctx.fillText(
-                    `Marcha ${nearest.gear === 0 ? 'N' : nearest.gear === -1 ? 'R' : nearest.gear}`,
-                    width - padding.right,
-                    padding.top
+                drawCurrentComparison(
+                    ctx,
+                    width,
+                    padding.top,
+                    nearest,
+                    referenceNearest,
+                    {
+                        valueOf: point => point.gear,
+                        formatValue: value => `Marcha ${formatGear(value)}`,
+                        compactFormatValue: value => formatGear(value),
+                        scale: 1,
+                    }
                 );
             }
 
@@ -1344,12 +1443,8 @@
                     Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
-                const nearest = data.reduce((best, point) =>
-                    Math.abs(point.index - playbackIndex) <
-                    Math.abs(best.index - playbackIndex)
-                        ? point
-                        : best
-                );
+                const nearest = findNearestGraphPoint(data, currentDistance);
+                const referenceNearest = findNearestGraphPoint(referenceData, currentDistance);
 
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
@@ -1363,14 +1458,20 @@
                 ctx.fillStyle = '#f59e0b';
                 ctx.fill();
 
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'top';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = color;
-                ctx.fillText(
-                    `${Math.round(nearest.value * 100)}%`,
-                    width - padding.right,
-                    padding.top
+                drawCurrentComparison(
+                    ctx,
+                    width,
+                    padding.top,
+                    nearest,
+                    referenceNearest,
+                    {
+                        valueOf: point => point.value,
+                        formatValue: value => `${Math.round(value * 100)}%`,
+                        compactFormatValue: value => `${Math.round(value * 100)}%`,
+                        scale: 100,
+                        deltaSuffix: '%',
+                        invertDeltaColor: pedal === 'brake',
+                    }
                 );
             }
 

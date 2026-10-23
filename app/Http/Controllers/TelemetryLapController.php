@@ -31,6 +31,7 @@ class TelemetryLapController extends Controller
 
         $referenceLapTelemetry = [];
         $referenceLapNumber = null;
+        $referenceLapTimeLabel = null;
         $referenceLapOptions = [];
         $referenceStintId = $request->integer('reference_stint') ?: null;
 
@@ -179,6 +180,19 @@ class TelemetryLapController extends Controller
                 empty($option['is_pit_lap'])
             ) {
                 $referenceLapNumber = $optionNumber;
+
+                $referenceTimeMs = (int) round((float) $lapTime * 1000);
+                $referenceMinutes = intdiv($referenceTimeMs, 60000);
+                $referenceSeconds = intdiv($referenceTimeMs % 60000, 1000);
+                $referenceMilliseconds = $referenceTimeMs % 1000;
+
+                $referenceLapTimeLabel = sprintf(
+                    '%d:%02d.%03d',
+                    $referenceMinutes,
+                    $referenceSeconds,
+                    $referenceMilliseconds
+                );
+
                 break;
             }
         }
@@ -259,6 +273,7 @@ class TelemetryLapController extends Controller
             'selectedLapNumber' => $selectedLapNumber,
             'referenceLapTelemetry' => $referenceLapTelemetry,
             'referenceLapNumber' => $referenceLapNumber,
+            'referenceLapTimeLabel' => $referenceLapTimeLabel,
             'referenceStintId' => $referenceStintId,
             'referenceLapOptions' => $referenceLapOptions,
         ]);

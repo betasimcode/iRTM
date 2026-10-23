@@ -64,10 +64,10 @@
 
 
 
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4
-            xl:grid-cols-[96px_minmax(260px,1.1fr)_minmax(290px,1.1fr)_minmax(180px,0.8fr)_minmax(220px,1fr)_minmax(260px,1.1fr)_minmax(220px,1fr)]">
+        <div class="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4
+            2xl:grid-cols-[minmax(90px,0.45fr)_minmax(155px,0.75fr)_minmax(300px,1.45fr)_minmax(190px,0.95fr)_minmax(160px,0.8fr)_minmax(180px,0.9fr)_minmax(160px,0.8fr)]">
 
-            <div class="max-w-28 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Stint #{{ $stint->id }}</p>
 
@@ -81,7 +81,7 @@
 
 
 
-            <div class="max-w-40 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Lap time</p>
 
@@ -110,7 +110,7 @@
             </div>
 
 
-            <div class="min-w-0 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
                 <p class="text-xs text-[var(--text-muted)]">Reference lap</p>
 
                 <div class="mt-1 flex min-w-0 items-center gap-2">
@@ -131,7 +131,7 @@
                         class="min-w-0 flex-1 truncate rounded-lg border
                             border-[var(--border)] bg-[var(--bg)] p-2
                             text-sm text-[var(--text)]"
-                    >{{ isset($referenceLapNumber) ? 'Vuelta ' . $referenceLapNumber : '---' }}</span>
+                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · Vuelta ' . $referenceLapNumber . ' - ' . ($referenceLapTimeLabel ?? '--:--.---') : '---' }}</span>
 
                     <div
                         id="reference-lap-color-host"
@@ -169,17 +169,38 @@
             </div>
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
-
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
                 <p class="text-xs text-[var(--text-muted)]">Reference mode</p>
 
+                <div class="mt-2 grid grid-cols-2 gap-1"
+                     id="telemetry-reference-mode"
+                     role="group"
+                     aria-label="Modo de análisis de referencia">
+                    <button
+                        type="button"
+                        id="reference-mode-temporal"
+                        data-reference-mode="temporal"
+                        aria-pressed="true"
+                        class="rounded-md border border-cyan-500 bg-cyan-600 px-2 py-2 text-xs font-semibold text-white"
+                    >Temporal</button>
+                    <button
+                        type="button"
+                        id="reference-mode-spatial"
+                        data-reference-mode="spatial"
+                        aria-pressed="false"
+                        class="rounded-md border border-[var(--border)] px-2 py-2 text-xs font-semibold text-[var(--text)] hover:border-[var(--accent)]"
+                    >Espacial</button>
+                </div>
 
-
+                {{-- <p id="reference-mode-description"
+                   class="mt-2 text-[11px] leading-tight text-[var(--text-muted)]">
+                    Sincronización por tiempo transcurrido.
+                </p> --}}
             </div>
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Fecha</p>
 
@@ -193,7 +214,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Aire / pista</p>
 
@@ -207,7 +228,7 @@
 
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Estado pista</p>
 
@@ -224,79 +245,6 @@
     </header>
 
 
-
-{{-- COMPARATIVA DE VUELTAS --}}
-<section class="rounded-xl border border-[var(--border)]
-                bg-[var(--card)] p-4">
-    <form
-        method="GET"
-        action="{{ route('telemetry.lap') }}"
-        class="flex flex-wrap items-end gap-4"
-    >
-        <input type="hidden" name="stint" value="{{ $stint->id }}">
-        <input
-            type="hidden"
-            name="lap"
-            value="{{ $selectedLapNumber }}"
-        >
-        <input
-            type="hidden"
-            name="reference_stint"
-            id="comparison_reference_stint"
-            value="{{ $referenceStintId ?? '' }}"
-        >
-
-        <input
-            type="hidden"
-            name="reference_lap"
-            id="comparison_reference_lap"
-            value="{{ $referenceLapNumber ?? '' }}"
-        >
-        <div class="min-w-56 flex-1">
-            <label
-                for="reference_lap"
-                class="mb-2 block text-xs uppercase tracking-wider
-                       text-[var(--text-muted)]"
-            >
-                Vuelta de referencia
-            </label>
-
-
-        </div>
-
-        <button
-            type="submit"
-            class="rounded-lg border border-[var(--border)]
-                   px-4 py-2 text-sm font-semibold
-                   text-[var(--text-title)] hover:border-[var(--accent)]"
-        >
-            Comparar
-        </button>
-
-        <div class="min-w-40">
-            <p class="text-xs uppercase tracking-wider
-                      text-[var(--text-muted)]">
-                Diferencia en este punto
-            </p>
-
-            <p
-                id="telemetry-lap-delta"
-                class="mt-1 font-mono-timing text-lg font-semibold
-                       text-[var(--text-title)]"
-            >
-                —
-            </p>
-        </div>
-    </form>
-
-    @if ($referenceLapNumber !== null)
-        <p class="mt-3 text-xs text-[var(--text-muted)]">
-            Referencia: vuelta {{ $referenceLapNumber }}.
-            Diferencia positiva: la vuelta principal pierde tiempo.
-            Diferencia negativa: la vuelta principal gana tiempo.
-        </p>
-    @endif
-</section>
 
 {{-- TOOLS + TRACK MAP + GRAPHICS --}}
     <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -501,13 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const referenceLapInput = document.getElementById('reference_lap');
     const referenceLabel = document.getElementById('reference-lap-label');
 
-    const comparisonStintInput = document.getElementById(
-        'comparison_reference_stint'
-    );
-    const comparisonLapInput = document.getElementById(
-        'comparison_reference_lap'
-    );
-
     const endpoint = @json(route('telemetry.lap.references'));
 
     let searchTimer = null;
@@ -652,13 +593,18 @@ document.addEventListener('DOMContentLoaded', () => {
         referenceStintInput.value = String(stint.stint_id);
         referenceLapInput.value = String(lap.number);
 
-        comparisonStintInput.value = String(stint.stint_id);
-        comparisonLapInput.value = String(lap.number);
-
         referenceLabel.textContent =
-            `#${stint.stint_id} · V${lap.number} · ${lap.lap_time_label}`;
+            `#${stint.stint_id} · Vuelta ${lap.number} - ${lap.lap_time_label}`;
+
+        // La selección recarga la vista con ambos identificadores para que
+        // Laravel resuelva las muestras y el overlay se inicialice con ellas.
+        const params = new URLSearchParams(window.location.search);
+        params.set('reference_stint', String(stint.stint_id));
+        params.set('reference_lap', String(lap.number));
 
         closeModal();
+        window.location.assign(`${window.location.pathname}?${params.toString()}`);
+
     }
 
     openButton.addEventListener('click', () => {

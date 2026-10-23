@@ -34,6 +34,8 @@
 
         const referenceSamples = @js($referenceLapTelemetry ?? []);
         const referenceLapNumber = @js($referenceLapNumber ?? null);
+        const referenceStintId = @js($referenceStintId ?? null);
+        const selectedLapDurationSeconds = @js($selectedLap['lap_time'] ?? null);
 
         const DEFAULT_REFERENCE_LAP_COLOR = '#E879F9';
 
@@ -91,8 +93,37 @@
         const lapColorTrigger = document.getElementById('lap-color-trigger');
         const lapColorPreview = document.getElementById('lap-color-preview');
 
-        // Conserva los cambios manuales mientras permanezca activa la página.
+        // Colores manuales asociados a una vuelta; se conservan entre recargas.
         const manualLapColors = new Map();
+        const LAP_COLOR_STORAGE_KEY = 'irtm.telemetry.manualLapColors';
+
+        try {
+            const savedColors = JSON.parse(
+                window.localStorage.getItem(LAP_COLOR_STORAGE_KEY) ?? '{}'
+            );
+
+            Object.entries(savedColors).forEach(([key, color]) => {
+                if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) {
+                    manualLapColors.set(key, color);
+                }
+            });
+        } catch (error) {
+            // La telemetría sigue funcionando aunque el navegador bloquee storage.
+            console.warn('[LapOverlay] No se pudieron recuperar colores guardados.');
+        }
+
+        const saveManualLapColor = (key, color) => {
+            manualLapColors.set(key, color);
+
+            try {
+                window.localStorage.setItem(
+                    LAP_COLOR_STORAGE_KEY,
+                    JSON.stringify(Object.fromEntries(manualLapColors))
+                );
+            } catch (error) {
+                console.warn('[LapOverlay] No se pudo persistir el color seleccionado.');
+            }
+        };
 
         const getSelectedLapKey = () => {
             if (lapSelector?.value) {
@@ -118,7 +149,7 @@
                 return DEFAULT_REFERENCE_LAP_COLOR;
             }
 
-            const key = `reference:${referenceLapNumber}`;
+            const key = `reference:${referenceStintId ?? ''}:${referenceLapNumber}`;
 
             return manualLapColors.get(key) ??
                 DEFAULT_REFERENCE_LAP_COLOR;
@@ -186,7 +217,7 @@
 
                         if (!key) return;
 
-                        manualLapColors.set(key, preset.value);
+                        saveManualLapColor(key, preset.value);
                         updateLapColorPreview();
                         updateVehicleColor();
                         colorMenu.classList.add('hidden');
@@ -242,12 +273,16 @@
             referenceColorTrigger.className =
                 'flex h-9 w-9 items-center justify-center rounded-lg ' +
                 'border border-[var(--border)]';
-            referenceColorTrigger.title = 'Color de la vuelta de referencia';
+            referenceColorTrigger.title =
+                `Color de referencia: ${lapColorPresets.find(
+                    color => color.value === getActiveReferenceLapColor()
+                )?.name ?? 'Personalizado'}`;
             referenceColorTrigger.setAttribute(
                 'aria-label',
                 'Cambiar color de la vuelta de referencia'
             );
-            referenceColorTrigger.disabled = referenceLapNumber == null;
+            referenceColorTrigger.disabled = referenceLapNumber == null || referenceSamples.length === 0;
+            referenceColorTrigger.classList.toggle('opacity-40', referenceColorTrigger.disabled);
 
             const referenceColorPreview = document.createElement('span');
             referenceColorPreview.style.cssText = [
@@ -297,8 +332,8 @@
                 option.addEventListener('click', () => {
                     if (referenceLapNumber == null) return;
 
-                    manualLapColors.set(
-                        `reference:${referenceLapNumber}`,
+                    saveManualLapColor(
+                        `reference:${referenceStintId ?? ''}:${referenceLapNumber}`,
                         preset.value
                     );
 
@@ -355,19 +390,169 @@
         const points = validSamples.map(sample => ({
             lat: Number(sample.position.lat),
             lon: Number(sample.position.lon),
-            sessionTime: Number.isFinite(Number(sample.session_time))
+            sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
                 ? Number(sample.session_time)
                 : null,
-            lapDistPct: Number.isFinite(Number(sample.lap_dist_pct))
+            lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
                 ? Number(sample.lap_dist_pct)
                 : null,
         }));
 
-        // Intervalo horizontal compartido por todas las gráficas.
-        // Los valores representan la distancia normalizada de la vuelta.
+        // El modo se conserva en el navegador, pero el temporal sigue siendo el predeterminado.
+        const REFERENCE_MODE_STORAGE_KEY = 'irtm.telemetry.referenceMode';
+        let referenceMode = 'temporal';
+        try {
+            referenceMode = window.localStorage.getItem(REFERENCE_MODE_STORAGE_KEY) === 'spatial'
+                ? 'spatial'
+                : 'temporal';
+        } catch (error) {
+            // El modo predeterminado continúa disponible si storage está bloqueado.
+        }
+
+        let spatialPct = 0;
+
+        const normalizeLapPct = value => {
+            if (value === null || value === undefined || value === '') return null;
+            const raw = Number(value);
+            if (!Number.isFinite(raw)) return null;
+            const normalized = raw > 1 && raw <= 100 ? raw / 100 : raw;
+            return normalized >= 0 && normalized <= 1 ? normalized : null;
+        };
+
+        const getSeriesDuration = series => {
+            if (!Array.isArray(series) || series.length < 2) return 0;
+            if (series[0]?.session_time == null || series[series.length - 1]?.session_time == null) return 0;
+            const first = Number(series[0]?.session_time);
+            const last = Number(series[series.length - 1]?.session_time);
+            return Number.isFinite(first) && Number.isFinite(last) && last > first
+                ? last - first
+                : 0;
+        };
+
+        const getGraphDomainEnd = (mode = referenceMode) => {
+            if (mode === 'spatial') return 1;
+
+            // El cronómetro de la comparativa temporal termina con la vuelta principal.
+            // Si faltan tiempos válidos, el reproductor usa su fallback de 60 segundos.
+            const metadataDuration = Number(selectedLapDurationSeconds);
+            const primaryDuration = getSeriesDuration(validSamples);
+            return Number.isFinite(metadataDuration) && metadataDuration > 0
+                ? metadataDuration
+                : primaryDuration > 0 ? primaryDuration : 60;
+        };
+
+        const getGraphCoordinate = (sample, index, series) => {
+            if (referenceMode === 'spatial') {
+                const pct = normalizeLapPct(sample?.lap_dist_pct);
+                return pct ?? index / Math.max(1, series.length - 1);
+            }
+
+            if (sample?.session_time == null || series[0]?.session_time == null) {
+                return index / Math.max(1, series.length - 1)
+                    * Math.max(getSeriesDuration(series), getGraphDomainEnd('temporal'));
+            }
+            const time = Number(sample?.session_time);
+            const startTime = Number(series[0]?.session_time);
+            if (Number.isFinite(time) && Number.isFinite(startTime)) {
+                return Math.max(0, time - startTime);
+            }
+
+            return index / Math.max(1, series.length - 1)
+                * Math.max(getSeriesDuration(series), getGraphDomainEnd('temporal'));
+        };
+
+        const formatGraphCoordinate = coordinate => {
+            if (referenceMode === 'spatial') {
+                const range = graphViewport.end - graphViewport.start;
+                return `${(coordinate * 100).toFixed(range < 0.1 ? 1 : 0)}%`;
+            }
+
+            const milliseconds = Math.max(0, Math.round(coordinate * 1000));
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.floor((milliseconds % 60000) / 1000);
+            const ms = milliseconds % 1000;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        };
+
+        const getIndexAtPct = (series, targetPct) => {
+            if (!Array.isArray(series) || series.length < 2) return 0;
+            const target = Math.max(0, Math.min(1, targetPct));
+            const getPct = (sample, index) =>
+                normalizeLapPct(sample?.lap_dist_pct ?? sample?.lapDistPct) ?? index / (series.length - 1);
+
+            let previousIndex = 0;
+            let previousPct = getPct(series[0], 0);
+
+            for (let index = 1; index < series.length; index++) {
+                const currentPct = getPct(series[index], index);
+                if (currentPct >= target) {
+                    const span = currentPct - previousPct;
+                    const fraction = span > 0
+                        ? (target - previousPct) / span
+                        : 0;
+                    return previousIndex + Math.max(0, Math.min(1, fraction));
+                }
+                previousIndex = index;
+                previousPct = currentPct;
+            }
+
+            return series.length - 1;
+        };
+
+        const getCurrentGraphCoordinate = () => {
+            if (referenceMode === 'spatial') return spatialPct;
+
+            const lastIndex = Math.max(0, validSamples.length - 1);
+            const index = Math.max(0, Math.min(lastIndex, playbackIndex));
+            const lower = Math.floor(index);
+            const upper = Math.min(lower + 1, lastIndex);
+            const fraction = index - lower;
+            const first = getGraphCoordinate(validSamples[lower] ?? {}, lower, validSamples);
+            const second = getGraphCoordinate(validSamples[upper] ?? {}, upper, validSamples);
+            return first + (second - first) * fraction;
+        };
+
+        // Invierte el eje visible y resuelve la muestra fraccional más cercana
+        // para que el deslizador temporal represente segundos reales, no índices.
+        const getIndexAtGraphCoordinate = coordinate => {
+            if (referenceMode === 'spatial') {
+                return getIndexAtPct(points, coordinate);
+            }
+
+            if (validSamples.length < 2) return 0;
+
+            const target = Math.max(
+                0,
+                Math.min(getGraphDomainEnd('temporal'), Number(coordinate) || 0)
+            );
+
+            let previousX = getGraphCoordinate(validSamples[0], 0, validSamples);
+
+            for (let index = 1; index < validSamples.length; index++) {
+                const currentX = getGraphCoordinate(
+                    validSamples[index],
+                    index,
+                    validSamples
+                );
+
+                if (target <= currentX) {
+                    const span = currentX - previousX;
+                    const fraction = span > 0
+                        ? Math.max(0, Math.min(1, (target - previousX) / span))
+                        : 0;
+
+                    return index - 1 + fraction;
+                }
+
+                previousX = currentX;
+            }
+
+            return validSamples.length - 1;
+        };
+
         const graphViewport = {
             start: 0,
-            end: 1,
+            end: getGraphDomainEnd(referenceMode),
         };
 
         // Durante la reproducción, desplaza la ventana visible sin alterar el zoom.
@@ -381,22 +566,14 @@
             );
 
             const sample = validSamples[sampleIndex];
-            const rawDistance = Number(sample?.lap_dist_pct);
-
-            const distance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const distance = getGraphCoordinate(sample, sampleIndex, validSamples);
 
             if (!Number.isFinite(distance)) return;
 
             const range = graphViewport.end - graphViewport.start;
 
             // Con la vuelta completa visible no hace falta desplazar la gráfica.
-            if (range >= 0.999) return;
+            if (range >= getGraphDomainEnd() * 0.999) return;
 
             const cursorRatio = (distance - graphViewport.start) / range;
             const targetRatio = 0.65;
@@ -420,12 +597,76 @@
             drawBrakeGraph();
         };
 
+        const buildGraphData = (series, field, normalize = value => Number(value), validate = () => true) =>
+            series.map((sample, index) => {
+                const value = normalize(sample?.[field]);
+                const x = getGraphCoordinate(sample, index, series);
+
+                if (!Number.isFinite(x) || !Number.isFinite(value) || !validate(value, sample)) {
+                    return null;
+                }
+
+                return { x, value, index, sample };
+            }).filter(Boolean).sort((a, b) => a.x - b.x);
+
+        const drawReferenceSeries = (ctx, data, xAt, yAt, plot, stepped = false) => {
+            if (data.length < 2 || referenceLapNumber == null) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(plot.left, plot.top, plot.width, plot.height);
+            ctx.clip();
+            ctx.beginPath();
+            ctx.moveTo(xAt(data[0].x), yAt(data[0].value));
+
+            for (let index = 1; index < data.length; index++) {
+                const previous = data[index - 1];
+                const current = data[index];
+                const x = xAt(current.x);
+
+                if (stepped) {
+                    ctx.lineTo(x, yAt(previous.value));
+                    if (current.value !== previous.value) {
+                        ctx.lineTo(x, yAt(current.value));
+                    }
+                } else {
+                    ctx.lineTo(x, yAt(current.value));
+                }
+            }
+
+            ctx.strokeStyle = getActiveReferenceLapColor();
+            ctx.lineWidth = 1.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            const cursorXValue = getCurrentGraphCoordinate();
+            if (
+                Number.isFinite(cursorXValue) &&
+                cursorXValue >= graphViewport.start &&
+                cursorXValue <= graphViewport.end
+            ) {
+                const nearest = data.reduce((best, point) =>
+                    Math.abs(point.x - cursorXValue) < Math.abs(best.x - cursorXValue)
+                        ? point
+                        : best
+                );
+
+                ctx.beginPath();
+                ctx.arc(xAt(cursorXValue), yAt(nearest.value), 3, 0, Math.PI * 2);
+                ctx.fillStyle = getActiveReferenceLapColor();
+                ctx.fill();
+            }
+
+            ctx.restore();
+        };
+
         const clampGraphViewport = () => {
             const range = graphViewport.end - graphViewport.start;
 
-            if (range >= 1) {
+            const domainEnd = getGraphDomainEnd();
+            if (range >= domainEnd) {
                 graphViewport.start = 0;
-                graphViewport.end = 1;
+                graphViewport.end = domainEnd;
                 return;
             }
 
@@ -434,18 +675,18 @@
                 graphViewport.start = 0;
             }
 
-            if (graphViewport.end > 1) {
-                graphViewport.start -= graphViewport.end - 1;
-                graphViewport.end = 1;
+            if (graphViewport.end > domainEnd) {
+                graphViewport.start -= graphViewport.end - domainEnd;
+                graphViewport.end = domainEnd;
             }
 
             graphViewport.start = Math.max(0, graphViewport.start);
-            graphViewport.end = Math.min(1, graphViewport.end);
+            graphViewport.end = Math.min(domainEnd, graphViewport.end);
         };
 
         const resetGraphZoom = () => {
             graphViewport.start = 0;
-            graphViewport.end = 1;
+            graphViewport.end = getGraphDomainEnd();
             redrawAllGraphs();
         };
 
@@ -456,9 +697,10 @@
 
         const zoomGraphAt = (distance, factor) => {
             const oldRange = graphViewport.end - graphViewport.start;
+            const domainEnd = getGraphDomainEnd();
             const newRange = Math.max(
-                GRAPH_MIN_RANGE,
-                Math.min(1, oldRange * factor)
+                domainEnd * 0.005,
+                Math.min(domainEnd, oldRange * factor)
             );
 
             const anchor = Math.max(
@@ -520,37 +762,19 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawSpeed = Number(sample.speed_kph);
+            const data = buildGraphData(
+                validSamples,
+                'speed_kph',
+                value => Number(value),
+                value => value >= 0
+            ).map(point => ({ ...point, speed: point.value }));
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        !Number.isFinite(rawSpeed) ||
-                        rawSpeed < 0
-                    ) {
-                        return null;
-                    }
-
-                    // lap_dist_pct normalmente se expresa entre 0 y 1.
-                    // Si llega en porcentaje, convertirlo al mismo rango.
-                    const distance = rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance;
-
-                    if (distance < 0 || distance > 1) {
-                        return null;
-                    }
-
-                    return {
-                        x: distance,
-                        speed: rawSpeed,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                'speed_kph',
+                value => Number(value),
+                value => value >= 0
+            ).map(point => ({ ...point, speed: point.value }));
 
             if (data.length < 2) {
                 ctx.fillStyle = '#94a3b8';
@@ -559,7 +783,11 @@
                 return;
             }
 
-            const maxSpeed = Math.max(50, ...data.map(point => point.speed));
+            const maxSpeed = Math.max(
+                50,
+                ...data.map(point => point.speed),
+                ...referenceData.map(point => point.speed)
+            );
             const minSpeed = 0;
 
             const padding = { top: 10, right: 10, bottom: 24, left: 38 };
@@ -609,9 +837,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -638,22 +864,18 @@
             ctx.stroke();
             ctx.restore();
 
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            });
+
             // Cursor asociado al índice de reproducción actual.
             const sampleIndex = Math.min(
                 Math.floor(playbackIndex),
                 validSamples.length - 1
             );
 
-            const currentSample = validSamples[sampleIndex];
-            const rawCurrentDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawCurrentDistance)
-                ? (
-                    rawCurrentDistance > 1 && rawCurrentDistance <= 100
-                        ? rawCurrentDistance / 100
-                        : rawCurrentDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -661,7 +883,7 @@
                 currentDistance <= graphViewport.end
             ) {
                 const cursorX = xAt(
-                    Math.max(0, Math.min(1, currentDistance))
+                    Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
                 ctx.beginPath();
@@ -718,38 +940,19 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawGear = Number(sample.gear);
-                    const time = Number(sample.session_time);
+            const data = buildGraphData(
+                validSamples,
+                'gear',
+                value => Number(value),
+                (value, sample) => sample.gear != null && value >= -1 && value <= 10
+            ).map(point => ({ ...point, gear: point.value, time: Number(point.sample.session_time) }));
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        sample.gear == null ||
-                        !Number.isFinite(rawGear) ||
-                        rawGear < -1 ||
-                        rawGear > 10
-                    ) {
-                        return null;
-                    }
-
-                    const distance =
-                        rawDistance > 1 && rawDistance <= 100
-                            ? rawDistance / 100
-                            : rawDistance;
-
-                    if (distance < 0 || distance > 1) return null;
-
-                    return {
-                        x: distance,
-                        gear: rawGear,
-                        time,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                'gear',
+                value => Number(value),
+                (value, sample) => sample.gear != null && value >= -1 && value <= 10
+            ).map(point => ({ ...point, gear: point.value, time: Number(point.sample.session_time) }));
 
             // Filtro visual de neutral transitorio.
             // Solo afecta a la serie representada en la gráfica.
@@ -810,7 +1013,7 @@
                 return;
             }
 
-            const gears = data.map(point => point.gear);
+            const gears = [...data, ...referenceData].map(point => point.gear);
             const minGear = Math.min(0, ...gears);
             const maxGear = Math.max(1, ...gears);
 
@@ -861,9 +1064,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -902,6 +1103,11 @@
             ctx.stroke();
             ctx.restore();
 
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            }, true);
+
             // Cursor compartido con Speed y el mapa.
             const sampleIndex = Math.min(
                 Math.floor(playbackIndex),
@@ -909,22 +1115,14 @@
             );
 
             const currentSample = validSamples[sampleIndex];
-            const rawDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&
                 currentDistance >= graphViewport.start &&
                 currentDistance <= graphViewport.end
             ) {
-                const cursorX = xAt(Math.max(0, Math.min(1, currentDistance)));
+                const cursorX = xAt(Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance)));
 
                 ctx.beginPath();
                 ctx.moveTo(cursorX, padding.top);
@@ -984,45 +1182,24 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, width, height);
 
-            const data = validSamples
-                .map((sample, index) => {
-                    const rawDistance = Number(sample.lap_dist_pct);
-                    const rawValue = sample[pedal] == null
-                        ? NaN
-                        : Number(sample[pedal]);
+            const normalizePedal = raw => {
+                const value = Number(raw);
+                return value > 1 && value <= 100 ? value / 100 : value;
+            };
 
-                    if (
-                        !Number.isFinite(rawDistance) ||
-                        !Number.isFinite(rawValue)
-                    ) {
-                        return null;
-                    }
+            const data = buildGraphData(
+                validSamples,
+                pedal,
+                normalizePedal,
+                value => value >= 0 && value <= 1
+            );
 
-                    const distance =
-                        rawDistance > 1 && rawDistance <= 100
-                            ? rawDistance / 100
-                            : rawDistance;
-
-                    // Admite señales expresadas como fracción o porcentaje.
-                    const value = rawValue > 1 && rawValue <= 100
-                        ? rawValue / 100
-                        : rawValue;
-
-                    if (
-                        distance < 0 || distance > 1 ||
-                        value < 0 || value > 1
-                    ) {
-                        return null;
-                    }
-
-                    return {
-                        x: distance,
-                        value,
-                        index,
-                    };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.x - b.x);
+            const referenceData = buildGraphData(
+                referenceSamples,
+                pedal,
+                normalizePedal,
+                value => value >= 0 && value <= 1
+            );
 
             const padding = {
                 top: 12,
@@ -1079,9 +1256,7 @@
                 const x = xAt(distance);
 
                 ctx.fillText(
-                    `${(distance * 100).toFixed(
-                        graphViewport.end - graphViewport.start < 0.1 ? 1 : 0
-                    )}%`,
+                    formatGraphCoordinate(distance),
                     x,
                     height - padding.bottom + 7
                 );
@@ -1119,6 +1294,11 @@
             ctx.stroke();
             ctx.restore();
 
+            drawReferenceSeries(ctx, referenceData, xAt, yAt, {
+                left: padding.left, top: padding.top,
+                width: plotWidth, height: plotHeight,
+            });
+
             // Posición actual sincronizada con el reproductor.
             const sampleIndex = Math.min(
                 Math.floor(playbackIndex),
@@ -1126,15 +1306,7 @@
             );
 
             const currentSample = validSamples[sampleIndex];
-            const rawDistance = Number(currentSample?.lap_dist_pct);
-
-            const currentDistance = Number.isFinite(rawDistance)
-                ? (
-                    rawDistance > 1 && rawDistance <= 100
-                        ? rawDistance / 100
-                        : rawDistance
-                )
-                : sampleIndex / Math.max(1, validSamples.length - 1);
+            const currentDistance = getCurrentGraphCoordinate();
 
             if (
                 Number.isFinite(currentDistance) &&
@@ -1142,7 +1314,7 @@
                 currentDistance <= graphViewport.end
             ) {
                 const cursorX = xAt(
-                    Math.max(0, Math.min(1, currentDistance))
+                    Math.max(graphViewport.start, Math.min(getGraphDomainEnd(), currentDistance))
                 );
 
                 const nearest = data.reduce((best, point) =>
@@ -1331,12 +1503,21 @@
         let previousFrameTime = null;
         let playbackSpeed = Number(speedSelect?.value ?? 1);
 
+        if (referenceMode === 'spatial') {
+            spatialPct = normalizeLapPct(points[0]?.lapDistPct) ?? 0;
+            playbackIndex = getIndexAtPct(points, spatialPct);
+        }
+
         const hasSessionTimes = points.every(point => point.sessionTime !== null);
         const sessionDuration = hasSessionTimes
             ? points[points.length - 1].sessionTime - points[0].sessionTime
             : 0;
-        // Si el IBT no trae tiempos utilizables, reproducimos la vuelta en 60 segundos.
-        const playbackDuration = sessionDuration > 0 ? sessionDuration : 60;
+        // Preferir la duración de vuelta validada en el resumen; recurrir a
+        // las muestras solo si el resumen no dispone de un tiempo utilizable.
+        const metadataPlaybackDuration = Number(selectedLapDurationSeconds);
+        const playbackDuration = Number.isFinite(metadataPlaybackDuration) && metadataPlaybackDuration > 0
+            ? metadataPlaybackDuration
+            : sessionDuration > 0 ? sessionDuration : 60;
 
         // Estado de navegación independiente de la calibración del circuito.
         const view = { zoom: 1, panX: 0, panY: 0 };
@@ -1345,9 +1526,12 @@
         const ZOOM_STEP = 1.2;
 
         let isDragging = false;
+        let isSpatialDragging = false;
         let dragStart = null;
 
         let isFollowEnabled = false;
+        let mainMapDrawPoints = [];
+        let referenceMapDrawPoints = [];
 
         const applyContainerTransform = () => {
             container.style.transformOrigin = '0 0';
@@ -1406,6 +1590,14 @@
         viewport.addEventListener('pointerdown', event => {
             if (event.button !== 0 || isFollowEnabled) return;
 
+            if (referenceMode === 'spatial' && !event.shiftKey) {
+                isSpatialDragging = true;
+                viewport.setPointerCapture(event.pointerId);
+                viewport.style.cursor = 'crosshair';
+                updateSpatialPositionFromMap(event);
+                return;
+            }
+
             isDragging = true;
             dragStart = {
                 x: event.clientX,
@@ -1419,17 +1611,28 @@
         });
 
         viewport.addEventListener('pointermove', event => {
-            if (!isDragging || !dragStart) return;
+            if (isDragging && dragStart) {
+                view.panX = dragStart.panX + event.clientX - dragStart.x;
+                view.panY = dragStart.panY + event.clientY - dragStart.y;
+                updateView();
+                return;
+            }
 
-            view.panX = dragStart.panX + event.clientX - dragStart.x;
-            view.panY = dragStart.panY + event.clientY - dragStart.y;
-            updateView();
+            if (
+                referenceMode === 'spatial' &&
+                (event.buttons === 0 || isSpatialDragging)
+            ) {
+                updateSpatialPositionFromMap(event);
+            }
         });
 
         const endDrag = () => {
             isDragging = false;
+            isSpatialDragging = false;
             dragStart = null;
-            viewport.style.cursor = 'grab';
+            viewport.style.cursor = referenceMode === 'spatial'
+                ? 'crosshair'
+                : 'grab';
         };
 
         viewport.addEventListener('pointerup', endDrag);
@@ -1481,10 +1684,10 @@
                     * radians * 6371000 * cosLat,
                 y: (Number(sample.position.lat) - originLat)
                     * radians * 6371000,
-                lapDistPct: Number.isFinite(Number(sample.lap_dist_pct))
+                lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
                     ? Number(sample.lap_dist_pct)
                     : null,
-                sessionTime: Number.isFinite(Number(sample.session_time))
+                sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
                     ? Number(sample.session_time)
                     : null,
             }));
@@ -1494,6 +1697,8 @@
             y: (point.lat - originLat) * radians * 6371000,
         }));
 
+        // Mantener la calibración del mapa basada en la vuelta principal.
+        // La referencia utiliza la misma transformación, sin desplazar el mapa.
         const minX = Math.min(...projected.map(p => p.x));
         const maxX = Math.max(...projected.map(p => p.x));
         const minY = Math.min(...projected.map(p => p.y));
@@ -1506,6 +1711,43 @@
             console.warn('[GPS overlay] Extensión GPS no válida.', trackId);
             return;
         }
+
+        const updateSpatialPositionFromMap = event => {
+            if (referenceMode !== 'spatial') return;
+
+            const rect = viewport.getBoundingClientRect();
+            const pointerX = event.clientX - rect.left;
+            const pointerY = event.clientY - rect.top;
+            let nearest = null;
+
+            const inspectPoints = points => {
+                points.forEach(point => {
+                    const screenX = point.x * view.zoom + view.panX;
+                    const screenY = point.y * view.zoom + view.panY;
+                    const distance = (screenX - pointerX) ** 2 + (screenY - pointerY) ** 2;
+
+                    if (nearest === null || distance < nearest.distance) {
+                        nearest = {
+                            distance,
+                            pct: normalizeLapPct(point.lapDistPct),
+                        };
+                    }
+                });
+            };
+
+            inspectPoints(mainMapDrawPoints);
+            inspectPoints(referenceMapDrawPoints);
+
+            // Evitar saltos si el puntero está lejos de las trazadas.
+            const maxCursorDistance = 26;
+            if (
+                nearest &&
+                nearest.pct !== null &&
+                nearest.distance <= maxCursorDistance ** 2
+            ) {
+                setSpatialPosition(nearest.pct);
+            }
+        };
 
         const drawOverlay = () => {
             const width = viewport.clientWidth;
@@ -1539,7 +1781,7 @@
             const cosAngle = Math.cos(angle);
             const sinAngle = Math.sin(angle);
 
-            const drawPoints = projected.map(point => {
+            const drawPoints = projected.map((point, index) => {
                 const x = (point.x - centerX) * fitScale;
                 const y = -(point.y - centerY) * fitScale;
 
@@ -1553,8 +1795,12 @@
                     y: height / 2
                         + rotatedY * calibration.scale
                         + height * calibration.offset_y_pct / 100,
+                    lapDistPct: normalizeLapPct(points[index]?.lapDistPct)
+                        ?? index / Math.max(1, projected.length - 1),
                 };
             });
+
+            mainMapDrawPoints = drawPoints;
 
             context.lineJoin = 'round';
             context.lineCap = 'round';
@@ -1564,7 +1810,7 @@
 
 
 
-            const referenceDrawPoints = referenceProjected.map(point => {
+            const referenceDrawPoints = referenceProjected.map((point, index) => {
                 const x = (point.x - centerX) * fitScale;
                 const y = -(point.y - centerY) * fitScale;
 
@@ -1578,10 +1824,13 @@
                     y: height / 2
                         + rotatedY * calibration.scale
                         + height * calibration.offset_y_pct / 100,
-                    lapDistPct: point.lapDistPct,
+                    lapDistPct: normalizeLapPct(point.lapDistPct)
+                        ?? index / Math.max(1, referenceProjected.length - 1),
                     sessionTime: point.sessionTime,
                 };
             });
+
+            referenceMapDrawPoints = referenceDrawPoints;
 
             // Trazada completa de la vuelta de referencia.
 
@@ -1624,15 +1873,17 @@
                         / Math.max(1, points.length - 1);
                 }
 
-                const visibleCount = Math.max(
-                    1,
-                    Math.min(
-                        referenceDrawPoints.length - 1,
-                        Math.floor(
-                            refProgress * (referenceDrawPoints.length - 1)
+                const visibleCount = referenceMode === 'spatial'
+                    ? referenceDrawPoints.length - 1
+                    : Math.max(
+                        1,
+                        Math.min(
+                            referenceDrawPoints.length - 1,
+                            Math.floor(
+                                refProgress * (referenceDrawPoints.length - 1)
+                            )
                         )
-                    )
-                );
+                    );
 
                 context.save();
                 context.beginPath();
@@ -1697,7 +1948,23 @@
                 let refY;
                 let refAngle;
 
-                if (hasTimeData) {
+                if (referenceMode === 'spatial') {
+                    const refProgress = getIndexAtPct(referenceDrawPoints, spatialPct);
+                    const refIndex = Math.min(
+                        Math.floor(refProgress),
+                        referenceDrawPoints.length - 2
+                    );
+                    const refFraction = refProgress - refIndex;
+                    const refStart = referenceDrawPoints[refIndex];
+                    const refEnd = referenceDrawPoints[refIndex + 1];
+
+                    refX = refStart.x + (refEnd.x - refStart.x) * refFraction;
+                    refY = refStart.y + (refEnd.y - refStart.y) * refFraction;
+                    refAngle = Math.atan2(
+                        refEnd.y - refStart.y,
+                        refEnd.x - refStart.x
+                    );
+                } else if (hasTimeData) {
                     // Tiempo transcurrido desde el inicio de la vuelta principal.
                     const targetElapsed =
                         mainStartTime +
@@ -1823,11 +2090,14 @@
 
             // Trazada de la vuelta con su color asignado.
             const completedIndex = Math.floor(playbackIndex);
+            const traceEndIndex = referenceMode === 'spatial'
+                ? drawPoints.length - 1
+                : completedIndex;
             context.lineWidth = 0.1;
             context.strokeStyle = getActiveLapColor();
             context.beginPath();
             context.moveTo(drawPoints[0].x, drawPoints[0].y);
-            for (let index = 1; index <= completedIndex && index < drawPoints.length; index++) {
+            for (let index = 1; index <= traceEndIndex && index < drawPoints.length; index++) {
                 context.lineTo(drawPoints[index].x, drawPoints[index].y);
             }
 
@@ -1846,7 +2116,11 @@
                 view.panY = height / 2 - currentPoint.y * view.zoom;
                 applyContainerTransform();
             }
-            if (playbackIndex > completedIndex && nextIndex !== completedIndex) {
+            if (
+                referenceMode === 'temporal' &&
+                playbackIndex > completedIndex &&
+                nextIndex !== completedIndex
+            ) {
                 context.lineTo(currentPoint.x, currentPoint.y);
             }
             context.stroke();
@@ -2412,13 +2686,19 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
 
         const updatePlaybackControls = () => {
-            const percent =
-                playbackIndex / Math.max(1, points.length - 1) * 100;
+            const progressPercent = referenceMode === 'spatial'
+                ? spatialPct * 100
+                : getCurrentGraphCoordinate()
+                    / Math.max(0.001, getGraphDomainEnd('temporal')) * 100;
 
-            if (progressSlider) progressSlider.value = String(percent);
+            if (progressSlider) {
+                progressSlider.value = String(progressPercent);
+            }
 
             if (progressLabel) {
-                progressLabel.textContent = `${Math.round(percent)}%`;
+                progressLabel.textContent = referenceMode === 'spatial'
+                    ? `${(spatialPct * 100).toFixed(1)}%`
+                    : formatGraphCoordinate(getCurrentGraphCoordinate());
             }
 
             updateTelemetryIndicators();
@@ -2439,6 +2719,29 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+        };
+
+        const setSpatialPosition = pct => {
+            if (referenceMode !== 'spatial') return;
+
+            spatialPct = Math.max(0, Math.min(1, Number(pct) || 0));
+            stopPlayback();
+            playbackIndex = getIndexAtPct(points, spatialPct);
+
+            // Si el cursor llega desde el mapa fuera de la zona ampliada,
+            // desplazar la ventana de las gráficas conservando su nivel de zoom.
+            const visibleRange = graphViewport.end - graphViewport.start;
+            if (
+                visibleRange < getGraphDomainEnd() * 0.999 &&
+                (spatialPct < graphViewport.start || spatialPct > graphViewport.end)
+            ) {
+                graphViewport.start = spatialPct - visibleRange / 2;
+                graphViewport.end = graphViewport.start + visibleRange;
+                clampGraphViewport();
+            }
+
+            drawOverlay();
+            updatePlaybackControls();
         };
 
         const playbackFrame = timestamp => {
@@ -2462,6 +2765,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         };
 
         const startPlayback = () => {
+            if (referenceMode === 'spatial') return;
             if (playbackIndex >= points.length - 1) playbackIndex = 0;
             if (isPlaying) return;
             isPlaying = true;
@@ -2478,14 +2782,145 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             updatePlaybackControls();
         });
         progressSlider?.addEventListener('input', () => {
-            stopPlayback();
             const percent = Number(progressSlider.value) / 100;
-            playbackIndex = percent * (points.length - 1);
+
+            if (referenceMode === 'spatial') {
+                setSpatialPosition(percent);
+                return;
+            }
+
+            stopPlayback();
+            playbackIndex = getIndexAtGraphCoordinate(
+                percent * getGraphDomainEnd('temporal')
+            );
             drawOverlay();
             updatePlaybackControls();
         });
         speedSelect?.addEventListener('change', () => {
             playbackSpeed = Math.max(0.1, Number(speedSelect.value) || 1);
+        });
+
+        const temporalModeButton = document.getElementById('reference-mode-temporal');
+        const spatialModeButton = document.getElementById('reference-mode-spatial');
+        const referenceModeDescription = document.getElementById('reference-mode-description');
+        const playbackDescription = document.getElementById('telemetry-playback-description');
+        const temporalControls = document.getElementById('telemetry-playback-time-controls');
+        const speedControl = document.getElementById('telemetry-playback-speed-control');
+        const progressStartLabel = document.getElementById('telemetry-lap-progress-start');
+        const progressEndLabel = document.getElementById('telemetry-lap-progress-end');
+
+        const applyModeButtonStyle = (button, active) => {
+            if (!button) return;
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('bg-cyan-600', active);
+            button.classList.toggle('text-white', active);
+            button.classList.toggle('border-cyan-500', active);
+            button.classList.toggle('border-[var(--border)]', !active);
+            button.classList.toggle('text-[var(--text)]', !active);
+        };
+
+        const updateReferenceModeUI = () => {
+            const spatial = referenceMode === 'spatial';
+
+            applyModeButtonStyle(temporalModeButton, !spatial);
+            applyModeButtonStyle(spatialModeButton, spatial);
+
+            if (referenceModeDescription) {
+                referenceModeDescription.textContent = spatial
+                    ? 'Sincronización por posición: 0–100 % del recorrido.'
+                    : 'Sincronización por tiempo transcurrido.';
+            }
+
+            if (playbackDescription) {
+                playbackDescription.textContent = spatial
+                    ? 'Explora el mismo punto de pista en ambas vueltas.'
+                    : 'Reproduce la trazada GPS siguiendo el tiempo de vuelta.';
+            }
+
+            if (temporalControls) temporalControls.style.display = spatial ? 'none' : '';
+            if (speedControl) speedControl.style.display = spatial ? 'none' : '';
+            viewport.style.cursor = spatial ? 'crosshair' : 'grab';
+
+            if (progressSlider) {
+                progressSlider.setAttribute(
+                    'aria-label',
+                    spatial
+                        ? 'Posición de análisis en el recorrido, de 0 a 100 %'
+                        : 'Posición temporal de reproducción en la vuelta'
+                );
+            }
+
+            if (progressStartLabel) {
+                progressStartLabel.textContent = spatial
+                    ? '0 % · Salida/meta'
+                    : '00:00.000 · Salida/meta';
+            }
+
+            if (progressEndLabel) {
+                progressEndLabel.textContent = spatial
+                    ? '100 % · Meta'
+                    : `${formatLapTime(playbackDuration * 1000)} · Fin de vuelta`;
+            }
+
+            if (progressLabel) {
+                progressLabel.textContent = spatial
+                    ? `${(spatialPct * 100).toFixed(1)}%`
+                    : formatGraphCoordinate(getCurrentGraphCoordinate());
+            }
+        };
+
+        const changeReferenceMode = mode => {
+            if (mode !== 'temporal' && mode !== 'spatial') return;
+
+            stopPlayback();
+
+            if (mode === 'spatial' && referenceMode !== 'spatial') {
+                const mainIndex = Math.min(
+                    Math.floor(playbackIndex),
+                    Math.max(0, points.length - 1)
+                );
+                const nextIndex = Math.min(mainIndex + 1, points.length - 1);
+                const fraction = playbackIndex - mainIndex;
+                const currentPct = normalizeLapPct(points[mainIndex]?.lapDistPct);
+                const nextPct = normalizeLapPct(points[nextIndex]?.lapDistPct);
+
+                spatialPct = currentPct !== null && nextPct !== null
+                    ? currentPct + (nextPct - currentPct) * fraction
+                    : mainIndex / Math.max(1, points.length - 1);
+
+                playbackIndex = getIndexAtPct(points, spatialPct);
+            } else if (mode === 'temporal' && referenceMode === 'spatial') {
+                playbackIndex = getIndexAtPct(points, spatialPct);
+            }
+
+            referenceMode = mode;
+            if (referenceMode === 'spatial') {
+                isFollowEnabled = false;
+            }
+
+            try {
+                window.localStorage.setItem(REFERENCE_MODE_STORAGE_KEY, mode);
+            } catch (error) {
+                // El cambio funciona durante esta visita aunque no se pueda guardar.
+            }
+
+            graphViewport.start = 0;
+            graphViewport.end = getGraphDomainEnd(mode);
+            clampGraphViewport();
+
+            updateReferenceModeUI();
+            updateFollowButton();
+            drawOverlay();
+            updatePlaybackControls();
+            redrawAllGraphs();
+        };
+
+        temporalModeButton?.addEventListener('click', () => {
+            changeReferenceMode('temporal');
+        });
+
+        spatialModeButton?.addEventListener('click', () => {
+            changeReferenceMode('spatial');
         });
 
         followButton?.addEventListener('click', () => {
@@ -2522,6 +2957,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
         mapObject.addEventListener('load', drawOverlay);
 
+        updateReferenceModeUI();
         updateFollowButton();
         drawOverlay();
         updateView();
@@ -2566,6 +3002,11 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             canvas.style.touchAction = 'pan-y';
             canvas.style.cursor = 'crosshair';
+
+            canvas.addEventListener('pointermove', event => {
+                if (referenceMode !== 'spatial' || event.buttons !== 0) return;
+                setSpatialPosition(graphDistanceAtPointer(canvas, event.clientX));
+            });
 
             canvas.addEventListener('wheel', event => {
                 event.preventDefault();
@@ -2641,7 +3082,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
                         endDistance
                     );
 
-                    if (selectionEnd - selectionStart >= GRAPH_MIN_RANGE) {
+                    if (selectionEnd - selectionStart >= getGraphDomainEnd() * GRAPH_MIN_RANGE) {
                         graphViewport.start = selectionStart;
                         graphViewport.end = selectionEnd;
 

@@ -2700,7 +2700,8 @@ class IbtProcessor
     public function writeLapTelemetryJson(
         string $filePath,
         string $outputDirectory,
-        array $laps
+        array $laps,
+        bool $includeSuspension = false
     ): array {
         if (!is_file($filePath)) {
             throw new \RuntimeException(
@@ -2831,6 +2832,57 @@ class IbtProcessor
         $generated = 0;
         $lastUsedCrossingPosition = -1;
 
+        $sampleVariables = [
+            'SessionTime',
+            'LapDistPct',
+            'Speed',
+            'Gear',
+            'Throttle',
+            'Brake',
+            'Clutch',
+            'IsOnTrack',
+            'OnPitRoad',
+            'Lat',
+            'Lon',
+            'Alt',
+            'Yaw',
+            'SteeringWheelAngle',
+        ];
+
+        if ($includeSuspension) {
+            $sampleVariables = array_merge($sampleVariables, [
+                'LFrideHeight',
+                'RFrideHeight',
+                'LRrideHeight',
+                'RRrideHeight',
+                'CFrideHeight',
+                'CRrideHeight',
+                'CFSRrideHeight',
+                'LFshockDefl',
+                'RFshockDefl',
+                'LRshockDefl',
+                'RRshockDefl',
+                'CFshockDefl',
+                'CRshockDefl',
+                'LFshockVel',
+                'RFshockVel',
+                'LRshockVel',
+                'RRshockVel',
+                'CFshockVel',
+                'CRshockVel',
+            ]);
+        }
+
+        $nullableFiniteFloat = static function ($value): ?float {
+            if (!is_numeric($value)) {
+                return null;
+            }
+
+            $number = (float) $value;
+
+            return is_finite($number) ? $number : null;
+        };
+
         foreach ($timedLaps as $lap) {
             $lapNumber = (int) ($lap['candidate_lap'] ?? 0);
             $internalLap = (int) ($lap['lap'] ?? 0);
@@ -2902,22 +2954,7 @@ class IbtProcessor
                     $filePath,
                     $startIndex,
                     $finishIndex,
-                    [
-                        'SessionTime',
-                        'LapDistPct',
-                        'Speed',
-                        'Gear',
-                        'Throttle',
-                        'Brake',
-                        'Clutch',
-                        'IsOnTrack',
-                        'OnPitRoad',
-                        'Lat',
-                        'Lon',
-                        'Alt',
-                        'Yaw',
-                        'SteeringWheelAngle',
-                    ]
+                    $sampleVariables
                 ) as $record
             ) {
                 if (
@@ -2965,7 +3002,7 @@ class IbtProcessor
                 $brake = $record['Brake'] ?? null;
                 $clutch = $record['Clutch'] ?? null;
 
-                $samples[] = [
+                $sample = [
                     'lap_dist_pct' => $distance,
                     'session_time' => round($sessionTime, 6),
                     'speed_kph' => round($speed * 3.6, 2),
@@ -3000,8 +3037,40 @@ class IbtProcessor
                         && is_finite((float) $steeringAngle)
                             ? (float) $steeringAngle
                             : null,
-
                 ];
+
+                if ($includeSuspension) {
+                    $sample['suspension'] = [
+                        // Ride height is separate from position.alt (track/GPS altitude).
+                        'ride_height_m' => [
+                            'lf' => $nullableFiniteFloat($record['LFrideHeight'] ?? null),
+                            'rf' => $nullableFiniteFloat($record['RFrideHeight'] ?? null),
+                            'lr' => $nullableFiniteFloat($record['LRrideHeight'] ?? null),
+                            'rr' => $nullableFiniteFloat($record['RRrideHeight'] ?? null),
+                            'cf' => $nullableFiniteFloat($record['CFrideHeight'] ?? null),
+                            'cr' => $nullableFiniteFloat($record['CRrideHeight'] ?? null),
+                            'cfsr' => $nullableFiniteFloat($record['CFSRrideHeight'] ?? null),
+                        ],
+                        'shock_deflection_m' => [
+                            'lf' => $nullableFiniteFloat($record['LFshockDefl'] ?? null),
+                            'rf' => $nullableFiniteFloat($record['RFshockDefl'] ?? null),
+                            'lr' => $nullableFiniteFloat($record['LRshockDefl'] ?? null),
+                            'rr' => $nullableFiniteFloat($record['RRshockDefl'] ?? null),
+                            'cf' => $nullableFiniteFloat($record['CFshockDefl'] ?? null),
+                            'cr' => $nullableFiniteFloat($record['CRshockDefl'] ?? null),
+                        ],
+                        'shock_velocity_mps' => [
+                            'lf' => $nullableFiniteFloat($record['LFshockVel'] ?? null),
+                            'rf' => $nullableFiniteFloat($record['RFshockVel'] ?? null),
+                            'lr' => $nullableFiniteFloat($record['LRshockVel'] ?? null),
+                            'rr' => $nullableFiniteFloat($record['RRshockVel'] ?? null),
+                            'cf' => $nullableFiniteFloat($record['CFshockVel'] ?? null),
+                            'cr' => $nullableFiniteFloat($record['CRshockVel'] ?? null),
+                        ],
+                    ];
+                }
+
+                $samples[] = $sample;
             }
 
             if (empty($samples)) {
@@ -3037,7 +3106,7 @@ class IbtProcessor
             ));
 
             $payload = [
-                'format_version' => 2,
+                'format_version' => $includeSuspension ? 3 : 2,
                 'lap' => $internalLap,
                 'candidate_lap' => $lapNumber,
                 'lap_time' => $lap['lap_time'] ?? null,

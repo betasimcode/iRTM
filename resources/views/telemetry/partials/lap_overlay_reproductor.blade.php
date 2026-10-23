@@ -1526,17 +1526,20 @@
             return hasNumericValue(value) ? Number(value) * 1000 : null;
         };
 
+        // La vista debe poder mostrar una referencia reparada aunque la vuelta
+        // principal todavía proceda de un JSON antiguo sin bloque suspension.
+        const suspensionSourceSamples = [...validSamples, ...referenceSamples];
         const wheelRideHeightKeys = ['lf', 'rf', 'lr', 'rr'];
         const availableWheelChannels = wheelRideHeightKeys.filter(channel =>
-            validSamples.some(sample =>
+            suspensionSourceSamples.some(sample =>
                 hasNumericValue(sample?.suspension?.ride_height_m?.[channel])
             )
         );
 
-        const hasFrontAxleHeight = validSamples.some(sample =>
+        const hasFrontAxleHeight = suspensionSourceSamples.some(sample =>
             hasNumericValue(sample?.suspension?.ride_height_m?.cf)
         );
-        const hasRearAxleHeight = validSamples.some(sample =>
+        const hasRearAxleHeight = suspensionSourceSamples.some(sample =>
             hasNumericValue(sample?.suspension?.ride_height_m?.cr)
         );
 

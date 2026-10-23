@@ -200,7 +200,7 @@
                         </div>
 
                         <div id="telemetry-suspension-axle-layout"
-                             class="hidden grid grid-cols-1 gap-3 sm:grid-cols-2">
+                             class="hidden grid grid-cols-1 gap-3">
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between">
                                     <span class="text-xs font-semibold">FRH · Front RH</span>

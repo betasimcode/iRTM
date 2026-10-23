@@ -239,6 +239,7 @@
                         drawGearsGraph();
                         drawThrottleGraph();
                         drawBrakeGraph();
+                        drawSuspensionGraphs();
                     });
 
                     colorMenu.appendChild(option);
@@ -265,6 +266,7 @@
                     drawGearsGraph();
                     drawThrottleGraph();
                     drawBrakeGraph();
+                    drawSuspensionGraphs();
                 });
             }
         }

@@ -64,10 +64,10 @@
 
 
 
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4
-            xl:grid-cols-[96px_minmax(260px,1.1fr)_minmax(290px,1.1fr)_minmax(180px,0.8fr)_minmax(220px,1fr)_minmax(260px,1.1fr)_minmax(220px,1fr)]">
+        <div class="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4
+            2xl:grid-cols-[minmax(90px,0.45fr)_minmax(155px,0.75fr)_minmax(300px,1.45fr)_minmax(190px,0.95fr)_minmax(160px,0.8fr)_minmax(180px,0.9fr)_minmax(160px,0.8fr)]">
 
-            <div class="max-w-28 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Stint #{{ $stint->id }}</p>
 
@@ -81,7 +81,7 @@
 
 
 
-            <div class="max-w-40 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
                 <p class="text-xs text-[var(--text-muted)]">Lap time</p>
 
@@ -110,7 +110,7 @@
             </div>
 
 
-            <div class="min-w-0 rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
                 <p class="text-xs text-[var(--text-muted)]">Reference lap</p>
 
                 <div class="mt-1 flex min-w-0 items-center gap-2">
@@ -131,7 +131,7 @@
                         class="min-w-0 flex-1 truncate rounded-lg border
                             border-[var(--border)] bg-[var(--bg)] p-2
                             text-sm text-[var(--text)]"
-                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · Vuelta ' . $referenceLapNumber : '---' }}</span>
+                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · Vuelta ' . $referenceLapNumber . ' - ' . ($referenceLapTimeLabel ?? '--:--.---') : '---' }}</span>
 
                     <div
                         id="reference-lap-color-host"
@@ -169,7 +169,7 @@
             </div>
 
 
-            <div class="rounded-lg bg-[var(--bg)] p-3">
+            <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
                 <p class="text-xs text-[var(--text-muted)]">Reference mode</p>
 
                 <div class="mt-2 grid grid-cols-2 gap-1"
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
         referenceLapInput.value = String(lap.number);
 
         referenceLabel.textContent =
-            `#${stint.stint_id} · V${lap.number} · ${lap.lap_time_label}`;
+            `#${stint.stint_id} · Vuelta ${lap.number} - ${lap.lap_time_label}`;
 
         // La selección recarga la vista con ambos identificadores para que
         // Laravel resuelva las muestras y el overlay se inicialice con ellas.

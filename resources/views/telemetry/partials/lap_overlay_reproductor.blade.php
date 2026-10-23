@@ -508,6 +508,44 @@
             return first + (second - first) * fraction;
         };
 
+        // Invierte el eje visible y resuelve la muestra fraccional más cercana
+        // para que el deslizador temporal represente segundos reales, no índices.
+        const getIndexAtGraphCoordinate = coordinate => {
+            if (referenceMode === 'spatial') {
+                return getIndexAtPct(points, coordinate);
+            }
+
+            if (validSamples.length < 2) return 0;
+
+            const target = Math.max(
+                0,
+                Math.min(getGraphDomainEnd('temporal'), Number(coordinate) || 0)
+            );
+
+            let previousX = getGraphCoordinate(validSamples[0], 0, validSamples);
+
+            for (let index = 1; index < validSamples.length; index++) {
+                const currentX = getGraphCoordinate(
+                    validSamples[index],
+                    index,
+                    validSamples
+                );
+
+                if (target <= currentX) {
+                    const span = currentX - previousX;
+                    const fraction = span > 0
+                        ? Math.max(0, Math.min(1, (target - previousX) / span))
+                        : 0;
+
+                    return index - 1 + fraction;
+                }
+
+                previousX = currentX;
+            }
+
+            return validSamples.length - 1;
+        };
+
         const graphViewport = {
             start: 0,
             end: getGraphDomainEnd(referenceMode),
@@ -1480,6 +1518,7 @@
         const ZOOM_STEP = 1.2;
 
         let isDragging = false;
+        let isSpatialDragging = false;
         let dragStart = null;
 
         let isFollowEnabled = false;
@@ -1544,6 +1583,9 @@
             if (event.button !== 0 || isFollowEnabled) return;
 
             if (referenceMode === 'spatial' && !event.shiftKey) {
+                isSpatialDragging = true;
+                viewport.setPointerCapture(event.pointerId);
+                viewport.style.cursor = 'crosshair';
                 updateSpatialPositionFromMap(event);
                 return;
             }
@@ -1568,15 +1610,21 @@
                 return;
             }
 
-            if (referenceMode === 'spatial' && event.buttons === 0) {
+            if (
+                referenceMode === 'spatial' &&
+                (event.buttons === 0 || isSpatialDragging)
+            ) {
                 updateSpatialPositionFromMap(event);
             }
         });
 
         const endDrag = () => {
             isDragging = false;
+            isSpatialDragging = false;
             dragStart = null;
-            viewport.style.cursor = 'grab';
+            viewport.style.cursor = referenceMode === 'spatial'
+                ? 'crosshair'
+                : 'grab';
         };
 
         viewport.addEventListener('pointerup', endDrag);
@@ -1680,7 +1728,13 @@
             inspectPoints(mainMapDrawPoints);
             inspectPoints(referenceMapDrawPoints);
 
-            if (nearest && nearest.pct !== null) {
+            // Evitar saltos si el puntero está lejos de las trazadas.
+            const maxCursorDistance = 26;
+            if (
+                nearest &&
+                nearest.pct !== null &&
+                nearest.distance <= maxCursorDistance ** 2
+            ) {
                 setSpatialPosition(nearest.pct);
             }
         };
@@ -2624,7 +2678,8 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         const updatePlaybackControls = () => {
             const progressPercent = referenceMode === 'spatial'
                 ? spatialPct * 100
-                : playbackIndex / Math.max(1, points.length - 1) * 100;
+                : getCurrentGraphCoordinate()
+                    / Math.max(0.001, getGraphDomainEnd('temporal')) * 100;
 
             if (progressSlider) {
                 progressSlider.value = String(progressPercent);
@@ -2725,7 +2780,9 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
             }
 
             stopPlayback();
-            playbackIndex = percent * (points.length - 1);
+            playbackIndex = getIndexAtGraphCoordinate(
+                percent * getGraphDomainEnd('temporal')
+            );
             drawOverlay();
             updatePlaybackControls();
         });
@@ -2772,6 +2829,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
 
             if (temporalControls) temporalControls.style.display = spatial ? 'none' : '';
             if (speedControl) speedControl.style.display = spatial ? 'none' : '';
+            viewport.style.cursor = spatial ? 'crosshair' : 'grab';
 
             if (progressSlider) {
                 progressSlider.setAttribute(

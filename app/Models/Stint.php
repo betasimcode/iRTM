@@ -7,6 +7,7 @@ use App\Models\IrLap;
 use App\Models\Setup;
 use App\Models\IrTelemetryTyre;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Stint extends Model {
 
@@ -147,6 +148,18 @@ class Stint extends Model {
     public function car()
     {
         return $this->belongsTo(Car::class);
+    }
+
+    /**
+     * Relación con el catálogo cars mediante el identificador de iRacing.
+     * ir_stints.car_id guarda cars.iracing_car_id, no cars.id.
+     *
+     * Se llama carDefinition para no colisionar con el atributo textual
+     * ir_stints.car, que ya existe en registros históricos.
+     */
+    public function carDefinition(): BelongsTo
+    {
+        return $this->belongsTo(Car::class, 'car_id', 'iracing_car_id');
     }
 
     public function tyreTelemetry()

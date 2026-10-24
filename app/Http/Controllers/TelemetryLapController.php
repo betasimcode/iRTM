@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Stint;
+use App\Models\Car;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\View;
@@ -299,7 +300,7 @@ public function references(Request $request): JsonResponse
 
     $query = $this->applyReferenceCarCompatibility(
         Stint::query()
-            ->with(['user', 'car'])
+            ->with('user')
             ->where('id', '!=', $mainStint->id),
         $mainStint
     )
@@ -506,9 +507,11 @@ private function applyReferenceCarCompatibility(
     Builder $query,
     Stint $mainStint
 ): Builder {
-    $mainStint->loadMissing('car');
-
-    $mainCategory = trim((string) ($mainStint->car?->category ?? ''));
+    // Stint conserva una columna textual heredada llamada "car", por eso
+    // leemos la categoría con car_id directamente desde el modelo Car.
+    $mainCategory = $mainStint->car_id !== null
+        ? trim((string) Car::query()->whereKey($mainStint->car_id)->value('category'))
+        : '';
 
     if ($mainCategory !== '') {
         // La categoría de cars agrupa modelos equivalentes (GT3, GT4, etc.).

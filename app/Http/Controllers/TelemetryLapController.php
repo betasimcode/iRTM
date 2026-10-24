@@ -507,27 +507,34 @@ private function applyReferenceCarCompatibility(
     Builder $query,
     Stint $mainStint
 ): Builder {
-    // Stint conserva una columna textual heredada llamada "car", por eso
-    // leemos la categoría con car_id directamente desde el modelo Car.
-    $mainCategory = $mainStint->car_id !== null
-        ? trim((string) Car::query()->whereKey($mainStint->car_id)->value('category'))
+    // IMPORTANTE: ir_stints.car_id almacena el ID de iRacing,
+    // mientras que cars.id es la PK interna de iRTM.
+    $iracingCarId = $mainStint->car_id;
+
+    $mainCategory = $iracingCarId !== null
+        ? trim((string) Car::query()
+            ->where('iracing_car_id', $iracingCarId)
+            ->value('category'))
         : '';
 
     if ($mainCategory !== '') {
-        // La categoría de cars agrupa modelos equivalentes (GT3, GT4, etc.).
-        // Normalizamos espacios y mayúsculas para tolerar datos históricos.
-        return $query->whereHas('car', function (Builder $carQuery) use ($mainCategory) {
-            $carQuery->whereRaw(
+        // Resolver los IDs de iRacing de todos los modelos de la misma clase.
+        // No usar whereHas('car'): la relación belongsTo estándar compara
+        // ir_stints.car_id con cars.id, que son identificadores distintos.
+        $compatibleIracingCarIds = Car::query()
+            ->select('iracing_car_id')
+            ->whereNotNull('iracing_car_id')
+            ->whereRaw(
                 'UPPER(TRIM(category)) = ?',
                 [strtoupper($mainCategory)]
             );
-        });
+
+        return $query->whereIn('ir_stints.car_id', $compatibleIracingCarIds);
     }
 
-    // Fallback conservador: si no hay categoría conocida, admitir solo el
-    // mismo modelo. Si tampoco hay car_id, no ofrecer stints ambiguos.
-    if ($mainStint->car_id !== null) {
-        return $query->where('car_id', $mainStint->car_id);
+    // Fallback conservador si el coche principal no tiene categoría.
+    if ($iracingCarId !== null) {
+        return $query->where('ir_stints.car_id', $iracingCarId);
     }
 
     return $query->whereRaw('1 = 0');

@@ -1859,7 +1859,7 @@
             drawOverlay();
         };
 
-
+//car reference svg
 @if($stint->car_id == 25)
 @include('telemetry.partials.car.fclass')
 @elseif($stint->car_id == 128)

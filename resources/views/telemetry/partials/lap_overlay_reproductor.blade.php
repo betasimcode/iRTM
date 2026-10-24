@@ -1864,6 +1864,8 @@
 @include('telemetry.partials.car.fclass')
 @elseif($stint->car_id == 128)
 @include('telemetry.partials.car.proto')
+@elseif($stint->car_id == 184)
+@include('telemetry.partials.car.gt3')
 @endif
 
         // vehicleSvg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`

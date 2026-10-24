@@ -39,7 +39,7 @@ class TelemetryLapController extends Controller
 
         if ($stintId > 0) {
             $stint = Stint::query()
-                ->with(['track'])
+                ->with(['track', 'carDefinition'])
                 ->findOrFail($stintId);
 
             $stintDate = $stint->created_at;

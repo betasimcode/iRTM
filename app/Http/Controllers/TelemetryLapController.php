@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Stint;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\View;
 use App\Services\Telemetry\TelemetryJsonStorage;
 use Illuminate\Http\JsonResponse;
@@ -118,9 +119,10 @@ class TelemetryLapController extends Controller
                 $referenceStint = $stint;
                 $referenceLaps = $laps;
             } else {
-                $referenceStint = Stint::query()
-                    ->whereKey($referenceStintId)
-                    ->where('car_id', $stint->car_id)
+                $referenceStint = $this->applyReferenceCarCompatibility(
+                    Stint::query()->whereKey($referenceStintId),
+                    $stint
+                )
                     ->where('track_id', $stint->track_id)
                     ->where('visibility', 'public')
                     ->where('status', 'validated')
@@ -232,9 +234,10 @@ class TelemetryLapController extends Controller
             if ($referenceLapNumber !== null && $referenceStintId !== null) {
                 $referenceStint = $referenceStintId === $stint->id
                     ? $stint
-                    : Stint::query()
-                        ->whereKey($referenceStintId)
-                        ->where('car_id', $stint->car_id)
+                    : $this->applyReferenceCarCompatibility(
+                        Stint::query()->whereKey($referenceStintId),
+                        $stint
+                    )
                         ->where('track_id', $stint->track_id)
                         ->where('visibility', 'public')
                         ->where('status', 'validated')
@@ -294,10 +297,12 @@ public function references(Request $request): JsonResponse
 
     $mainStint = Stint::query()->findOrFail($mainStintId);
 
-    $query = Stint::query()
-        ->with('user')
-        ->where('id', '!=', $mainStint->id)
-        ->where('car_id', $mainStint->car_id)
+    $query = $this->applyReferenceCarCompatibility(
+        Stint::query()
+            ->with(['user', 'car'])
+            ->where('id', '!=', $mainStint->id),
+        $mainStint
+    )
         ->where('track_id', $mainStint->track_id)
         ->where('visibility', 'public')
         ->where('status', 'validated')
@@ -495,5 +500,34 @@ public function references(Request $request): JsonResponse
 
 
 
+
+
+private function applyReferenceCarCompatibility(
+    Builder $query,
+    Stint $mainStint
+): Builder {
+    $mainStint->loadMissing('car');
+
+    $mainCategory = trim((string) ($mainStint->car?->category ?? ''));
+
+    if ($mainCategory !== '') {
+        // La categoría de cars agrupa modelos equivalentes (GT3, GT4, etc.).
+        // Normalizamos espacios y mayúsculas para tolerar datos históricos.
+        return $query->whereHas('car', function (Builder $carQuery) use ($mainCategory) {
+            $carQuery->whereRaw(
+                'UPPER(TRIM(category)) = ?',
+                [strtoupper($mainCategory)]
+            );
+        });
+    }
+
+    // Fallback conservador: si no hay categoría conocida, admitir solo el
+    // mismo modelo. Si tampoco hay car_id, no ofrecer stints ambiguos.
+    if ($mainStint->car_id !== null) {
+        return $query->where('car_id', $mainStint->car_id);
+    }
+
+    return $query->whereRaw('1 = 0');
+}
 
 }

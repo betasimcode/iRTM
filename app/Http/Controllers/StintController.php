@@ -30,7 +30,7 @@ class StintController extends Controller
                     'track',
                     'session',
                 ])
-                ->whereHas('laps')
+                ->where('laps_completed', '>', 0)
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 

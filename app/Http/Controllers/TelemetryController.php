@@ -1074,7 +1074,10 @@ public function store(Request $request)
                     );
                 }
 
-                $stint->update(['status' => 'validated']);
+                $stint->update([
+                    'status' => 'validated',
+                    'laps_completed' => $validJsonLaps,
+                ]);
 
                 $jsonProcessing = array_merge($jsonProcessing, [
                     'generated' => true,

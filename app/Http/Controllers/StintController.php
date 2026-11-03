@@ -24,7 +24,6 @@ class StintController extends Controller
         try {
 
             $stints = StintQueryService::base()
-
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 

@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Services\Stints\StintJsonMetricsService;
 use App\Services\Setup\SetupRepairService;
 use App\Services\Stints\StintMetricsService;
-use App\Services\Stints\StintQueryService;
+use App\Services\StintAccessService;
 
 class StintController extends Controller
 {
@@ -23,8 +23,13 @@ class StintController extends Controller
     {
         try {
 
-            $stints = StintQueryService::base()
-                ->where('visibility', 'public')
+            $stints = app(StintAccessService::class)
+                ->query()
+                ->with([
+                    'user.team',
+                    'track',
+                    'session',
+                ])
                 ->whereHas('laps')
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);

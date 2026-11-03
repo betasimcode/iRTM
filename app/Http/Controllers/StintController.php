@@ -24,7 +24,8 @@ class StintController extends Controller
         try {
 
             $stints = StintQueryService::base()
-
+                ->where('visibility', 'public')
+                ->whereHas('laps')
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 

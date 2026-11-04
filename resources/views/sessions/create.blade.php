@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Nueva Sesión')
-@section('page-title', 'Nueva Sesión')
+@section('title', __('ui.new_session'))
+@section('page-title', __('ui.new_session'))
 
 @section('content')
 
@@ -23,13 +23,13 @@
             {{-- Tipo sesión --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Tipo de sesión
+                    {{ __('ui.session_type') }}
                 </label>
 
                 <select name="session_type" class="form-input">
-                    <option value="practice">Práctica</option>
-                    <option value="qualy">Clasificación</option>
-                    <option value="race">Carrera</option>
+                    <option value="practice">{{ __('ui.practice') }}</option>
+                    <option value="qualy">{{ __('ui.qualifying') }}</option>
+                    <option value="race">{{ __('ui.race') }}</option>
                 </select>
             </div>
 
@@ -38,7 +38,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Circuito
+                    {{ __('ui.circuit') }}
                 </label>
 
                 <select name="circuit_id" class="form-input">
@@ -55,7 +55,7 @@
             {{-- Coche --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Coche
+                    {{ __('ui.car') }}
                 </label>
 
                 <select name="car_id" class="form-input">
@@ -70,7 +70,7 @@
             {{-- Mejor vuelta --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Mejor vuelta (segundos)
+                    {{ __('ui.best_lap_seconds') }}
                 </label>
 
                 <input type="number"
@@ -82,7 +82,7 @@
             {{-- Fuel --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Combustible usado
+                    {{ __('ui.fuel_used') }}
                 </label>
 
                 <input type="number"
@@ -95,7 +95,7 @@
                 <button type="submit"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700
                                text-white rounded-lg text-sm font-medium shadow transition">
-                    Guardar sesión
+                    {{ __('ui.save') }}
                 </button>
             </div>
 

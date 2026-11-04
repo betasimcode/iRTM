@@ -1,19 +1,19 @@
 {{-- Controles del reproductor GPS de la vuelta --}}
 <div
     class="mb-4 w-full bg-[var(--card)] p-4"
-    aria-label="Reproductor de telemetría GPS"
+    aria-label="{{ __('ui.lap_gps_player') }}"
 >
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3" id="telemetry-playback-heading">
         <div>
-            <h3 class="text-sm font-semibold text-[var(--text-title)]">Recorrido de vuelta</h3>
-            <p id="telemetry-playback-description" class="text-xs text-[var(--text-muted)]">Reproduce la trazada GPS sobre el circuito</p>
+            <h3 class="text-sm font-semibold text-[var(--text-title)]">{{ __('ui.lap_route') }}</h3>
+            <p id="telemetry-playback-description" class="text-xs text-[var(--text-muted)]">{{ __('ui.play_gps_trace') }}</p>
         </div>
         <label id="telemetry-playback-speed-control" class="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-            Velocidad
+            {{ __('ui.speed') }}
             <select
                 id="telemetry-lap-speed"
                 class="rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-[var(--text-title)]"
-                aria-label="Velocidad de reproducción"
+                aria-label="{{ __('ui.playback_speed') }}"
             >
                 <option value="0.25">×0,25</option>
                 <option value="0.5">×0,5</option>
@@ -60,10 +60,10 @@
         step="0.1"
         value="0"
         class="mt-4 w-full cursor-pointer accent-cyan-500"
-        aria-label="Posición temporal de reproducción en la vuelta"
+        aria-label="{{ __('ui.playback_position_lap') }}"
     >
     <div class="mt-1 flex justify-between text-xs text-[var(--text-muted)]">
-        <span id="telemetry-lap-progress-start">00:00.000 · Salida/meta</span>
-        <span id="telemetry-lap-progress-end">Fin de vuelta</span>
+        <span id="telemetry-lap-progress-start">00:00.000 · {{ __('ui.start_finish_line') }}</span>
+        <span id="telemetry-lap-progress-end">{{ __('ui.end_of_lap') }}</span>
     </div>
 </div>

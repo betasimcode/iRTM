@@ -8,7 +8,7 @@
         href="{{ route('teamcenter.dashboard') }}"
         class="text-sm font-medium transition-opacity hover:opacity-70"
     >
-        {{ $team->name ?? 'Team' }}
+        {{ $team->name ?? __('ui.team') }}
     </a>
 
 
@@ -18,7 +18,7 @@
         href="{{ route('teamcenter.championships.index') }}"
         class="text-sm font-medium transition-opacity hover:opacity-70"
     >
-        Championships
+        {{ __('ui.teamcenter_championships') }}
     </a>
 
 
@@ -28,7 +28,7 @@
         href="#"
         class="text-sm font-medium transition-opacity hover:opacity-70"
     >
-        Comms
+        {{ __('ui.comms') }}
     </a>
 
 
@@ -38,7 +38,7 @@
         href="#"
         class="text-sm font-medium transition-opacity hover:opacity-70"
     >
-        Resources
+        {{ __('ui.resources') }}
     </a>
 
 
@@ -48,7 +48,7 @@
         href="#"
         class="text-sm font-medium transition-opacity hover:opacity-70"
     >
-        Sponsors
+        {{ __('ui.sponsors') }}
     </a>
 
 

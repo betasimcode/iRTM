@@ -2,14 +2,14 @@
 
 @section('content')
 
-@section('title', 'Setup Items')
+@section('title', __('ui.set_items'))
 
-@section('page-title',  'Admin system')
+@section('page-title', __('ui.admin_system'))
 
 <div class="max-w-3xl mx-auto py-10">
 
     <h1 class="text-2xl font-bold text-gray-600 dark:text-white mb-6">
-        Setup Item normalize
+        {{ __('ui.setup_item_normalize') }}
     </h1>
 
     <form action="{{ route('admin.setup-items.update', $item->id) }}"
@@ -22,7 +22,7 @@
         {{-- RAW KEY --}}
         <div>
             <label class="block text-sm text.gray-500 dark:text-gray-400 mb-2">
-                Raw Key
+                {{ __('ui.rawkey') }}
             </label>
 
             <div class="w-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-700 px-4 py-2 rounded font-mono text-lg">
@@ -33,14 +33,14 @@
         {{-- LABEL --}}
         <div>
             <label class="block text-sm text.gray-500 dark:text-gray-400 mb-2">
-                Label
+                {{ __('ui.label') }}
             </label>
 
             <select name="label"
                     class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-700
                            rounded-lg px-4 py-2 text-gray-600 dark:text-white">
 
-                <option value="">-- seleccionar --</option>
+                <option value="">{{ __('ui.select_option') }}</option>
 
                 @foreach($labels as $label)
                     <option value="{{ $label }}" @selected($item->label == $label)>
@@ -54,7 +54,7 @@
         {{-- ZONA --}}
         <div>
             <label class="block text-sm text.gray-500 dark:text-gray-400 mb-2">
-                Zona
+                {{ __('ui.zone') }}
             </label>
 
             <select name="zone"
@@ -73,17 +73,17 @@
         {{-- STATUS (solo visual) --}}
         <div>
             <label class="block text-sm text.gray-500 dark:text-gray-400 mb-2">
-                Estado
+                {{ __('ui.status') }}
             </label>
 
             <div class="text-sm">
                 @if($item->status === 'pending')
                     <span class="bg-yellow-500 text-yellow-900 px-2 py-1 rounded">
-                        Pendiente
+                        {{ __('ui.pending') }}
                     </span>
                 @else
                     <span class="bg-green-600 text-white px-2 py-1 rounded">
-                        OK
+                        {{ __('ui.ok') }}
                     </span>
                 @endif
             </div>
@@ -95,13 +95,13 @@
             {{-- GUARDAR --}}
             <button type="submit"
                     class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded text-white">
-                Guardar
+                {{ __('ui.save') }}
             </button>
 
             {{-- CANCELAR --}}
             <a href="{{ route('admin.setup-items.index') }}"
                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">
-                Cancelar
+                {{ __('ui.cancel') }}
             </a>
 
         </div>

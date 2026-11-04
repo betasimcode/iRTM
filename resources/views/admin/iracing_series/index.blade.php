@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Series')
-@section('page-title', 'Registered iRacing Series')
+@section('page-title', __('ui.registered_iracing_series'))
 @section('content')
 
 
@@ -25,10 +25,10 @@
             <div class="overflow-x-auto">
             <thead class="bg-[var(--card)] border-[var(--border)] text-[var(--text-title)] uppercase text-xs tracking-wider">
                 <tr>
-                    <th class="px-6 py-3 text-left">ID</th>
-                    <th class="px-6 py-3 text-left">Logo</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.id') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.logo') }}</th>
                     <th class="px-6 py-3 text-left">{{ __('ui.name') }}</th>
-                    <th class="px-6 py-3 text-left">iRacing ID</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.iracing_id') }}</th>
                     <th class="px-6 py-3 text-left">{{ __('ui.class') }}</th>
                     <th class="px-6 py-3 text-left">{{ __('ui.category') }}</th>
                     <th class="px-6 py-3 text-left">{{ __('ui.start') }}</th>
@@ -73,9 +73,9 @@
                     </td>
                     <td class="px-6 py-4 text[var(--text)] text-xs w-72">
                         @if ($s->race_type == 'Time')
-                        {{ $s->race_length ?? '—' }} - Laps
+                        {{ $s->race_length ?? '—' }} - {{ __('ui.laps') }}
                         @else
-                        {{ $s->race_length ?? '—' }} - Mins
+                        {{ $s->race_length ?? '—' }} - {{ __('ui.min') }}
                         @endif
                     </td>
 
@@ -104,7 +104,7 @@
 
                             <button
                                 class="text-[var(--text-soft)] hover:text-[var(--danger)] font-medium transition"
-                                onclick="return confirm('¿Seguro que quieres eliminar esta serie?')">
+                                onclick="return confirm('{{ __('ui.delete_series_confirmation') }}')">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 
                                     <g id="SVGRepo_bgCarrier" stroke-width="0"/>

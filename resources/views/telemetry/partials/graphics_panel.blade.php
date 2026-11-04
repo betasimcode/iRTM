@@ -58,9 +58,9 @@
                             x-show="item.key === 'speed'"
                             class="flex shrink-0 items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-2 py-1"
                             role="group"
-                            aria-label="Velocidad máxima de ambas vueltas"
+                            aria-label="{{ __('ui.max_speed_both_laps') }}"
                         >
-                            <span class="text-[9px] font-bold uppercase tracking-wide text-[var(--text-muted)]">MAX SPEED</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{{ strtoupper(__('ui.max_speed')) }}</span>
                             <span
                                 id="telemetry-graph-max-speed-main"
                                 class="flex h-6 min-w-[36px] items-center justify-center rounded border border-white/15 bg-black/20 px-1 text-[11px] font-semibold tabular-nums"
@@ -104,7 +104,7 @@
                             id="telemetry-graphics-speed"
                             class="block w-full"
                             style="height: 180px;"
-                            aria-label="Gráfica de velocidad durante la vuelta"
+                            aria-label="{{ __('ui.speed_graph_lap') }}"
                         ></canvas>
                     </div>
                 </template>
@@ -115,7 +115,7 @@
                             id="telemetry-graphics-gears"
                             class="block w-full"
                             style="height: 180px;"
-                            aria-label="Gráfica de marchas durante la vuelta"
+                            aria-label="{{ __('ui.gear_graph_lap') }}"
                         ></canvas>
                     </div>
                 </template>
@@ -126,7 +126,7 @@
                             id="telemetry-graphics-throttle"
                             class="block w-full"
                             style="height: 180px;"
-                            aria-label="Gráfica del acelerador durante la vuelta"
+                            aria-label="{{ __('ui.throttle_graph_lap') }}"
                         ></canvas>
                     </div>
                 </template>
@@ -137,7 +137,7 @@
                             id="telemetry-graphics-brake"
                             class="block w-full"
                             style="height: 180px;"
-                            aria-label="Gráfica del freno durante la vuelta"
+                            aria-label="{{ __('ui.brake_graph_lap') }}"
                         ></canvas>
                     </div>
                 </template>
@@ -148,54 +148,54 @@
                     <div class="w-full min-w-0">
                         <p id="telemetry-suspension-data-status"
                            class="mb-2 text-[11px] text-[var(--text-muted)]">
-                            Altura de carrocería (mm) · Principal y referencia
+                            {{ __('ui.body_ride_height_main_reference') }}
                         </p>
 
                         <div id="telemetry-suspension-wheel-layout"
                              class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold">LF · Delantera izquierda</span>
+                                    <span class="text-xs font-semibold">LF · {{ __('ui.front_left') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-lf-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-lf-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-lf" class="block w-full" style="height:145px" aria-label="Ride height rueda delantera izquierda"></canvas>
+                                <canvas id="telemetry-graphics-suspension-lf" class="block w-full" style="height:145px" aria-label="{{ __('ui.ride_height_front_left') }}"></canvas>
                             </div>
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold">RF · Delantera derecha</span>
+                                    <span class="text-xs font-semibold">RF · {{ __('ui.front_right') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-rf-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-rf-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-rf" class="block w-full" style="height:145px" aria-label="Ride height rueda delantera derecha"></canvas>
+                                <canvas id="telemetry-graphics-suspension-rf" class="block w-full" style="height:145px" aria-label="{{ __('ui.ride_height_front_right') }}"></canvas>
                             </div>
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold">LR · Trasera izquierda</span>
+                                    <span class="text-xs font-semibold">LR · {{ __('ui.rear_left') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-lr-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-lr-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-lr" class="block w-full" style="height:145px" aria-label="Ride height rueda trasera izquierda"></canvas>
+                                <canvas id="telemetry-graphics-suspension-lr" class="block w-full" style="height:145px" aria-label="{{ __('ui.ride_height_rear_left') }}"></canvas>
                             </div>
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold">RR · Trasera derecha</span>
+                                    <span class="text-xs font-semibold">RR · {{ __('ui.rear_right') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-rr-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-rr-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-rr" class="block w-full" style="height:145px" aria-label="Ride height rueda trasera derecha"></canvas>
+                                <canvas id="telemetry-graphics-suspension-rr" class="block w-full" style="height:145px" aria-label="{{ __('ui.ride_height_rear_right') }}"></canvas>
                             </div>
                         </div>
 
@@ -203,31 +203,31 @@
                              class="hidden grid grid-cols-1 gap-3">
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between">
-                                    <span class="text-xs font-semibold">FRH · Front RH</span>
+                                    <span class="text-xs font-semibold">FRH · {{ __('ui.front_ride_height') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-front-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-front-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-front" class="block w-full" style="height:180px" aria-label="Ride height delantera"></canvas>
+                                <canvas id="telemetry-graphics-suspension-front" class="block w-full" style="height:180px" aria-label="{{ __('ui.front_ride_height') }}"></canvas>
                             </div>
                             <div class="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] p-2">
                                 <div class="mb-1 flex items-center justify-between">
-                                    <span class="text-xs font-semibold">RRH · Rear RH</span>
+                                    <span class="text-xs font-semibold">RRH · {{ __('ui.rear_ride_height') }}</span>
                                     <span class="text-[10px] text-[var(--text-muted)]">RH (mm)</span>
                                 </div>
                                 <div class="mb-1 flex justify-end gap-2 text-[10px] font-semibold tabular-nums">
                                     <span id="telemetry-suspension-rear-main" class="text-blue-400">—</span>
                                     <span id="telemetry-suspension-rear-reference" class="text-purple-400">—</span>
                                 </div>
-                                <canvas id="telemetry-graphics-suspension-rear" class="block w-full" style="height:180px" aria-label="Ride height trasera"></canvas>
+                                <canvas id="telemetry-graphics-suspension-rear" class="block w-full" style="height:180px" aria-label="{{ __('ui.rear_ride_height') }}"></canvas>
                             </div>
                         </div>
 
                         <p id="telemetry-suspension-no-data"
                            class="hidden rounded-md border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">
-                            Este IBT no contiene canales de ride height disponibles para representar.
+                            {{ __('ui.no_ride_height_channels') }}
                         </p>
                     </div>
                 </template>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Setup Items')
+@section('title', __('ui.set_items'))
 
 @section('page-title',   __('ui.set_item_database') )
 
@@ -37,7 +37,7 @@
             <input type="text"
                    name="search"
                    value="{{ request('search') }}"
-                   placeholder="Buscar key, label..."
+                   placeholder="{{ __('ui.key_label_placeholder') }}"
                    class="px-3 py-1 rounded bg-white dark:bg-gray-700 
                           border border-gray-300 dark:border-gray-600 
                           text-sm text-gray-700 dark:text-gray-200">
@@ -66,7 +66,7 @@
     
         <a href="{{ route('admin.setup-items.index', ['filter' => 'ok', 'search' => request('search')]) }}"
            class="px-3 py-1 rounded text-sm {{ request('filter') == 'ok' ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-700' }}">
-            OK
+            {{ __('ui.ok') }}
         </a>
     
     </div>
@@ -121,7 +121,7 @@
                                 </span>
                             @else
                                 <span class="bg-green-500 text-white px-2 py-1 rounded text-xs">
-                                    OK
+                                    {{ __('ui.ok') }}
                                 </span>
                             @endif
 
@@ -131,7 +131,7 @@
                         <td class="px-4 py-4">
                             <a href="{{ route('admin.setup-items.edit', $item->id) }}"
                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
-                                Edit
+                                {{ __('ui.edit') }}
                             </a>
                         </td>
 
@@ -142,7 +142,7 @@
                     <tr>
                         <td colspan="5"
                             class="px-6 py-8 text-center text-gray-400">
-                            No hay setup items aún.
+                            {{ __('ui.no_setup_items') }}
                         </td>
                     </tr>
 

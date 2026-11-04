@@ -338,5 +338,6 @@ return [
     "no_stints_available" => "No hay stints disponibles",
     "clutch" => "Embrague",
     "telemetry" => "Telemetría",
+    "undock_instruments_on_map" => "Desacoplar instrumentos sobre el mapa",
 
 ];

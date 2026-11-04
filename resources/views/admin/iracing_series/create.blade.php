@@ -309,8 +309,8 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
         <select name="week_start_day"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
             @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                <option value="{{ __('ui.' . strtolower($day)) }}" {{ $day == 'Tuesday' ? 'selected' : '' }}>
-                    {{ $day }}
+                <option value="{{ $day }}" {{ $day == 'Tuesday' ? 'selected' : '' }}>
+                    {{ __('ui.' . strtolower($day)) }}
                 </option>
             @endforeach
         </select>

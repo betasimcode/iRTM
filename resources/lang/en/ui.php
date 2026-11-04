@@ -294,7 +294,7 @@ return [
     "throttle" => "Throttle",
     "brake" => "Brake",
     "gears" => "Gears",
-    "max_speed" => "Maximum speed",
+    "max_speed" => "Max speed",
     "max_speed_both_laps" => "Maximum speed for both laps",
     "speed_graph_lap" => "Speed graph over the lap",
     "gear_graph_lap" => "Gear graph over the lap",
@@ -338,5 +338,6 @@ return [
     "no_stints_available" => "No stints available",
     "clutch" => "Clutch",
     "telemetry" => "Telemetry",
+    "undock_instruments_on_map" => "Undock instruments over the map",
 
 ];

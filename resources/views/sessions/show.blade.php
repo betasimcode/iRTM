@@ -78,11 +78,11 @@
         {{-- SETUP --}}
         @if($session->series)
                 @if($session->series->setup_type === "open")
-                <span title="TThe sessions marked as PRO indicate that the competition establishes setup OPEN" class="w-28 max-h-5 text-center px-2 rounded text-xs bg-[var(--A)] border border-[var(--badge-b)] text-yellow-200">
+                <span title="{{ __('ui.pro_setup_description') }}" class="w-28 max-h-5 text-center px-2 rounded text-xs bg-[var(--A)] border border-[var(--badge-b)] text-yellow-200">
                     PRO
             </span>
                     @else
-            <span title="The sessions marked as AMATEUR indicate that the competition establishes FIXED setup for all competitors." class="w-28 max-h-5 text-center px-2 rounded text-xs bg-[var(--D)] border border-[var(--badge-b)] text-[var(--value-info)]">
+            <span title="{{ __('ui.amateur_setup_description') }}" class="w-28 max-h-5 text-center px-2 rounded text-xs bg-[var(--D)] border border-[var(--badge-b)] text-[var(--value-info)]">
                 AMATEUR
                 @endif
             </span>
@@ -125,7 +125,7 @@
 
             <button
                 type="submit"
-                title="Reprocess session data"
+                title="{{ __('ui.reprocess_session_data') }}"
                 class="p-2 rounded-md bg-[var(--card)] border border-[var(--border)] text-center max-h-20 max-w-20 mb-5 text-[var(--text)] hover:text-[var(--text-h)]"
             >
 
@@ -151,7 +151,7 @@
     <div class="bg-[var(--card)] rounded-t-lg border border-[var(--border)]">
         <h2 class="text-sm font-semibold p-4 text-[var(--text-card-title)]">
 
-            Session benchmarks
+            {{ __('ui.session_benchmarks') }}
 
         </h2>
     </div>
@@ -163,21 +163,21 @@
 
                     <tr class="text-[var(--text-card-title)] uppercase text-xxs tracking-wider">
 
-                        <th class="w-10 text-left p-2">Pos</th>
+                        <th class="w-10 text-left p-2">{{ __('ui.position') }}</th>
 
-                        <th class="w-44 text-left p-2">Driver</th>
+                        <th class="w-44 text-left p-2">{{ __('ui.driver') }}</th>
 
-                        <th class="w-40 text-left p-2">Country</th>
+                        <th class="w-40 text-left p-2">{{ __('ui.country') }}</th>
 
-                        <th class="w-52 text-left p-2">Car</th>
+                        <th class="w-52 text-left p-2">{{ __('ui.car') }}</th>
 
                         <th class="w-10 p-2">#</th>
 
-                        <th class="w-24 p-2">Fast Lap</th>
+                        <th class="w-24 p-2">{{ __('ui.fastestlap') }}</th>
 
-                        <th class="w-16 text-center p-2">iRating</th>
+                        <th class="w-16 text-center p-2">{{ __('ui.irating') }}</th>
 
-                        <th class="w-20 text-center p-2">Division</th>
+                        <th class="w-20 text-center p-2">{{ __('ui.division') }}</th>
 
                     </tr>
 

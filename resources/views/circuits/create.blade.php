@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Circuito')
-@section('page-title', 'Registrar Circuito')
+@section('title', __('ui.add_circuit'))
+@section('page-title', __('ui.add_circuit'))
 
 @section('content')
 
@@ -17,7 +17,7 @@
             {{-- Nombre --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Display name
+                    {{ __('ui.display_name') }}
                 </label>
                 <input type="text"
                        name="display_name"
@@ -26,7 +26,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Name
+                    {{ __('ui.name') }}
                 </label>
                 <input type="text"
                        name="name"
@@ -37,7 +37,7 @@
             {{-- Variante --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Variante
+                    {{ __('ui.variant') }}
                 </label>
                 <input type="text"
                        name="variant"
@@ -46,7 +46,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    iRacing ID
+                    {{ __('ui.iracing_id') }}
                 </label>
                 <input type="text"
 
@@ -56,7 +56,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Short Name
+                    {{ __('ui.short_name') }}
                 </label>
                 <input type="text"
                        name="short_name"
@@ -66,7 +66,7 @@
         {{-- LOGO --}}
             <div>
                 <label class="block text-sm text-[var(--text-title)] mb-2">
-                    Logo
+                    {{ __('ui.logo') }}
                 </label>
 
                 <input
@@ -77,7 +77,7 @@
 
             <div>
                 <label class="block text-sm text-[var(--text-title)] mb-2">
-                    Logo Dark
+                    {{ __('ui.logo_dark') }}
                 </label>
 
                 <input
@@ -88,7 +88,7 @@
 
             <div>
                 <label class="block text-sm text-[var(--text-title)] mb-2">
-                    Logo Light
+                    {{ __('ui.logo_light') }}
                 </label>
 
                 <input
@@ -99,7 +99,7 @@
 
             <div>
              <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                Tipo
+                {{ __('ui.circuit_type') }}
             </label>
 
             <select name="type"
@@ -123,7 +123,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Map svg
+                    {{ __('ui.map_svg') }}
                 </label>
                 <input type="text"
                        name="map_svg"
@@ -133,7 +133,7 @@
             {{-- Longitud --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--text-title)] mb-2">
-                    Longitud (m)
+                    {{ __('ui.length_meters') }}
                 </label>
                 <input type="number"
                         disabled
@@ -172,14 +172,14 @@
                 <a href="{{ route('circuits.index') }}"
                    class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600
                           text-gray-200 rounded-lg text-sm transition">
-                    Cancelar
+                    {{ __('ui.cancel') }}
                 </a>
 
                 <button type="submit"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700
                                text-[var(--text-title)] rounded-lg text-sm font-medium
                                transition shadow">
-                    Añadir circuito
+                    {{ __('ui.add_circuit') }}
                 </button>
 
 

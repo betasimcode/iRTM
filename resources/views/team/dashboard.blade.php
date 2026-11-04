@@ -24,9 +24,9 @@
                         class="w-20 m-auto align-middle">
             <p class="text-[var(--text-title)] text-lg font-semibold">{{ auth()->user()->iracing_name }}</p>
             @if(auth()->user()->driver_role === 'team_owner')
-            <p class="text-[var(--info)]">Team Owner</p>
+            <p class="text-[var(--info)]">{{ __('ui.team_owner') }}</p>
             @else
-            Driver
+            {{ __('ui.driver_role') }}
             @endif
         </div>
 

@@ -76,7 +76,7 @@
                            tracking-wider
                            text-[var(--text-card-title)]"
                 >
-                    Personal
+                    {{ __('ui.personal') }}
                 </div>
 
                 <div class="space-y-1">
@@ -88,7 +88,7 @@
                                hover:bg-black/5
                                dark:hover:bg-white/5"
                     >
-                        Mi cuenta
+                        {{ __('ui.account') }}
                     </a>
 
                     <a
@@ -98,7 +98,7 @@
                                hover:bg-black/5
                                dark:hover:bg-white/5"
                     >
-                        Comms
+                        {{ __('ui.comms') }}
                     </a>
 
                     <a
@@ -108,7 +108,7 @@
                                hover:bg-black/5
                                dark:hover:bg-white/5"
                     >
-                        Telemetría
+                        {{ __('ui.telem') }}
                     </a>
 
                 </div>
@@ -131,7 +131,7 @@
                                tracking-wider
                                text-[var(--text-card-title)]"
                     >
-                        Team
+                        {{ __('ui.team') }}
                     </div>
 
                     <div class="space-y-1">
@@ -143,7 +143,7 @@
                                    hover:bg-black/5
                                    dark:hover:bg-white/5"
                         >
-                            Championships
+                            {{ __('ui.teamcenter_championships') }}
                         </a>
 
                         <a
@@ -153,7 +153,7 @@
                                    hover:bg-black/5
                                    dark:hover:bg-white/5"
                         >
-                            Calendar
+                            {{ __('ui.calendar') }}
                         </a>
 
                         <a
@@ -163,7 +163,7 @@
                                    hover:bg-black/5
                                    dark:hover:bg-white/5"
                         >
-                            Drivers
+                            {{ __('ui.drivers') }}
                         </a>
 
                         <a
@@ -173,7 +173,7 @@
                                    hover:bg-black/5
                                    dark:hover:bg-white/5"
                         >
-                            Liveries
+                            {{ __('ui.liveries') }}
                         </a>
 
                         <a
@@ -183,7 +183,7 @@
                                    hover:bg-black/5
                                    dark:hover:bg-white/5"
                         >
-                            Sponsors
+                            {{ __('ui.sponsors') }}
                         </a>
 
                     </div>
@@ -210,7 +210,7 @@
                                    tracking-wider
                                    text-[var(--text-card-title)]"
                         >
-                            Admin Site
+                            {{ __('ui.admin_site') }}
                         </div>
 
                         <div class="space-y-1">
@@ -222,7 +222,7 @@
                                        hover:bg-black/5
                                        dark:hover:bg-white/5"
                             >
-                                Configuración del sitio
+                                {{ __('ui.site_configuration') }}
                             </a>
 
                             <a
@@ -232,7 +232,7 @@
                                        hover:bg-black/5
                                        dark:hover:bg-white/5"
                             >
-                                Editor
+                                {{ __('ui.editor') }}
                             </a>
 
                             <a
@@ -242,7 +242,7 @@
                                        hover:bg-black/5
                                        dark:hover:bg-white/5"
                             >
-                                Layout
+                                {{ __('ui.layout') }}
                             </a>
 
                         </div>
@@ -305,7 +305,7 @@
                                hover:bg-black/5
                                dark:hover:bg-white/5"
                     >
-                        Desconectar
+                        {{ __('ui.logout') }}
                     </button>
 
                 </form>

@@ -553,5 +553,11 @@ return [
     "overall_standings" => "Overall standings",
     "drivers" => "Drivers",
     "overall_drivers_count" => ":count drivers",
+    "language" => "Language",
+    "notifications" => "Notifications",
+    "user_menu" => "User menu",
+    "competitions" => "Competitions",
+    "team_management" => "Team management",
+    "site_admin" => "Site administration",
 
 ];

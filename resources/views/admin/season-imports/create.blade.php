@@ -10,11 +10,11 @@
 
         <div class="mb-6">
             <h1 class="text-2xl font-semibold">
-                Nueva configuración de importación
+                {{ __('ui.new_import_configuration') }}
             </h1>
 
             <p class="mt-1 text-sm opacity-70">
-                Define una competición dentro de una temporada del calendario iRacing.
+                {{ __('ui.define_competition_in_season') }}
             </p>
         </div>
 
@@ -36,7 +36,7 @@
                         for="ir_serie_id"
                         class="block text-sm font-medium mb-2"
                     >
-                        Serie iRacing
+                        {{ __('ui.irseries') }}
                     </label>
 
                     <select
@@ -47,7 +47,7 @@
                     >
 
                         <option value="">
-                            Selecciona una serie
+                            {{ __('ui.select_series') }}
                         </option>
 
                         @foreach($iracingSeries as $series)
@@ -82,7 +82,7 @@
                             for="year"
                             class="block text-sm font-medium mb-2"
                         >
-                            Año
+                            {{ __('ui.year') }}
                         </label>
 
                         <input
@@ -111,7 +111,7 @@
                             for="season"
                             class="block text-sm font-medium mb-2"
                         >
-                            Temporada
+                            {{ __('ui.season') }}
                         </label>
 
                         <select
@@ -122,7 +122,7 @@
                         >
 
                             <option value="">
-                                Selecciona temporada
+                                {{ __('ui.select_season') }}
                             </option>
 
                             @for($i = 1; $i <= 4; $i++)
@@ -157,7 +157,7 @@
                         for="title"
                         class="block text-sm font-medium mb-2"
                     >
-                        Título que busca el parser
+                        {{ __('ui.pdf_parser_search_title') }}
                     </label>
 
                     <input
@@ -189,7 +189,7 @@
                             for="page_start"
                             class="block text-sm font-medium mb-2"
                         >
-                            Página inicio
+                            {{ __('ui.start_page') }}
                         </label>
 
                         <input
@@ -217,7 +217,7 @@
                             for="page_end"
                             class="block text-sm font-medium mb-2"
                         >
-                            Página fin
+                            {{ __('ui.end_page') }}
                         </label>
 
                         <input
@@ -249,14 +249,14 @@
                         href="{{ route('admin.season-imports.index') }}"
                         class="px-4 py-2 rounded-lg border border-[var(--border)]"
                     >
-                        Cancelar
+                        {{ __('ui.cancel') }}
                     </a>
 
                     <button
                         type="submit"
                         class="px-4 py-2 rounded-lg bg-indigo-600 text-white"
                     >
-                        Guardar configuración
+                        {{ __('ui.save_import_configuration') }}
                     </button>
 
                 </div>

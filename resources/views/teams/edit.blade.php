@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title','Editar Equipo')
-@section('page-title','Editar Equipo')
+@section('title', __('ui.edit_team'))
+@section('page-title', __('ui.edit_team'))
 
 @section('content')
 
@@ -18,7 +18,7 @@
 <div>
 
 <label class="block text-sm text-[var(--text)] mb-2">
-Nombre del equipo
+{{ __('ui.team_name') }}
 </label>
 
 <input type="text"
@@ -32,7 +32,7 @@ Nombre del equipo
 <div>
 
 <label class="block text-sm text-[var(--text)] mb-2">
-Nombre corto
+{{ __('ui.short_name') }}
 </label>
 
 <input type="text"
@@ -48,7 +48,7 @@ Nombre corto
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Logo
+{{ __('ui.logo') }}
 </label>
 
 <input type="file"
@@ -60,7 +60,7 @@ Logo
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Logo light
+{{ __('ui.logo_light') }}
 </label>
 
 <input type="file"
@@ -72,7 +72,7 @@ Logo light
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Logo Dark
+{{ __('ui.logo_dark') }}
 </label>
 
 <input type="file"
@@ -85,7 +85,7 @@ Logo Dark
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Banner
+{{ __('ui.banner') }}
 </label>
 
 <input type="file"
@@ -97,7 +97,7 @@ Banner
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Banner Dark
+{{ __('ui.banner_dark') }}
 </label>
 
 <input type="file"
@@ -111,14 +111,14 @@ Banner Dark
 <a href="{{ route('teams.index') }}"
    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white">
 
-Cancelar
+{{ __('ui.cancel') }}
 
 </a>
 
 <button
     class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white">
 
-Guardar
+{{ __('ui.save_team') }}
 
 </button>
 

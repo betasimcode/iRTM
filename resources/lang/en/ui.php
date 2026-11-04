@@ -339,5 +339,9 @@ return [
     "clutch" => "Clutch",
     "telemetry" => "Telemetry",
     "undock_instruments_on_map" => "Undock instruments over the map",
+    "close_graphs" => "Close graphs",
+    "reset_zoom" => "Reset zoom",
+    "sectors_comparison" => "Sector comparison",
+    "current_values_of" => "Current values of",
 
 ];

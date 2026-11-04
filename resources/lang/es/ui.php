@@ -551,5 +551,7 @@ return [
     "place" => "Puesto",
     "division_standings" => "Clasificación de la división",
     "overall_standings" => "Clasificación general",
+    "drivers" => "Pilotos",
+    "overall_drivers_count" => ":count pilotos",
 
 ];

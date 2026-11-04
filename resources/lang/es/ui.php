@@ -483,5 +483,9 @@ return [
     "confirm_deletion" => "Confirmar eliminación",
     "irreversible_action" => "Esta acción no se puede deshacer.",
     "remove" => "Quitar",
+    "pit" => "Parada en boxes",
+    "editround" => "Editar ronda",
+    "length" => "Duración",
+    "example_stint_or_driver" => "Ej.: 1089 o nombre del piloto",
 
 ];

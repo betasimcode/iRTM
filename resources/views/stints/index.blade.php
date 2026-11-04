@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Stints')
-@section('page-title',  'Stints' )
+@section('title', __('ui.stints'))
+@section('page-title', __('ui.stints'))
 
 @section('content')
 
@@ -48,11 +48,11 @@
                             <td class="px-4 py-4 text-[var(--text)]">
                             @if ($stint->status === 'validated')
                                 <span class="text-xs text-emerald-500">
-                                    Validado
+                                    {{ __('ui.validated') }}
                                 </span>
                             @else
                                 <span class="text-xs text-amber-500">
-                                    Pendiente de validación
+                                    {{ __('ui.pending_validation') }}
                                 </span>
                             @endif
                             </td>
@@ -111,7 +111,7 @@
                         <tr>
                             <td colspan="7"
                                 class="px-6 py-8 text-center text-gray-400">
-                                No hay stints registrados para esta combinación.
+                                {{ __('ui.no_stints_found') }}
                             </td>
                         </tr>
 
@@ -131,7 +131,7 @@
     {{-- Acción volver --}}
     <div class="flex mt-8">
                         <x-ui.button variant="exit" href="/">
-                        <x-heroicon-o-arrow-turn-left-up class="w-4 h-4 mr-2"/> Back
+                        <x-heroicon-o-arrow-turn-left-up class="w-4 h-4 mr-2"/> {{ __('ui.back') }}
                         </x-ui.button>
 
 

@@ -200,7 +200,7 @@ return [
     "view_weather_conditions" => "View weather conditions",
     "close_weather_conditions" => "Close weather conditions",
     "reprocess_ibt_telemetry" => "Reprocess IBT telemetry",
-    "confirm_reprocess_ibt" => "Do you want to reprocess this stint's IBT?",
+    "confirm_reprocess_ibt" => "Reprocess the IBT for this stint?",
     "print_stint_data" => "Print stint data",
     "precipitation" => "Precipitation: :value%",
     "precipitation_unavailable" => "Precipitation unavailable",

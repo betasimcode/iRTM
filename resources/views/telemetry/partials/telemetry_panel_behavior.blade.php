@@ -358,8 +358,8 @@
 
         const dragHandle = document.createElement('span');
         dragHandle.className = 'telemetry-floating-drag-handle';
-        dragHandle.textContent = 'IRTM · TELEMETRÍA';
-        dragHandle.title = 'Arrastrar instrumentos';
+        dragHandle.textContent = 'IRTM · ' + @js(__('ui.telemetry'));
+        dragHandle.title = @js(__('ui.drag_instruments'));
 
         toolbar.appendChild(dragHandle);
 
@@ -372,19 +372,19 @@
 
             // Un solo botón: muestra la acción disponible.
             if (label) {
-                label.textContent = detached ? 'Acoplar' : 'Desacoplar';
+                label.textContent = detached ? detachButton.dataset.labelDock : detachButton.dataset.labelUndock;
             } else {
-                detachButton.textContent = detached ? 'Acoplar' : 'Desacoplar';
+                detachButton.textContent = detached ? detachButton.dataset.labelDock : detachButton.dataset.labelUndock;
             }
 
             detachButton.title = detached
-                ? 'Acoplar instrumentos en su posición original'
-                : 'Desacoplar instrumentos sobre el mapa';
+                ? detachButton.dataset.titleDock
+                : detachButton.dataset.titleUndock;
 
             detachButton.setAttribute('aria-pressed', String(detached));
             detachButton.setAttribute(
                 'aria-label',
-                detached ? 'Acoplar instrumentos' : 'Desacoplar instrumentos'
+                detached ? detachButton.dataset.titleDock : detachButton.dataset.titleUndock
             );
         };
 

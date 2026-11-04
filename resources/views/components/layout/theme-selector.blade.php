@@ -46,15 +46,15 @@
     >
 
         <option disabled class="text-[var(--text-title)] uppercase" value="">
-            Main themes
+            {{ __('ui.main_themes') }}
         </option>
 
         <option value="theme-dark">
-            Theme Dark
+            {{ __('ui.dark_theme') }}
         </option>
 
         <option value="theme-iracing">
-            Theme iRacing
+            {{ __('ui.iracing_theme') }}
         </option>
 
         @foreach($teamThemes as $theme)
@@ -64,35 +64,35 @@
         @endforeach
 
         <option disabled class="text-[var(--text-title)] border-b-[var(--card)] uppercase mb-3" value="">
-            Custom themes
+            {{ __('ui.custom_themes') }}
         </option>
 
         <option value="theme-monaco">
-            UI Monaco
+            {{ __('ui.theme') }} Monaco
         </option>
 
         <option value="theme-monza">
-            UI Monza
+            {{ __('ui.theme') }} Monza
         </option>
 
         <option value="theme-laguna">
-            UI Laguna Seca
+            {{ __('ui.theme') }} Laguna Seca
         </option>
 
         <option value="theme-hock">
-            UI Hockemheim
+            {{ __('ui.theme') }} Hockenheim
         </option>
 
         <option value="theme-spa">
-            UI Spa Francorchamps
+            {{ __('ui.theme') }} Spa-Francorchamps
         </option>
 
         <option value="theme-jerez">
-            UI Jerez
+            {{ __('ui.theme') }} Jerez
         </option>
 
         <option value="theme-crtg">
-            UI CRT Green
+            {{ __('ui.theme') }} CRT Green
         </option>
 
     </select>

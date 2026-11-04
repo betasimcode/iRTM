@@ -21,19 +21,19 @@
     class="flex items-end justify-center gap-4 px-1 pt-1 pb-1"
 >
         <div class="flex w-7 flex-col items-center gap-1">
-            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="Clutch" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="{{ __('ui.clutch') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div id="telemetry-current-clutch-bar" class="w-full rounded-[2px] bg-blue-600 transition-[height] duration-75" style="height:0%"></div>
             </div>
             <span id="telemetry-current-clutch-value" class="font-mono text-xs tabular-nums">0%</span>
         </div>
         <div class="flex w-7 flex-col items-center gap-1">
-            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="Brake" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="{{ __('ui.brake') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div id="telemetry-current-brake-bar" class="w-full rounded-[2px] bg-red-500 transition-[height] duration-75" style="height:0%"></div>
             </div>
             <span id="telemetry-current-brake-value" class="font-mono text-xs tabular-nums">0%</span>
         </div>
         <div class="flex w-7 flex-col items-center gap-1">
-            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="flex h-14 w-7 items-end overflow-hidden rounded-sm border border-[var(--border)] bg-black/30 p-[2px]" role="meter" aria-label="{{ __('ui.throttle') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div id="telemetry-current-throttle-bar" class="w-full rounded-[2px] bg-green-500 transition-[height] duration-75" style="height:0%"></div>
             </div>
             <span id="telemetry-current-throttle-value" class="font-mono text-xs tabular-nums">0%</span>
@@ -54,7 +54,7 @@
             bg-black/20 px-3 py-2"
     >
         <div class="mb-2 flex items-center justify-between">
-            <span class="text-[10px] text-[var(--text-muted)]">INPUTS</span>
+            <span class="text-[10px] text-[var(--text-muted)]">{{ strtoupper(__('ui.inputs')) }}</span>
         </div>
 
         <div class="space-y-2">
@@ -70,7 +70,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <span class="w-9 text-[10px] font-semibold text-red-400">BRAKE</span>
+                <span class="w-9 text-[10px] font-semibold text-red-400">{{ strtoupper(__('ui.brake')) }}</span>
                 <div class="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                     <div id="telemetry-mini-brake-bar"
                         class="h-full rounded-full bg-red-500"

@@ -219,5 +219,6 @@ return [
     "division" => "Division",
     "team_owner" => "Team owner",
     "driver_role" => "Driver",
+    "open_lap_telemetry" => "Open telemetry for lap :lap",
 
 ];

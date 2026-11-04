@@ -13,11 +13,11 @@
             <div>
 
                 <h1 class="text-2xl font-semibold">
-                    Calendarios iRacing
+                    {{ __('ui.iracing_calendars') }}
                 </h1>
 
                 <p class="mt-1 text-sm opacity-70">
-                    PDFs disponibles para el parser.
+                    {{ __('ui.available_pdfs_for_parser') }}
                 </p>
 
             </div>
@@ -26,7 +26,7 @@
                 href="{{ route('admin.season-pdfs.create') }}"
                 class="px-4 py-2 rounded-lg bg-indigo-600 text-white"
             >
-                Subir PDF
+                {{ __('ui.upload_pdf') }}
             </a>
 
         </div>
@@ -60,7 +60,7 @@
             @empty
 
                 <div class="p-6 text-sm opacity-60">
-                    No hay calendarios registrados.
+                    {{ __('ui.no_calendars_registered') }}
                 </div>
 
             @endforelse

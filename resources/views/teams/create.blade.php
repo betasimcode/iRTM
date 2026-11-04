@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title','Crear Equipo')
-@section('page-title','Crear Equipo')
+@section('title', __('ui.create_team'))
+@section('page-title', __('ui.create_team'))
 
 @section('content')
 
@@ -17,7 +17,7 @@
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Nombre del equipo
+{{ __('ui.team_name') }}
 </label>
 
 <input type="text"
@@ -30,7 +30,7 @@ Nombre del equipo
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Logo
+{{ __('ui.logo') }}
 </label>
 
 <input type="file"
@@ -42,7 +42,7 @@ Logo
 <div>
 
 <label class="block text-sm text-gray-400 mb-2">
-Banner
+{{ __('ui.banner') }}
 </label>
 
 <input type="file"
@@ -56,14 +56,14 @@ Banner
 <a href="{{ route('teams.index') }}"
    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white">
 
-Cancelar
+{{ __('ui.cancel') }}
 
 </a>
 
 <button
     class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white">
 
-Crear Equipo
+{{ __('ui.create_team') }}
 
 </button>
 

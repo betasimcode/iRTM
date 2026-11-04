@@ -1,5 +1,5 @@
 
-            <p class="sidebar-label text-xs text-[var(--text-title)] uppercase">Admin site</p>
+            <p class="sidebar-label text-xs text-[var(--text-title)] uppercase">{{ __('ui.admin_site') }}</p>
             <div class="border-t border-[var(--b-header)] my-2"></div>
 
                 <a href="{{ route('teams.index') }}"
@@ -12,7 +12,7 @@
                 </a>
 
                 <a href="{{ route('admin.season-imports.index') }}" class="block px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] hover:text-[var(--text-h)] {{ request()->routeIs('admin.season-imports.index') ? 'bg-[var(--hover)] text-[var(--text-h)]' : '' }}">
-                Competitions
+                {{ __('ui.competitions') }}
                 </a>
 
                  <a href="{{ route('cars.index') }}"

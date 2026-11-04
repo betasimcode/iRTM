@@ -15,27 +15,27 @@
 
             <a href="#"
                class="px-3 py-2 hover:border-b-2 hover:border-[var(--border)] transition">
-                Dashboard
+                {{ __('ui.dashboard') }}
             </a>
 
             <a href="#"
                class="px-3 py-2 hover:border-b-2 hover:border-[var(--border)] transition">
-                Competitions
+                {{ __('ui.competitions') }}
             </a>
 
             <a href="#"
                class="px-3 py-2 hover:border-b-2 hover:border-[var(--border)] transition">
-                Drivers
+                {{ __('ui.drivers') }}
             </a>
 
             <a href="#"
                class="px-3 py-2 hover:border-b-2 hover:border-[var(--border)] transition">
-                Cars
+                {{ __('ui.cars') }}
             </a>
 
             <a href="#"
                class="px-3 py-2 hover:border-b-2 hover:border-[var(--border)] transition">
-                Reports
+                {{ __('ui.reports') }}
             </a>
 
         </nav>
@@ -44,7 +44,7 @@
         <div class="ml-auto flex items-center gap-4">
 
             <span class="text-xs opacity-60">
-                {{ $team?->name ?? 'Team' }}
+                {{ $team?->name ?? __('ui.team') }}
             </span>
 
         </div>

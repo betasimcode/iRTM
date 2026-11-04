@@ -357,7 +357,7 @@ Refuel allowed
             class="w-full mt-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg p-2 text-[var(--text)]">
 
             @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                <option value="{{ __('ui.' . strtolower($day)) }}"
+                <option value="{{ $day }}"
                     {{ old('week_start_day', $iracingSeries->week_start_day) == $day ? 'selected' : '' }}>
                     {{ $day }}
                 </option>

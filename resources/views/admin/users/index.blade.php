@@ -1,25 +1,25 @@
 @extends('layouts.app')
 
-@section('page-title','Users')
+@section('page-title', __('ui.users'))
 
 @section('content')
 
 <div class="mb-6 flex justify-between">
-    <h2 class="text-xl font-semibold">Users</h2>
+    <h2 class="text-xl font-semibold">{{ __('ui.users') }}</h2>
 
     <a href="{{ route('admin.users.create') }}"
        class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm">
-        Create User
+        {{ __('ui.create_user') }}
     </a>
 </div>
 
 <table class="w-full bg-gray-800 rounded-xl overflow-hidden">
     <thead class="bg-gray-700 text-left text-sm text-gray-300">
         <tr>
-            <th class="p-4">Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Team</th>
+            <th class="p-4">{{ __('ui.name') }}</th>
+            <th>{{ __('ui.email') }}</th>
+            <th>{{ __('ui.role') }}</th>
+            <th>{{ __('ui.team') }}</th>
             <th></th>
         </tr>
     </thead>
@@ -32,7 +32,7 @@
                 <td>{{ $user->team?->name }}</td>
                 <td class="text-right pr-4">
                     <a href="{{ route('admin.users.edit',$user) }}"
-                       class="text-blue-400">Edit</a>
+                       class="text-blue-400">{{ __('ui.edit') }}</a>
                 </td>
             </tr>
         @endforeach

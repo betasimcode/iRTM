@@ -545,5 +545,11 @@ return [
     "driver_workspace" => "Driver workspace",
     "main_themes" => "Main themes",
     "custom_themes" => "Custom themes",
+    "overall" => "Overall",
+    "update_standings_failed" => "Could not update the standings.",
+    "standings_updated" => "Standings updated",
+    "place" => "Place",
+    "division_standings" => "Division standings",
+    "overall_standings" => "Overall standings",
 
 ];

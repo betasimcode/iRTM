@@ -105,15 +105,15 @@
             <select name="type"
             class="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded-lg px-4 py-2 uppercase text-[var(--text)]">
 
-                <option value="ROAD">ROAD</option>
-                <option value="OVAL">OVAL</option>
-                <option value="DIRT ROAD">DIRT ROAD</option>
-                <option value="DIRT OVAL">DIRT OVAL</option>
+                <option value="ROAD">{{ __('ui.road') }}</option>
+                <option value="OVAL">{{ __('ui.oval') }}</option>
+                <option value="DIRT ROAD">{{ __('ui.dirt_road') }}</option>
+                <option value="DIRT OVAL">{{ __('ui.dirt_oval') }}</option>
             </select>
         </div>
             <div>
                 <label class="block text-lg text-[var(--text-title)] mb-2">
-                    Map
+                    {{ __('ui.map') }}
                 </label>
 
                 <input

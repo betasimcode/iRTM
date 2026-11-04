@@ -40,10 +40,10 @@
 
                 <tr>
 
-                    <th class="px-6 py-3 text-left">Logo</th>
-                    <th class="px-6 py-3 text-left">Equipo</th>
-                    <th class="px-6 py-3 text-left">Miembros</th>
-                    <th class="px-6 py-3 text-left">Acciones</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.logo') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.team') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.members') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.actions') }}</th>
 
                 </tr>
 

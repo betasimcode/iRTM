@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Nuevo Coche')
-@section('page-title', 'Nuevo Coche')
+@section('title', __('ui.new').' '. __('ui.car'))
+@section('page-title', __('ui.new').' '. __('ui.car'))
 
 @section('content')
 
@@ -15,7 +15,7 @@
             {{-- Nombre --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Nombre
+                    {{ __('ui.name') }}
                 </label>
                 <input type="text"
                        name="name"
@@ -26,18 +26,18 @@
             {{-- Categoría --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Categoría
+                    {{ __('ui.category') }}
                 </label>
                 <input type="text"
                        name="category"
-                       placeholder="F1, GT, LMP..."
+                       placeholder="{{ __('ui.car_category_examples') }}"
                        class="form-input">
             </div>
 
             {{-- Tank --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Capacidad de combustible (L)
+                    {{ __('ui.tank_capacity_label') }} (L)
                 </label>
                 <input type="number"
                        step="0.1"
@@ -48,7 +48,7 @@
             {{-- Consumo --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Consumo por vuelta (L)
+                    {{ __('ui.fuel_consumption_per_lap') }}
                 </label>
                 <input type="number"
                        step="0.01"
@@ -59,18 +59,18 @@
             {{-- Neumático --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Tipo de neumático
+                    {{ __('ui.tyre_type') }}
                 </label>
                 <input type="text"
                        name="tyre_type"
-                       placeholder="Blando, Medio, Duro"
+                       placeholder="{{ __('ui.soft') }}, {{ __('ui.medium') }}, {{ __('ui.hard') }}"
                        class="form-input">
             </div>
 
             {{-- Potencia --}}
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-2">
-                    Potencia (HP)
+                    {{ __('ui.power_hp') }}
                 </label>
                 <input type="number"
                        name="power_hp"
@@ -82,13 +82,13 @@
 
                 <a href="{{ route('cars.index') }}"
                    class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition">
-                    Cancelar
+                    {{ __('ui.cancel') }}
                 </a>
 
                 <button type="submit"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white
                                rounded-lg text-sm font-medium transition shadow">
-                    Guardar coche
+                    {{ __('ui.save_car') }}
                 </button>
 
             </div>

@@ -118,7 +118,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
         <option value="">{{ __('ui.select') }}</option>
         @foreach(['SPORTS CAR SERIES','FORMULA CAR SERIES','OVAL SERIES','DIRT','OVAL DIRT'] as $discipline)
             <option value="{{ $discipline }}">
-                {{ $discipline }}
+                {{ __('ui.' . strtolower(str_replace(' ', '_', $discipline))) }}
             </option>
         @endforeach
     </select>
@@ -190,7 +190,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
     <input type="number" step="1" name="fuel_limit"
         value="{{ old('fuel_limit') }}"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]"
-        placeholder="Ej: 50">
+        placeholder="50">
 </div>
 
 {{-- Override tanque --}}
@@ -237,7 +237,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
     {{-- Fast repair --}}
     <label class="flex items-center gap-2 text-gray-300 mt-6">
         <input type="checkbox" name="fast_repair" value="1">
-        Fast Repair
+        {{ __('ui.fast_repair') }}
     </label>
 
     {{-- Drive Through --}}

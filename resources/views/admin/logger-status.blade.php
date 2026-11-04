@@ -1,23 +1,23 @@
 <table border="1" cellpadding="10">
     <tr>
-        <th>Driver</th>
-        <th>User</th>
-        <th>Versión</th>
-        <th>Última conexión</th>
-        <th>Estado</th>
+        <th>{{ __('ui.driver') }}</th>
+        <th>{{ __('ui.user') }}</th>
+        <th>{{ __('ui.version') }}</th>
+        <th>{{ __('ui.last_connection') }}</th>
+        <th>{{ __('ui.status') }}</th>
     </tr>
 
     @foreach($drivers as $driver)
         <tr>
             <td>{{ $driver->name }}</td>
             <td>{{ $driver->user->name ?? '—' }}</td>
-            <td>{{ $driver->logger_version ?? 'Desconocida' }}</td>
+            <td>{{ $driver->logger_version ?? __('ui.unknown') }}</td>
             <td>{{ $driver->last_logger_ping }}</td>
             <td>
                 @if($driver->last_logger_ping && $driver->last_logger_ping->gt(now()->subMinutes(5)))
-                    🟢 Activo
+                    🟢 {{ __('ui.active') }}
                 @else
-                    🔴 Offline
+                    🔴 {{ __('ui.offline') }}
                 @endif
             </td>
         </tr>

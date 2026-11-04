@@ -545,5 +545,11 @@ return [
     "driver_workspace" => "Espacio de piloto",
     "main_themes" => "Temas principales",
     "custom_themes" => "Temas personalizados",
+    "overall" => "General",
+    "update_standings_failed" => "No se pudo actualizar la clasificación.",
+    "standings_updated" => "Clasificación actualizada",
+    "place" => "Puesto",
+    "division_standings" => "Clasificación de la división",
+    "overall_standings" => "Clasificación general",
 
 ];

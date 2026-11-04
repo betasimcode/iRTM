@@ -31,15 +31,15 @@
 
             <thead class="bg-[var(--card)] border-[var(--border)] text-[var(--text-title)]  uppercase text-xs tracking-wider">
                 <tr>
-                    <th class="px-4 py-2 text-left">ID</th>
-                    <th class="px-4 py-2 text-left">Imagen</th>
-                    <th class="px-4 py-2 text-left">Brand</th>
-                    <th class="px-4 py-2 text-left">iR-ID</th>
-                    <th class="px-4 py-2 text-left">Model</th>
-                    <th class="px-4 py-2 text-left">Code</th>
-                    <th class="px-4 py-2 text-left">Depósito</th>
-                    <th class="px-4 py-2 text-left">Categoría</th>
-                    <th class="px-4 py-2 text-right">Acciones</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.id') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.image') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.brand') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.iracing_id') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.model') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.code') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.tank_capacity_label') }}</th>
+                    <th class="px-4 py-2 text-left">{{ __('ui.category') }}</th>
+                    <th class="px-4 py-2 text-right">{{ __('ui.actions') }}</th>
                 </tr>
             </thead>
 

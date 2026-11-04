@@ -3,7 +3,7 @@
     <button
         type="button"
         class="relative flex items-center justify-center"
-        aria-label="Notificaciones"
+        aria-label="{{ __('ui.notifications') }}"
     >
         <i
             data-lucide="bell"

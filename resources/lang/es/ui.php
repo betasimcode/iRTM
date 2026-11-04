@@ -336,5 +336,6 @@ return [
     "no_laps_available" => "No hay vueltas disponibles",
     "suspension" => "Suspensión",
     "no_stints_available" => "No hay stints disponibles",
+    "clutch" => "Embrague",
 
 ];

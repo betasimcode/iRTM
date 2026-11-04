@@ -11,12 +11,11 @@
         <div class="mb-6">
 
             <h1 class="text-2xl font-semibold">
-                Subir calendario iRacing
+                {{ __('ui.upload_iracing_calendar') }}
             </h1>
 
             <p class="mt-1 text-sm opacity-70">
-                El archivo será renombrado automáticamente
-                según la temporada seleccionada.
+                {{ __('ui.file_renamed_automatically') }}
             </p>
 
         </div>
@@ -59,7 +58,7 @@
                             for="year"
                             class="block text-sm font-medium mb-2"
                         >
-                            Año
+                            {{ __('ui.year') }}
                         </label>
 
                         <input
@@ -82,7 +81,7 @@
                             for="season"
                             class="block text-sm font-medium mb-2"
                         >
-                            Temporada
+                            {{ __('ui.season') }}
                         </label>
 
                         <select
@@ -93,7 +92,7 @@
                         >
 
                             <option value="">
-                                Selecciona temporada
+                                {{ __('ui.select_season') }}
                             </option>
 
                             @for($i = 1; $i <= 4; $i++)
@@ -120,7 +119,7 @@
                         for="file"
                         class="block text-sm font-medium mb-2"
                     >
-                        Archivo PDF
+                        {{ __('ui.pdf_file') }}
                     </label>
 
                     <input
@@ -133,7 +132,7 @@
                     >
 
                     <p class="mt-2 text-xs opacity-60">
-                        El nombre original del archivo no se conservará.
+                        {{ __('ui.original_filename_not_kept') }}
                     </p>
 
                 </div>
@@ -142,14 +141,14 @@
                 <div class="rounded-lg border border-[var(--border)] p-4">
 
                     <p class="text-sm opacity-70">
-                        Nombre que utilizará el parser:
+                        {{ __('ui.parser_filename') }}
                     </p>
 
                     <p
                         id="generated-filename"
                         class="mt-1 font-mono font-semibold"
                     >
-                        Selecciona año y temporada
+                        {{ __('ui.select_year_and_season') }}
                     </p>
 
                 </div>
@@ -161,14 +160,14 @@
                         href="{{ route('admin.season-pdfs.index') }}"
                         class="px-4 py-2 rounded-lg border border-[var(--border)]"
                     >
-                        Cancelar
+                        {{ __('ui.cancel') }}
                     </a>
 
                     <button
                         type="submit"
                         class="px-4 py-2 rounded-lg bg-indigo-600 text-white"
                     >
-                        Subir PDF
+                        {{ __('ui.upload_pdf') }}
                     </button>
 
                 </div>
@@ -209,7 +208,7 @@
         } else {
 
             filename.textContent =
-                'Selecciona año y temporada';
+                @js(__('ui.select_year_and_season'));
 
         }
     }

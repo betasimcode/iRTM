@@ -11,7 +11,7 @@
             <div>
                 <h1 class="text-2xl font-bold font-microsport
                            text-[var(--text-title)]">
-                    STRATEGY
+                    {{ strtoupper(__('ui.strategy')) }}
                 </h1>
 
                 <p class="mt-2 text-sm text-[var(--text-muted)]">
@@ -21,7 +21,7 @@
                 </p>
 
                 <p class="mt-1 text-sm text-[var(--text-muted)]">
-                    {{ $displayRound?->track?->display_name ?? 'Track unavailable' }}
+                    {{ $displayRound?->track?->display_name ?? __('ui.track_unavailable') }}
                     @if($displayRound?->track?->variant)
                         - {{ $displayRound->track->variant }}
                     @endif
@@ -31,7 +31,7 @@
             <a href="{{ route('teamcenter.championships.show', $series) }}"
                class="px-4 py-2 rounded-lg border border-[var(--border)]
                       text-[var(--text)] hover:bg-[var(--card-hover)]">
-                Back to Championship
+                {{ __('ui.back_to_championship') }}
             </a>
 
         </div>
@@ -48,7 +48,7 @@
               class="flex flex-wrap items-center justify-between gap-4">
 
             <label class="text-sm text-[var(--text-muted)]">
-                Statistical reference
+                {{ __('ui.statistical_reference') }}
             </label>
 
             <select name="report_scope"
@@ -58,17 +58,17 @@
 
                 <option value="week"
                     @selected($reportScope === 'week')>
-                    Current week
+                    {{ __('ui.current_week') }}
                 </option>
 
                 <option value="season"
                     @selected($reportScope === 'season')>
-                    Season
+                    {{ __('ui.season') }}
                 </option>
 
                 <option value="all"
                     @selected($reportScope === 'all')>
-                    Historic
+                    {{ __('ui.historic') }}
                 </option>
 
             </select>
@@ -93,13 +93,11 @@
                         bg-[var(--card)] p-8 text-center">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)]">
-                Strategy unavailable
+                {{ __('ui.strategy_unavailable') }}
             </h2>
 
             <p class="mt-3 text-sm text-[var(--text-muted)]">
-                No hay datos suficientes de ritmo o consumo para
-                calcular la estrategia de esta combinación de
-                coche y circuito.
+                {{ __('ui.insufficient_pace_fuel_data') }}
             </p>
 
         </section>
@@ -111,7 +109,7 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)] mb-5">
-                Race Summary
+                {{ __('ui.race_summary') }}
             </h2>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -119,7 +117,7 @@
                 <div class="rounded-xl border border-[var(--border)]
                             bg-[var(--bg)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Estimated laps
+                        {{ __('ui.estimated_laps') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-info)]">
                         {{ $plan['estimated_laps'] }}
@@ -129,7 +127,7 @@
                 <div class="rounded-xl border border-[var(--border)]
                             bg-[var(--bg)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Tank capacity
+                        {{ __('ui.tank_capacity') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-data)]">
                         {{ number_format($plan['tank_capacity'], 2) }} L
@@ -139,7 +137,7 @@
                 <div class="rounded-xl border border-[var(--border)]
                             bg-[var(--bg)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Base fuel
+                        {{ __('ui.base_fuel') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-info)]">
                         {{ number_format($plan['base']['fuel'], 2) }} L
@@ -156,7 +154,7 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)]">
-                Contingency Plan
+                {{ __('ui.contingency_plan') }}
             </h2>
 
             @if(($config['margin_laps'] ?? 0) > 0 ||
@@ -166,7 +164,7 @@
                             bg-[var(--bg)] p-4 text-sm
                             text-[var(--text-muted)]">
 
-                    Active contingency:
+                    {{ __('ui.active_contingency') }}
                     +{{ $config['margin_laps'] ?? 0 }} laps,
                     +{{ number_format($config['extra_fuel'] ?? 0, 2) }} L
 
@@ -188,7 +186,7 @@
                     <div>
                         <label class="block text-sm
                                       text-[var(--text-muted)]">
-                            Additional laps
+                            {{ __('ui.additional_laps') }}
                         </label>
 
                         <input type="number"
@@ -215,7 +213,7 @@
                     <div>
                         <label class="block text-sm
                                       text-[var(--text-muted)]">
-                            Additional fuel (L)
+                            {{ __('ui.additional_fuel') }}
                         </label>
 
                         <input type="number"
@@ -248,7 +246,7 @@
                                    bg-[var(--btn-app)]
                                    text-[var(--text-title)]
                                    border border-[var(--border)]">
-                        Apply contingency
+                        {{ __('ui.apply_contingency') }}
                     </button>
 
                 </div>
@@ -268,7 +266,7 @@
                         class="px-5 py-2 rounded-lg
                                border border-[var(--border)]
                                text-[var(--text-muted)]">
-                    Reset contingency
+                    {{ __('ui.reset_contingency') }}
                 </button>
 
             </form>
@@ -281,7 +279,7 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)] mb-5">
-                Base Strategy
+                {{ __('ui.base_strategy') }}
             </h2>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -289,7 +287,7 @@
                 <div class="rounded-xl bg-[var(--bg)]
                             border border-[var(--border)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Required stints
+                        {{ __('ui.required_stints') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-info)]">
                         {{ $plan['base']['stints'] }}
@@ -299,7 +297,7 @@
                 <div class="rounded-xl bg-[var(--bg)]
                             border border-[var(--border)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Estimated stops
+                        {{ __('ui.estimated_stops') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-data)]">
                         {{ max(0, $plan['base']['stints'] - 1) }}
@@ -309,7 +307,7 @@
                 <div class="rounded-xl bg-[var(--bg)]
                             border border-[var(--border)] p-4">
                     <p class="text-xs uppercase text-[var(--text-muted)]">
-                        Fuel per stint (average)
+                        {{ __('ui.fuel_per_stint_average') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold text-[var(--value-data)]">
                         {{ number_format(
@@ -329,9 +327,9 @@
 
                 <p class="text-sm font-semibold">
                     @if($plan['base']['stints'] <= 1)
-                        Race fits within one stint. No fuel stop required.
+                        {{ __('ui.single_stint_no_stops') }}
                     @else
-                        Estimated fuel stops:
+                        {{ __('ui.estimated_fuel_stops') }}:
                         {{ max(0, $plan['base']['stints'] - 1) }}
                     @endif
                 </p>
@@ -346,7 +344,7 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)] mb-5">
-                Scenario Comparison
+                {{ __('ui.scenario_comparison') }}
             </h2>
 
             <div class="overflow-x-auto">
@@ -357,11 +355,11 @@
                         <tr class="border-b border-[var(--border)]
                                    text-[var(--text-muted)] text-left">
 
-                            <th class="py-3">Scenario</th>
-                            <th class="py-3 text-center">Fuel</th>
-                            <th class="py-3 text-center">Stints</th>
-                            <th class="py-3 text-center">Stops</th>
-                            <th class="py-3 text-center">Favorite</th>
+                            <th class="py-3">{{ __('ui.scenario') }}</th>
+                            <th class="py-3 text-center">{{ __('ui.fuel') }}</th>
+                            <th class="py-3 text-center">{{ __('ui.stints') }}</th>
+                            <th class="py-3 text-center">{{ __('ui.stops') }}</th>
+                            <th class="py-3 text-center">{{ __('ui.favorite') }}</th>
 
                         </tr>
                     </thead>
@@ -369,10 +367,10 @@
                     <tbody>
 
                         @foreach([
-                            'base' => 'Base',
-                            'conservative' => 'Conservative',
-                            'aggressive' => 'Aggressive',
-                            'safety_car' => 'Safety Car',
+                            'base' => __('ui.base_strategy'),
+                            'conservative' => __('ui.conservative'),
+                            'aggressive' => __('ui.aggressive'),
+                            'safety_car' => __('ui.safety_car'),
                         ] as $key => $label)
 
                             <tr class="border-b border-[var(--border)]
@@ -419,15 +417,15 @@
                                                value="{{ $key }}">
 
                                         <button type="submit"
-                                                aria-label="Select {{ $label }}"
+                                                aria-label="{{ __('ui.select_scenario', ['scenario' => $label]) }}"
                                                 class="px-3 py-1 rounded-lg
                                                        border border-[var(--border)]
                                                        {{ $favorite === $key
                                                            ? 'bg-[var(--btn-app)] text-[var(--text-title)]'
                                                            : 'text-[var(--text-muted)]' }}">
                                             {{ $favorite === $key
-                                                ? '★ Selected'
-                                                : '☆ Select' }}
+                                                ? '★ ' . __('ui.selected')
+                                                : '☆ ' . __('ui.select') }}
                                         </button>
 
                                     </form>
@@ -452,14 +450,14 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)] mb-5">
-                Fuel Risk
+                {{ __('ui.fuel_risk') }}
             </h2>
 
             <div class="grid md:grid-cols-3 gap-4">
 
                 <div>
                     <p class="text-sm text-[var(--text-muted)]">
-                        Applied margin
+                        {{ __('ui.margin_applied') }}
                     </p>
                     <p class="mt-2 text-xl font-bold text-[var(--value-data)]">
                         {{ $plan['margin_percent'] }} %
@@ -468,7 +466,7 @@
 
                 <div>
                     <p class="text-sm text-[var(--text-muted)]">
-                        Fuel buffer
+                        {{ __('ui.fuel_buffer') }}
                     </p>
                     <p class="mt-2 text-xl font-bold text-[var(--value-data)]">
                         {{ $plan['buffer'] }} L
@@ -477,7 +475,7 @@
 
                 <div>
                     <p class="text-sm text-[var(--text-muted)]">
-                        Risk level
+                        {{ __('ui.risk_level') }}
                     </p>
 
                     <p class="mt-2 text-xl font-bold
@@ -486,7 +484,7 @@
                             : ($plan['risk'] === 'Medio'
                                 ? 'text-yellow-500'
                                 : 'text-red-500') }}">
-                        {{ $plan['risk'] }}
+                        {{ $plan['risk'] === 'Bajo' ? __('ui.low') : ($plan['risk'] === 'Medio' ? __('ui.medium') : __('ui.high')) }}
                     </p>
                 </div>
 
@@ -500,21 +498,17 @@
                         bg-[var(--card)] p-6">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)] mb-3">
-                Strategic Recommendation
+                {{ __('ui.strategic_recommendation') }}
             </h2>
 
             <p class="text-sm text-[var(--text-muted)] leading-relaxed">
 
                 @if($plan['base']['stints'] <= 1)
-                    Estrategia de un solo stint. Controlar el ritmo,
-                    el consumo y evitar tráfico innecesario.
+                    {{ __('ui.single_stint_recommendation') }}
                 @elseif($plan['base']['stints'] == 2)
-                    Estrategia de dos stints. Evaluar la ventana de parada
-                    y la posibilidad de undercut u overcut.
+                    {{ __('ui.two_stint_recommendation') }}
                 @else
-                    Carrera con múltiples stints. Será necesario
-                    coordinar las paradas y la gestión del combustible
-                    entre los pilotos.
+                    {{ __('ui.multiple_stint_recommendation') }}
                 @endif
 
             </p>

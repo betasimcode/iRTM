@@ -3,7 +3,7 @@
     <div class="max-w-3xl mx-auto py-8">
 
         <h2 class="text-2xl font-bold text-gray-800 mb-6">
-            Registrar resultados de la sesión
+            {{ __('ui.session_results') }}
         </h2>
 
         <form method="POST"
@@ -15,7 +15,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Combustible inicial
+                    {{ __('ui.initial_fuel') }}
                 </label>
                 <input type="number"
                        step="0.01"
@@ -25,7 +25,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Combustible final
+                    {{ __('ui.final_fuel') }}
                 </label>
                 <input type="number"
                        step="0.01"
@@ -35,7 +35,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Mejor vuelta (s)
+                    {{ __('ui.best_lap_seconds') }}
                 </label>
                 <input type="number"
                        step="0.001"
@@ -45,7 +45,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Incidentes
+                    {{ __('ui.incidents') }}
                 </label>
                 <input type="number"
                        name="incidents"
@@ -54,7 +54,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Temperatura pista
+                    {{ __('ui.track_temperature') }}
                 </label>
                 <input type="number"
                        step="0.1"
@@ -64,7 +64,7 @@
 
             <div class="flex justify-end">
                 <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow">
-                    Guardar resultados
+                    {{ __('ui.save_results') }}
                 </button>
             </div>
 

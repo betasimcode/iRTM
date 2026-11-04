@@ -559,5 +559,8 @@ return [
     "competitions" => "Competiciones",
     "team_management" => "Gestión del equipo",
     "site_admin" => "Administración del sitio",
+    "theme" => "Tema",
+    "dark_theme" => "Tema oscuro",
+    "iracing_theme" => "Tema iRacing",
 
 ];

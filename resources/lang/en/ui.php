@@ -443,5 +443,10 @@ return [
     "fuel_used" => "Fuel used",
     "vehicle" => "Car",
     "circuit" => "Track",
+    "example_fifty" => "e.g. 50",
+    "registered_iracing_series" => "Registered iRacing series",
+    "delete_series_confirmation" => "Are you sure you want to delete this series?",
+    "minutes" => "Minutes",
+    "new_session" => "New session",
 
 ];

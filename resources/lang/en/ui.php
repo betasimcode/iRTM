@@ -483,5 +483,9 @@ return [
     "confirm_deletion" => "Confirm deletion",
     "irreversible_action" => "This action cannot be undone.",
     "remove" => "Remove",
+    "pit" => "Pit stop",
+    "editround" => "Edit round",
+    "length" => "Length",
+    "example_stint_or_driver" => "e.g. 1089 or driver name",
 
 ];

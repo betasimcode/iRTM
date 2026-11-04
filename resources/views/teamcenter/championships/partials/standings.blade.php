@@ -36,7 +36,7 @@
                                tracking-wide
                                text-[var(--text-title)]"
                     >
-                        {{ $series->iracingSeries->name }} {{ $series->season_year }} - Season {{ $series->season_number }}
+                        {{ $series->iracingSeries->name }} {{ $series->season_year }} - {{ __('ui.season') }} {{ $series->season_number }}
                     </h2>
 
                 </div>
@@ -66,7 +66,7 @@
                     const html = await response.text();
 
                     if (!response.ok) {
-                        throw new Error('No se pudo actualizar la clasificación.');
+                        throw new Error(@js(__('ui.update_standings_failed')));
                     }
 
                     toolContent = html;
@@ -97,7 +97,7 @@
                        hover:text-[var(--text)]"
             >
 
-                Seleccionar JSON
+                {{ __('ui.select_json') }}
 
                 <input
                     type="file"
@@ -127,11 +127,11 @@
             >
 
                 <span x-show="!standingsSyncing">
-                    Actualizar
+                    {{ __('ui.update') }}
                 </span>
 
                 <span x-show="standingsSyncing">
-                    Actualizando...
+                    {{ __('ui.updating') }}
                 </span>
 
             </button>
@@ -170,7 +170,7 @@
                                 : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                         "
                     >
-                        My Division
+                        {{ __('ui.my_division') }}
 
                         @if($division !== null)
                             <span
@@ -203,7 +203,7 @@
                                 : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                         "
                     >
-                        Overall
+                        {{ __('ui.overall') }}
 
                         <span
                             x-show="standingsTab === 'overall'"
@@ -244,7 +244,7 @@
                         class="text-sm
                                text-[var(--text-muted)]"
                     >
-                        No hay clasificación disponible para tu división.
+                        {{ __('ui.no_division_standings') }}
                     </p>
 
                 </div>
@@ -260,7 +260,7 @@
                                tracking-wider
                                text-[var(--text)]"
                     >
-                        Division {{ $division }}
+                        {{ __('ui.division_number', ['division' => $division]) }}
                     </p>
 
                 </div>
@@ -281,27 +281,27 @@
                             >
 
                                 <th class="px-3 py-2 text-left">
-                                    Pos
+                                    {{ __('ui.position_short') }}
                                 </th>
 
                                 <th class="px-3 py-2 text-left">
-                                    Nation
+                                    {{ __('ui.nation') }}
                                 </th>
 
                                 <th class="px-3 py-2 text-left">
-                                    Driver
+                                    {{ __('ui.driver') }}
                                 </th>
 
                                 <th class="px-3 py-2 text-right">
-                                    Points
+                                    {{ __('ui.points') }}
                                 </th>
 
                                 <th class="px-3 py-2 text-right">
-                                    Starts
+                                    {{ __('ui.starts') }}
                                 </th>
 
                                 <th class="px-3 py-2 text-right">
-                                    Wins
+                                    {{ __('ui.wins') }}
                                 </th>
 
                             </tr>
@@ -415,7 +415,7 @@
                         class="text-sm
                                text-[var(--text-muted)]"
                     >
-                        No hay clasificación general disponible.
+                        {{ __('ui.overall_standings') }}
                     </p>
 
                 </div>
@@ -431,14 +431,14 @@
                                tracking-wider
                                text-[var(--text-muted)]"
                     >
-                        Overall
+                        {{ __('ui.overall') }}
                     </p>
 
                     <p
                         class="mt-1 text-[11px]
                                text-[var(--text-muted)]"
                     >
-                        {{ $overallDrivers->count() }} drivers
+                        {{ __('ui.overall_drivers_count', ['count' => $overallDrivers->count()]) }}
                     </p>
 
                 </div>
@@ -475,7 +475,7 @@
                                 </th>
 
                                 <th class="px-3 py-2 text-right">
-                                    Division
+                                    {{ __('ui.division') }}
                                 </th>
 
                             </tr>

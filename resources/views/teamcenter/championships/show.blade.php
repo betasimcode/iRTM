@@ -302,7 +302,7 @@
             {{-- <div> {!! $stint->track->map_svg !!}      </div> --}}
             </div>
             @else
-            <div class="p-8 m-auto text-center">No track image</div>
+            <div class="p-8 m-auto text-center">{{ __('ui.no_track_image') }}</div>
             @endif
 
             </div>
@@ -315,7 +315,7 @@
                 <button
                     @click="open = false"
                     class="px-4 w-28 py-2 text-sm font-medium text-[var(--text)] bg-[var(--btn-cancel)] hover:bg-[var(--btn-cancel-h)] rounded-lg transition">
-                    Back
+                    {{ __('ui.back') }}
                 </button>
                 {{-- <button
                     @click="open = false"
@@ -656,7 +656,7 @@
                     class="text-[var(--text-muted)]
                            hover:text-[var(--text)]
                            transition"
-                    aria-label="Close"
+                    aria-label="{{ __('ui.close') }}"
                 >
                     <i
                         data-lucide="x"

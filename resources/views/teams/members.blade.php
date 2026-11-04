@@ -22,10 +22,10 @@ Miembros del equipo
 <thead class="bg-gray-700 text-gray-300 uppercase text-xs">
 
 <tr>
-<th class="px-6 py-3 text-left">Piloto</th>
-<th class="px-6 py-3 text-left">iRacing</th>
-<th class="px-6 py-3 text-left">Rol</th>
-<th class="px-6 py-3 text-left">Acciones</th>
+<th class="px-6 py-3 text-left">{{ __('ui.driver') }}</th>
+<th class="px-6 py-3 text-left">{{ __('ui.iracing') }}</th>
+<th class="px-6 py-3 text-left">{{ __('ui.role') }}</th>
+<th class="px-6 py-3 text-left">{{ __('ui.actions') }}</th>
 </tr>
 
 </thead>

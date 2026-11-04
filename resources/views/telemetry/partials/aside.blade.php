@@ -100,25 +100,29 @@
     {{-- MAP --}}
     <section class="space-y-2">
         <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
-            <span class="text-base">⌖</span> MAP
+            <span class="text-base">⌖</span> {{ strtoupper(__('ui.map')) }}
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
             <button type="button"
                 @click="document.getElementById('telemetry-panel-toggle')?.click()"
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">◉</span>Instrumentos
+                <span class="block text-lg">◉</span>{{ __('ui.instruments') }}
             </button>
 
             <button
                 type="button"
                 id="telemetry-panel-detach"
+                data-label-dock="{{ __('ui.dock') }}"
+                data-label-undock="{{ __('ui.undock') }}"
+                data-title-dock="{{ __('ui.dock_instruments') }}"
+                data-title-undock="{{ __('ui.undock_instruments') }}"
                 @click="
                     const panel = document.getElementById('telemetry-main-panel');
                     if (panel) {
                         const detached = panel.parentElement?.id === 'telemetry-floating-panel-host';
-                        $el.textContent = detached ? '⤢ Acoplar' : '⤢ Desacoplar';
-                        $el.title = detached ? 'Acoplar instrumentos' : 'Desacoplar instrumentos';
+                        $el.textContent = detached ? '⤢ ' + $el.dataset.labelDock : '⤢ ' + $el.dataset.labelUndock;
+                        $el.title = detached ? $el.dataset.titleDock : $el.dataset.titleUndock;
                         $el.setAttribute('aria-pressed', String(!detached));
                         window.dispatchEvent(new CustomEvent('telemetry-panel-toggle-detach'));
                     }
@@ -126,31 +130,31 @@
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]"
             >
                 <span class="block text-lg">⤢</span>
-                <span>Acoplar</span>
+                <span>{{ __('ui.dock') }}</span>
             </button>
 
             <button type="button"
                 @click="document.getElementById('telemetry-map-reset')?.click()"
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">⌂</span>Encuadrar
+                <span class="block text-lg">⌂</span>{{ __('ui.frame_map') }}
             </button>
 
             <button type="button"
                 @click="document.getElementById('telemetry-map-zoom-in')?.click()"
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">＋</span>Zoom +
+                <span class="block text-lg">＋</span>{{ __('ui.zoom_in') }}
             </button>
 
             <button type="button"
                 @click="document.getElementById('telemetry-map-zoom-out')?.click()"
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">−</span>Zoom −
+                <span class="block text-lg">−</span>{{ __('ui.zoom_out') }}
             </button>
 
             <button type="button"
                 @click="document.getElementById('telemetry-map-follow')?.click()"
                 class="rounded-lg border border-[var(--border)] p-2 text-center text-xs hover:border-[var(--accent)]">
-                <span class="block text-lg">◎</span>Seguir
+                <span class="block text-lg">◎</span>{{ __('ui.follow') }}
             </button>
         </div>
     </section>
@@ -160,7 +164,7 @@
     {{-- ASIDE --}}
     <section class="space-y-2">
         <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
-            <span class="text-base">◫</span> ASIDE
+            <span class="text-base">◫</span> {{ strtoupper(__('ui.tools')) }}
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
@@ -169,7 +173,7 @@
                 :aria-pressed="tools.gear"
                 :class="tools.gear ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">⚙</span>Gear
+                <span class="block text-lg">⚙</span>{{ __('ui.gear') }}
             </button>
 
             <button type="button"
@@ -177,7 +181,7 @@
                 :aria-pressed="tools.speed"
                 :class="tools.speed ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">◉</span>Speed
+                <span class="block text-lg">◉</span>{{ __('ui.speed') }}
             </button>
 
             <button type="button"
@@ -185,7 +189,7 @@
                 :aria-pressed="tools.sectors"
                 :class="tools.sectors ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">⌁</span>Sectors
+                <span class="block text-lg">⌁</span>{{ __('ui.sectors') }}
             </button>
 
             <button
@@ -201,7 +205,7 @@
                 class="rounded-lg border p-2 text-center text-xs"
             >
                 <span class="block text-lg">▥</span>
-                Controls
+                {{ __('ui.controls') }}
                 <span
                     class="mt-1 block text-[10px]"
                     {{-- x-text="tools.controls ? 'ON' : 'OFF'" --}}
@@ -227,7 +231,7 @@
                     ? 'border-[var(--accent)] bg-[var(--bg)]'
                     : 'border-[var(--border)] opacity-60'"
             >
-                <span class="block text-lg">▤</span>Inputs
+                <span class="block text-lg">▤</span>{{ __('ui.inputs') }}
 
             </button>
 
@@ -242,7 +246,7 @@
                 class="rounded-lg border p-2 text-center text-xs"
             >
                 <span class="block text-lg">↻</span>
-                Steering
+                {{ __('ui.steering') }}
                 <span
                     class="mt-1 block text-[10px]"
                     {{-- x-text="tools.steering ? 'ON' : 'OFF'" --}}
@@ -256,7 +260,7 @@
     {{-- GRAPHICS --}}
     <section class="space-y-2">
         <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
-            <span class="text-base">⌁</span> GRAPHICS
+            <span class="text-base">⌁</span> {{ strtoupper(__('ui.graphics')) }}
         </h3>
 
         <div class="grid grid-cols-3 gap-2">
@@ -273,7 +277,7 @@
                 :aria-pressed="graphics.gears"
                 :class="graphics.gears ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">⚙</span>Gears
+                <span class="block text-lg">⚙</span>{{ __('ui.gears') }}
             </button>
 
             <button
@@ -286,7 +290,7 @@
                 class="rounded-lg border p-2 text-center text-xs"
             >
                 <span class="block text-lg">▥</span>
-                Throttle
+                {{ __('ui.throttle') }}
             </button>
 
             <button
@@ -299,7 +303,7 @@
                 class="rounded-lg border p-2 text-center text-xs"
             >
                 <span class="block text-lg">▤</span>
-                Brake
+                {{ __('ui.brake') }}
             </button>
 
             <button type="button"
@@ -323,7 +327,7 @@
                 :aria-pressed="graphics.suspension"
                 :class="graphics.suspension ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">↕</span>Suspensión
+                <span class="block text-lg">↕</span>{{ __('ui.suspension') }}
             </button>
 
             <button type="button"
@@ -331,7 +335,7 @@
                 :aria-pressed="graphics.setup"
                 :class="graphics.setup ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">☷</span>Setup
+                <span class="block text-lg">☷</span>{{ __('ui.setup') }}
             </button>
         </div>
     </section>
@@ -366,7 +370,7 @@
 
                     <div class="text-xs text-[var(--text-muted)]">
 
-                        Velocidad máxima
+                        {{ __('ui.max_speed') }}
 
                     </div>
 
@@ -390,7 +394,7 @@
 
                 <div class="mb-2 text-xs text-[var(--text-muted)]">
 
-                    Marchas utilizadas
+                    {{ __('ui.gears_used') }}
 
                 </div>
 
@@ -418,7 +422,7 @@
 
             <p class="text-xs text-[var(--text-muted)]">
 
-                No hay muestras de velocidad y marcha disponibles para esta vuelta.
+                {{ __('ui.no_speed_and_gear_samples') }}
 
             </p>
 
@@ -441,7 +445,7 @@
 
     <h3 class="mb-3 text-sm font-semibold text-[var(--text-title)]">
 
-        Sectores
+        {{ __('ui.sectors') }}
 
     </h3>
 
@@ -471,7 +475,7 @@
 
         <p class="text-xs text-[var(--text-muted)]">
 
-            No hay sectores disponibles para esta vuelta.
+            {{ __('ui.no_sectors_available') }}
 
         </p>
 
@@ -485,9 +489,7 @@
 
             <p class="mt-5 text-xs leading-relaxed text-[var(--text-muted)]">
 
-                Selecciona las herramientas que quieras mostrar durante
-
-                el análisis de la vuelta.
+                {{ __('ui.select_tools_to_show') }}
 
             </p>
 

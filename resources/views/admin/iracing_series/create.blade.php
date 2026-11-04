@@ -190,7 +190,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
     <input type="number" step="1" name="fuel_limit"
         value="{{ old('fuel_limit') }}"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]"
-        placeholder="50">
+        placeholder="{{ __('ui.example_fifty') }}">
 </div>
 
 {{-- Override tanque --}}

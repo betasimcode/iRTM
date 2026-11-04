@@ -269,7 +269,7 @@
                 :aria-pressed="graphics.speed"
                 :class="graphics.speed ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">↗</span>Speed
+                <span class="block text-lg">↗</span >{{ __('ui.speed') }}
             </button>
 
             <button type="button"
@@ -319,7 +319,7 @@
                 :aria-pressed="graphics.sectors"
                 :class="graphics.sectors ? 'border-[var(--accent)] bg-[var(--bg)]' : 'border-[var(--border)] opacity-60'"
                 class="rounded-lg border p-2 text-center text-xs">
-                <span class="block text-lg">Ⅱ</span>Sectors
+                <span class="block text-lg">Ⅱ</span>{{ __('ui.sectors') }}
             </button>
 
             <button type="button"

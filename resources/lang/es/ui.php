@@ -443,5 +443,10 @@ return [
     "fuel_used" => "Combustible utilizado",
     "vehicle" => "Coche",
     "circuit" => "Circuito",
+    "example_fifty" => "Ej.: 50",
+    "registered_iracing_series" => "Series de iRacing registradas",
+    "delete_series_confirmation" => "¿Seguro que quieres eliminar esta serie?",
+    "minutes" => "Minutos",
+    "new_session" => "Nueva sesión",
 
 ];

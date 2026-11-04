@@ -262,17 +262,17 @@
                     class="bg-gray-900 text-white px-3 py-2 rounded">
 
                 <option value="driver" @selected($user->driver_role === 'driver')>
-                    Driver
+                    {{ __('ui.driver') }}
                 </option>
 
                 <option value="team_director" @selected($user->driver_role === 'team_director')>
-                    Director
+                    {{ __('ui.director') }}
                 </option>
 
             </select>
 
             <button class="ml-2 bg-blue-600 px-3 py-2 rounded text-white">
-                Update
+                {{ __('ui.update') }}
             </button>
         </form>
 
@@ -283,7 +283,7 @@
             @method('DELETE')
 
             <button class="bg-red-600 px-3 py-2 rounded text-white">
-                Remove
+                {{ __('ui.remove') }}
             </button>
         </form>
 

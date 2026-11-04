@@ -116,14 +116,14 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
         @foreach(['SPORTS CAR SERIES','FORMULA CAR SERIES','OVAL SERIES','DIRT','OVAL DIRT'] as $discipline)
             <option value="{{ $discipline }}"
             {{ old('discipline', $iracingSeries->discipline) == $discipline ? 'selected' : '' }}>
-                {{ $discipline }}
+                {{ __('ui.' . strtolower(str_replace(' ', '_', $discipline))) }}
             </option>
         @endforeach
     </select>
 </div>
 
 <div>
-<label class="text-[var(--text-soft)]">Clase</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.class') }}</label>
 <select name="iracing_class"
 class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 @foreach(['ROOKIE','D','C','B','A','PRO'] as $ir_class)
@@ -154,12 +154,12 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Tipo --}}
 <div>
-<label class="text-[var(--text-soft)]">Tipo</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.race_type') }}</label>
 <select name="race_type"
 class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-<option value="laps" {{ $iracingSeries->race_type == 'laps' ? 'selected' : '' }}>Vueltas</option>
-<option value="time" {{ $iracingSeries->race_type == 'time' ? 'selected' : '' }}>Tiempo</option>
+<option value="laps" {{ $iracingSeries->race_type == 'laps' ? 'selected' : '' }}>{{ __('ui.by_laps') }}</option>
+<option value="time" {{ $iracingSeries->race_type == 'time' ? 'selected' : '' }}>{{ __('ui.by_time') }}</option>
 
 </select>
 </div>
@@ -170,8 +170,8 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 <select name="start_type"
 class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-<option value="standing" {{ $iracingSeries->start_type == 'standing' ? 'selected' : '' }}>Parado</option>
-<option value="rolling" {{ $iracingSeries->start_type == 'rolling' ? 'selected' : '' }}>Lanzada</option>
+<option value="standing" {{ $iracingSeries->start_type == 'standing' ? 'selected' : '' }}>{{ __('ui.standing') }}</option>
+<option value="rolling" {{ $iracingSeries->start_type == 'rolling' ? 'selected' : '' }}>{{ __('ui.rolling') }}</option>
 
 </select>
 </div>
@@ -192,7 +192,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Fuel limit --}}
 <div>
-<label class="text-[var(--text-soft)]">Fuel limit (%)</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.fuel_limit') }}</label>
 <input type="number"
 name="fuel_limit"
 value="{{ old('fuel_limit', $iracingSeries->fuel_limit) }}"
@@ -201,7 +201,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Tank override --}}
 <div>
-<label class="ttext-[var(--text-soft)]">Tank override (L)</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.tank_override') }}</label>
 <input type="number"
 name="tank_capacity_override"
 value="{{ old('tank_capacity_override', $iracingSeries->tank_capacity_override) }}"
@@ -213,13 +213,13 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 <label>
 <input type="checkbox" name="mandatory_pit" value="1"
 {{ $iracingSeries->mandatory_pit ? 'checked' : '' }}>
-Mandatory pit
+{{ __('ui.mandatory_pit') }}
 </label>
 
 <label>
 <input type="checkbox" name="refuel_allowed" value="1"
 {{ $iracingSeries->refuel_allowed ? 'checked' : '' }}>
-Refuel allowed
+{{ __('ui.refuel_allowed') }}
 </label>
 </div>
 
@@ -241,12 +241,12 @@ Refuel allowed
 
             <option value="open"
                 {{ old('setup_type', $iracingSeries->setup_type) == 'open' ? 'selected' : '' }}>
-                Open
+                {{ __('ui.open') }}
             </option>
 
             <option value="fixed"
                 {{ old('setup_type', $iracingSeries->setup_type) == 'fixed' ? 'selected' : '' }}>
-                Fixed
+                {{ __('ui.fixed') }}
             </option>
 
         </select>
@@ -256,7 +256,7 @@ Refuel allowed
     <label class="flex items-center gap-2 text-[var(--text-soft)] mt-6">
         <input type="checkbox" name="fast_repair" value="1"
             {{ old('fast_repair', $iracingSeries->fast_repair) ? 'checked' : '' }}>
-        Fast Repair
+        {{ __('ui.fast_repair') }}
     </label>
 
     {{-- Drive Through --}}
@@ -359,7 +359,7 @@ Refuel allowed
             @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
                 <option value="{{ $day }}"
                     {{ old('week_start_day', $iracingSeries->week_start_day) == $day ? 'selected' : '' }}>
-                    {{ $day }}
+                    {{ __('ui.' . strtolower($day)) }}
                 </option>
             @endforeach
 

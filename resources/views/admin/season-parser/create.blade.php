@@ -8,18 +8,18 @@
 
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-[var(--text)]">
-            Season Parser
+            {{ __('ui.season_parser') }}
         </h1>
 
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Ejecuta la importación de una temporada de iRacing.
+            {{ __('ui.run_iracing_season_import') }}
         </p>
     </div>
 
     @if ($errors->any())
         <div class="mb-6 rounded-lg border border-red-300 bg-red-50 p-4">
             <div class="font-semibold text-red-800">
-                No se puede ejecutar la importación.
+                {{ __('ui.cannot_run_import') }}
             </div>
 
             <ul class="mt-2 list-disc pl-5 text-sm text-red-700">
@@ -34,12 +34,11 @@
 
         <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-6">
             <h2 class="font-semibold text-yellow-900">
-                No hay temporadas configuradas
+                {{ __('ui.no_seasons_configured') }}
             </h2>
 
             <p class="mt-2 text-sm text-yellow-800">
-                Antes de ejecutar el parser debes configurar al menos
-                una temporada en Season Imports.
+                {{ __('ui.configure_season_before_parser') }}
             </p>
         </div>
 
@@ -49,11 +48,11 @@
 
             <div class="border-b border-gray-200 px-6 py-5 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-[var(--text-title)]">
-                    Ejecutar importación
+                    {{ __('ui.run_import') }}
                 </h2>
 
                 <p class="mt-1 text-sm text-[var(--text)]">
-                    Selecciona una temporada previamente configurada.
+                    {{ __('ui.select_configured_season') }}
                 </p>
             </div>
 
@@ -69,7 +68,7 @@
                         for="season"
                         class="block text-sm font-medium text-[var(--text)]"
                     >
-                        Temporada
+                        {{ __('ui.season') }}
                     </label>
 
                     <select
@@ -95,7 +94,7 @@
                            "
                 >
                     <h3 class="font-semibold text-[var(--text-title)]">
-                        Información de la temporada
+                        {{ __('ui.season_information') }}
                     </h3>
 
                     <div class="mt-4 grid gap-4 sm:grid-cols-3">
@@ -113,7 +112,7 @@
 
                         <div>
                             <div class="text-xs uppercase tracking-wide text-[var(--text-soft)]">
-                                PDF registrado
+                                {{ __('ui.pdf_registered') }}
                             </div>
 
                             <div
@@ -124,7 +123,7 @@
 
                         <div>
                             <div class="text-xs uppercase tracking-wide text-[var(--text-soft)]">
-                                Configuraciones
+                                {{ __('ui.configurations') }}
                             </div>
 
                             <div
@@ -145,7 +144,7 @@
                                focus:outline-none focus:ring-2
                                focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Ejecutar importación
+                        {{ __('ui.run_import') }}
                     </button>
                 </div>
 

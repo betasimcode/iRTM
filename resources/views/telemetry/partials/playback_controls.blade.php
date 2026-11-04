@@ -32,14 +32,14 @@
                 type="button"
                 class="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
             >
-                <span aria-hidden="true">▶</span> Reproducir
+                <span aria-hidden="true">▶</span> {{ __('ui.play') }}
             </button>
             <button
                 id="telemetry-lap-pause"
                 type="button"
                 class="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-title)] hover:bg-[var(--bg)]"
             >
-                <span aria-hidden="true">Ⅱ</span> Pausa
+                <span aria-hidden="true">Ⅱ</span> {{ __('ui.pause') }}
             </button>
             <button
                 id="telemetry-lap-restart"

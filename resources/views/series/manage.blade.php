@@ -72,7 +72,7 @@
         <input type="hidden" name="race_type" value="laps">
 
         <input type="number" name="race_length"
-               placeholder="Vueltas"
+               placeholder="{{ __('ui.laps') }}"
                class="w-full bg-[var(--input-dis)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text)]">
 
     @endif
@@ -126,8 +126,8 @@
 
                     <td class="px-6 py-4">
                         {{ $round->race_type == 'time'
-                            ? $round->race_length.' min'
-                            : $round->race_length.' vueltas' }}
+                            ? $round->race_length . ' ' . __('ui.min')
+                            : $round->race_length . ' ' . __('ui.laps') }}
                     </td>
 
                     <td class="px-6 py-4 text-right space-x-3">

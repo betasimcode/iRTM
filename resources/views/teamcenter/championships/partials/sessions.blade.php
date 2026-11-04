@@ -15,13 +15,13 @@
             <div>
 
                 <p class="text-xs uppercase tracking-wide text-[var(--text-muted)]">
-                    Active Round
+                    {{ __('ui.active_round') }}
                 </p>
 
                 <p class="mt-1 text-sm font-semibold text-[var(--text-title)]">
-                    Round {{ $activeRound->round_number }}
+                    {{ __('ui.round') }} {{ $activeRound->round_number }}
                     ·
-                    {{ $activeRound->track?->display_name ?? 'Track' }}
+                    {{ $activeRound->track?->display_name ?? __('ui.track') }}
                 </p>
 
             </div>
@@ -31,11 +31,11 @@
                 <div class="text-right">
 
                     <p class="text-xs uppercase tracking-wide text-[var(--text-muted)]">
-                        Car
+                        {{ __('ui.car') }}
                     </p>
 
                     <p class="mt-1 text-sm font-semibold text-[var(--text-title)]">
-                        {{ $competitionCar->name ?? 'Competition Car' }}
+                        {{ $competitionCar->name ?? __('ui.competition_car') }}
                     </p>
 
                 </div>
@@ -76,7 +76,7 @@
         >
 
             <p class="text-sm text-[var(--text-muted)]">
-                No hay sesiones registradas para esta ronda.
+                {{ __('ui.no_sessions_registered_this_round') }}
             </p>
 
         </div>
@@ -116,7 +116,7 @@
                                        font-semibold
                                        text-[var(--text-title)]"
                             >
-                                Session #{{ $session->id }}
+                                {{ __('ui.session_number', ['id' => $session->id]) }}
                             </p>
 
                             <p
@@ -145,7 +145,7 @@
                                            tracking-wide
                                            text-[var(--text-muted)]"
                                 >
-                                    Stints
+                                    {{ __('ui.stints') }}
                                 </p>
 
                                 <p

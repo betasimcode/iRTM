@@ -73,7 +73,7 @@
 
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
 
-                   Lap  {{ $selectedLap['candidate_lap'] ?? $selectedLap['lap'] ?? '—' }}
+                   {{ __('ui.lap') }}  {{ $selectedLap['candidate_lap'] ?? $selectedLap['lap'] ?? '—' }}
 
                 </p>
 
@@ -83,7 +83,7 @@
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
-                <p class="text-xs text-[var(--text-muted)]">Lap time</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.lap_time') }}</p>
 
                 <p class="flex mt-1 font-mono-timing text-lg font-semibold
 
@@ -94,8 +94,8 @@
                     <button
                         type="button"
                         id="lap-color-trigger"
-                        aria-label="Cambiar color de la trazada"
-                        title="Color de la trazada"
+                        aria-label="{{ __('ui.change_track_color') }}"
+                        title="{{ __('ui.track_color') }}"
                         class="flex items-center justify-center rounded-lg"
                     >
                         <span
@@ -111,7 +111,7 @@
 
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
-                <p class="text-xs text-[var(--text-muted)]">Reference lap</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.reference_lap') }}</p>
 
                 <div class="mt-1 flex min-w-0 items-center gap-2">
                     <input
@@ -131,7 +131,7 @@
                         class="min-w-0 flex-1 truncate rounded-lg border
                             border-[var(--border)] bg-[var(--bg)] p-2
                             text-sm text-[var(--text)]"
-                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · Vuelta ' . $referenceLapNumber . ' - ' . ($referenceLapTimeLabel ?? '--:--.---') : '---' }}</span>
+                    >{{ $referenceLapNumber !== null ? '#' . ($referenceStintId ?? '—') . ' · ' . __('ui.lap') . ' ' . $referenceLapNumber . ' - ' . ($referenceLapTimeLabel ?? '--:--.---') : '---' }}</span>
 
                     <div
                         id="reference-lap-color-host"
@@ -145,8 +145,8 @@
                             border border-[var(--border)] px-3 py-2
                             text-sm font-semibold text-[var(--text-title)]
                             hover:border-[var(--accent)]"
-                        aria-label="Buscar vuelta de referencia"
-                        title="Buscar vuelta de referencia"
+                        aria-label="{{ __('ui.search_reference_lap') }}"
+                        title="{{ __('ui.search_reference_lap') }}"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -163,33 +163,33 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
-                        Buscar
+                        {{ __('ui.search') }}
                     </button>
                 </div>
             </div>
 
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
-                <p class="text-xs text-[var(--text-muted)]">Reference mode</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.reference_mode') }}</p>
 
                 <div class="mt-2 grid grid-cols-2 gap-1"
                      id="telemetry-reference-mode"
                      role="group"
-                     aria-label="Modo de análisis de referencia">
+                     aria-label="{{ __('ui.reference_analysis_mode') }}">
                     <button
                         type="button"
                         id="reference-mode-temporal"
                         data-reference-mode="temporal"
                         aria-pressed="true"
                         class="rounded-md border border-cyan-500 bg-cyan-600 px-2 py-2 text-xs font-semibold text-white"
-                    >Temporal</button>
+                     >{{ __('ui.temporal') }}</button>
                     <button
                         type="button"
                         id="reference-mode-spatial"
                         data-reference-mode="spatial"
                         aria-pressed="false"
                         class="rounded-md border border-[var(--border)] px-2 py-2 text-xs font-semibold text-[var(--text)] hover:border-[var(--accent)]"
-                    >Espacial</button>
+                     >{{ __('ui.spatial') }}</button>
                 </div>
 
                 {{-- <p id="reference-mode-description"
@@ -202,7 +202,7 @@
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
-                <p class="text-xs text-[var(--text-muted)]">Fecha</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.date') }}</p>
 
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
 
@@ -216,7 +216,7 @@
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
-                <p class="text-xs text-[var(--text-muted)]">Aire / pista</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.air_track') }}</p>
 
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
 
@@ -230,7 +230,7 @@
 
             <div class="min-w-0 w-full rounded-lg bg-[var(--bg)] p-3">
 
-                <p class="text-xs text-[var(--text-muted)]">Estado pista</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ __('ui.trackstate') }}</p>
 
                 <p class="mt-1 text-lg font-semibold text-[var(--text-title)]">
 
@@ -295,11 +295,11 @@
                     id="reference-lap-modal-title"
                     class="text-lg font-semibold text-[var(--text-title)]"
                 >
-                    Buscar vuelta de referencia
+                    {{ __('ui.search_reference_lap') }}
                 </h2>
 
                 <p class="mt-1 text-sm text-[var(--text-muted)]">
-                    Selecciona un stint y después una vuelta.
+                    {{ __('ui.select_stint_then_lap') }}
                 </p>
             </div>
 
@@ -309,8 +309,8 @@
                 class="flex h-9 w-9 shrink-0 items-center justify-center
                        rounded-lg border border-[var(--border)]
                        text-xl text-[var(--text)] hover:border-[var(--accent)]"
-                aria-label="Cerrar catálogo"
-                title="Cerrar"
+                aria-label="{{ __('ui.close_catalogue') }}"
+                title="{{ __('ui.close') }}"
             >
                 &times;
             </button>
@@ -323,14 +323,14 @@
                 class="mb-2 block text-xs font-semibold uppercase
                        tracking-wider text-[var(--text-muted)]"
             >
-                Buscar por stint o piloto
+                {{ __('ui.search_by_stint_or_driver') }}
             </label>
 
             <input
                 type="search"
                 id="reference-lap-search-input"
                 autocomplete="off"
-                placeholder="Ej.: 1089 o nombre del piloto"
+                placeholder="{{ __('ui.example_stint_or_driver') }}"
                 class="w-full rounded-lg border border-[var(--border)]
                        bg-[var(--bg)] px-3 py-2.5 text-sm
                        text-[var(--text)] outline-none
@@ -338,8 +338,7 @@
             >
 
             <p class="mt-2 text-xs text-[var(--text-muted)]">
-                Solo se mostrarán referencias compatibles con el coche
-                y el circuito de la vuelta principal.
+                {{ __('ui.reference_compatibility_notice') }}
             </p>
         </div>
 

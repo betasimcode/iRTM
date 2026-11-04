@@ -12,11 +12,11 @@
 
         <div>
             <h1 class="text-2xl font-bold text-[var(--text)]">
-                Season Imports
+                {{ __('ui.season_imports') }}
             </h1>
 
             <p class="mt-2 text-sm text-[var(--text-soft)]">
-                Configuración de las series que serán extraídas de cada PDF de temporada.
+                {{ __('ui.series_extracted_from_pdfs') }}
             </p>
         </div>
 
@@ -26,7 +26,7 @@
                    font-semibold text-white shadow-sm
                    hover:bg-indigo-700"
         >
-            + Nueva configuración
+            + {{ __('ui.new_configuration') }}
         </a>
 
     </div>
@@ -44,11 +44,11 @@
         <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-sm">
 
             <h2 class="text-lg font-semibold text-[var(--text-title)]">
-                No hay configuraciones
+                {{ __('ui.no_configurations') }}
             </h2>
 
             <p class="mt-2 text-sm text-[var(--text)] dark:text-gray-400">
-                Crea la primera configuración de importación para una temporada.
+                {{ __('ui.create_first_import_configuration') }}
             </p>
 
             <div class="mt-6">
@@ -57,7 +57,7 @@
                     class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm
                            font-semibold text-white hover:bg-indigo-700"
                 >
-                    Crear configuración
+                    {{ __('ui.create_configuration') }}
                 </a>
             </div>
 
@@ -76,19 +76,19 @@
                         <tr>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-[var(--text-card-title)]">
-                                Temporada
+                                {{ __('ui.season') }}
                             </th>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-[var(--text-card-title)]">
-                                Serie
+                                {{ __('ui.series') }}
                             </th>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-[var(--text-card-title)]">
-                                Título PDF
+                                {{ __('ui.pdf_title') }}
                             </th>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-[var(--text-card-title)]">
-                                Páginas
+                                {{ __('ui.pages') }}
                             </th>
 
                         </tr>
@@ -109,7 +109,7 @@
 
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-[var(--text-title)]">
-                                        {{ $import->iracingSeries?->name ?? 'Serie no encontrada' }}
+                                        {{ $import->iracingSeries?->name ?? __('ui.series_not_found') }}
                                     </div>
 
                                     <div class="mt-1 text-xs text-[var(--text)]">

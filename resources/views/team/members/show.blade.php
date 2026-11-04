@@ -55,7 +55,7 @@
 
         <div class="space-y-4 mt-6">
 
-            <h3 class="text-sm text-gray-400">Series Assignments</h3>
+            <h3 class="text-sm text-gray-400">{{ __('ui.series_assignments') }}</h3>
         
             @foreach($series as $s)
         
@@ -112,14 +112,14 @@
         
             {{-- ROLE --}}
             <select name="role" class="bg-gray-900 text-white px-2 py-1 rounded">
-                <option value="driver1">Driver 1</option>
-                <option value="driver2">Driver 2</option>
-                <option value="driver3">Driver 3</option>
-                <option value="reserve">Reserve</option>
+                <option value="driver1">{{ __('ui.driver_1') }}</option>
+                <option value="driver2">{{ __('ui.driver_2') }}</option>
+                <option value="driver3">{{ __('ui.driver_3') }}</option>
+                <option value="reserve">{{ __('ui.reserve') }}</option>
             </select>
         
             <button class="bg-green-600 px-3 py-1 rounded text-white">
-                Assign
+                {{ __('ui.assign') }}
             </button>
         
         </form>
@@ -146,29 +146,29 @@
 
         <div class="space-y-4">
             <div class="bg-gray-300 dark:bg-gray-900 p-4 rounded">
-                <p class="text-xs text-gray-500">Status</p>
+                <p class="text-xs text-gray-500">{{ __('ui.status') }}</p>
                 <p class="text-sm">{{ $user->current_status ?? 'offline' }}</p>
             </div>
 
             <div class="bg-gray-300 dark:bg-gray-900 p-4 rounded">
-                <p class="text-xs text-gray-500">Email</p>
+                <p class="text-xs text-gray-500">{{ __('ui.email') }}</p>
                 <p class="text-sm">{{ $user->email }}</p>
             </div>
 
             <div class="bg-gray-300 dark:bg-gray-900 p-4 rounded">
-                <p class="text-xs text-gray-500">Cars assigned</p>
+                <p class="text-xs text-gray-500">{{ __('ui.cars_assigned') }}</p>
                 <p class="text-sm">{{ $user->cars_count ?? 0 }}</p>
             </div>
         </div>
 
         <div class="space-y-4">
             <div class="bg-gray-300 dark:bg-gray-900 p-4 rounded">
-                <p class="text-xs text-gray-500">Series</p>
+                <p class="text-xs text-gray-500">{{ __('ui.series') }}</p>
                 <p class="text-sm">{{ $user->series_count ?? 0 }}</p>
             </div>
 
             <div class="bg-gray-300 dark:bg-gray-900 p-4 rounded">
-                <p class="text-xs text-gray-500">iRacing ID</p>
+                <p class="text-xs text-gray-500">{{ __('ui.iracing_id') }}</p>
                 <p class="text-sm">{{ $user->iracing_user_id }}</p>
             </div>
         </div>
@@ -177,7 +177,7 @@
 
     <div class="space-y-3">
 
-        <h3 class="text-sm text-gray-400">Assigned Cars</h3>
+        <h3 class="text-sm text-gray-400">{{ __('ui.assigned_cars') }}</h3>
     
         @forelse($user->teamCars as $car)
     
@@ -208,7 +208,7 @@
     
         @empty
     
-            <p class="text-gray-400 text-sm">No cars assigned</p>
+            <p class="text-gray-400 text-sm">{{ __('ui.no_cars_assigned') }}</p>
     
         @endforelse
     
@@ -226,7 +226,7 @@
             <select name="team_car_id"
                     class="bg-gray-900 text-white px-3 py-2 rounded">
 
-                <option value="">Assign car...</option>
+                <option value="">{{ __('ui.assign_car') }}</option>
 
                 @foreach($teamCars as $car)
                     <option value="{{ $car->id }}">
@@ -238,7 +238,7 @@
             </select>
 
             <button class="bg-green-600 px-3 py-2 rounded text-white">
-                Add
+                {{ __('ui.add') }}
             </button>
 
         </form>

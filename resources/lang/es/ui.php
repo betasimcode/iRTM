@@ -339,5 +339,9 @@ return [
     "clutch" => "Embrague",
     "telemetry" => "Telemetría",
     "undock_instruments_on_map" => "Desacoplar instrumentos sobre el mapa",
+    "close_graphs" => "Cerrar gráficas",
+    "reset_zoom" => "Restablecer zoom",
+    "sectors_comparison" => "Comparativa de sectores",
+    "current_values_of" => "Valores actuales de",
 
 ];

@@ -8,7 +8,7 @@
 
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-[var(--text)]">
-            Resultado de la importación
+            {{ __('ui.import_result') }}
         </h1>
 
         <p class="mt-2 text-sm text-[var(--text-soft)]">
@@ -24,7 +24,7 @@
             </div>
 
             <p class="mt-1 text-sm text-green-700">
-                El parser finalizó sin errores.
+                {{ __('ui.parser_finished_without_errors') }}
             </p>
         </div>
 
@@ -46,7 +46,7 @@
 
         <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
             <div class="text-xs uppercase tracking-wide text-[var(--text-title)]">
-                Temporada
+                {{ __('ui.season') }}
             </div>
 
             <div class="mt-2 text-xl font-semibold text-[var(--text)]">
@@ -56,7 +56,7 @@
 
         <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
             <div class="text-xs uppercase tracking-wide text-gray-500">
-                PDF
+                {{ __('ui.pdf_file') }}
             </div>
 
             <div class="mt-2 text-xl font-semibold text-[var(--text)]">
@@ -66,7 +66,7 @@
 
         <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
             <div class="text-xs uppercase tracking-wide text-gray-500">
-                Configuraciones
+                {{ __('ui.configurations') }}
             </div>
 
             <div class="mt-2 text-xl font-semibold text-[var(--text)]">
@@ -80,7 +80,7 @@
 
         <div class="border-b border-[var(--border)] px-6 py-4">
             <h2 class="font-semibold text-[var(--text-title)]">
-                Salida del parser
+                {{ __('ui.parser_output') }}
             </h2>
         </div>
 
@@ -94,7 +94,7 @@
 
             <div class="border-b border-red-200 px-6 py-4">
                 <h2 class="font-semibold text-red-800">
-                    Error output
+                    {{ __('ui.error_output') }}
                 </h2>
             </div>
 
@@ -112,7 +112,7 @@
                    font-semibold text-[var(--btn-text)] bg-[var(--btn-bg)]
                    hover:bg-[var(--btn-hover)]"
         >
-            ← Volver al parser
+            ← {{ __('ui.back_to_parser') }}
         </a>
 
     </div>

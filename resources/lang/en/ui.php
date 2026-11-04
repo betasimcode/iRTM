@@ -336,5 +336,6 @@ return [
     "no_laps_available" => "No laps available",
     "suspension" => "Suspension",
     "no_stints_available" => "No stints available",
+    "clutch" => "Clutch",
 
 ];

@@ -9,7 +9,7 @@
     <header class="mb-3 flex items-center justify-between gap-2">
         <h2 class="text-sm font-semibold uppercase tracking-wider
                    text-[var(--text-title)]">
-            Graphics
+            {{ __('ui.graphics') }}
         </h2>
 
         <button
@@ -18,7 +18,7 @@
             class="rounded-lg border border-[var(--border)]
                    px-2 py-1 text-xs hover:border-[var(--accent)]"
         >
-            Cerrar gráficas
+            {{ __('ui.close_graphs') }}
         </button>
         <button
             type="button"
@@ -26,21 +26,21 @@
             class="rounded-lg border border-[var(--border)]
                 px-2 py-1 text-xs hover:border-[var(--accent)]"
         >
-            Restablecer zoom
+            {{ __('ui.reset_zoom') }}
         </button>
     </header>
 
     <div class="space-y-3">
-        <template x-for="item in [
-            { key: 'speed', label: 'Speed' },
-            { key: 'gears', label: 'Gears' },
-            { key: 'throttle', label: 'Throttle' },
-            { key: 'brake', label: 'Brake' },
-            { key: 'steering', label: 'Dirección' },
-            { key: 'sectors', label: 'Comparativa de sectores' },
-            { key: 'setup', label: 'Setup' },
-            { key: 'suspension', label: 'Suspensión' },
-        ]" :key="item.key">
+        <template x-for='item in [
+            { key: "speed", label: @js(__('ui.speed')) },
+            { key: "gears", label: @js(__('ui.gears')) },
+            { key: "throttle", label: @js(__('ui.throttle')) },
+            { key: "brake", label: @js(__('ui.brake')) },
+            { key: "steering", label: @js(__('ui.steering')) },
+            { key: "sectors", label: @js(__('ui.sectors_comparison')) },
+            { key: "setup", label: @js(__('ui.setup')) },
+            { key: "suspension", label: @js(__('ui.suspension')) },
+        ]' :key="item.key">
             <section
                 x-show="graphics[item.key]"
                 class="rounded-lg border border-[var(--border)]
@@ -78,7 +78,7 @@
                         x-show="['speed', 'gears', 'throttle', 'brake'].includes(item.key)"
                         class="grid shrink-0 grid-cols-[76px_66px_76px] gap-1"
                         role="group"
-                        :aria-label="'Valores actuales de ' + item.label"
+                        :aria-label='@js(__('ui.current_values_of')) + " " + item.label'
                     >
                         <span
                             :id="'telemetry-graph-value-' + item.key + '-main'"

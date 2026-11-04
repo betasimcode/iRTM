@@ -553,5 +553,11 @@ return [
     "overall_standings" => "Clasificación general",
     "drivers" => "Pilotos",
     "overall_drivers_count" => ":count pilotos",
+    "language" => "Idioma",
+    "notifications" => "Notificaciones",
+    "user_menu" => "Menú de usuario",
+    "competitions" => "Competiciones",
+    "team_management" => "Gestión del equipo",
+    "site_admin" => "Administración del sitio",
 
 ];

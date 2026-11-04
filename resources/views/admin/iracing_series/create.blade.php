@@ -17,7 +17,7 @@ Crear iRacing Series
 
 {{-- Nombre --}}
 <div>
-<label class="text-[var(--text-soft)]">iRacing Series Name</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.iracing_series_name') }}</label>
 <input type="text"
 name="name"
 value="{{ old('name') }}"
@@ -26,7 +26,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Nombre --}}
 <div>
-<label class="text-[var(--text-soft)]">Short name</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.short_name') }}</label>
 <input type="text"
 name="short_name"
 value="{{ old('short_name') }}"
@@ -34,7 +34,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 </div>
 
 <div>
-<label class="text-[var(--text-soft)]">Info/History</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.info_history') }}</label>
 <textarea type="text"
 name="serie_info"
 value="{{ old('serie_info') }}"
@@ -43,7 +43,7 @@ class="w-full bg-[var(--input-bg)] text-[var(--text)] border border-[var(--borde
 
 {{-- uRL --}}
 <div>
-<label class="text-[var(--text-soft)]">iRacing Series url</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.iracing_series_url') }}</label>
 <input type="text"
 name="ir_url"
 value="{{ old('ir_url') }}"
@@ -52,31 +52,31 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- stats uRL --}}
 <div>
-<label class="text-[var(--text-soft)]">Championship url</label>
+<label class="text-[var(--text-soft)]">{{ __('ui.championship_url') }}</label>
 <input type="text"
 name="stats_url"
 value="{{ old('stats_url') }}"
 class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 </div>
 
-{{-- iRacing Series ID --}}
+{{-- {{ __('ui.iracing_id') }} --}}
 <div>
-    <label class="text-[var(--text-soft)]">iRacing Series ID</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.iracing_id') }}</label>
     <input type="number"
         name="iracing_series_id"
         value="{{ old('iracing_series_id') }}"
-        placeholder="Ej: 228"
+        placeholder="{{ __('ui.example_series_id') }}"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 </div>
 
-<h2 class="text-[var(--card-title)] font-semibold">Config</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.config') }}</h2>
 <hr class="border-[var(--card-title)]">
 
 <div class="space-y-2">
 
     <label class="text-sm font-semibold">
 
-        Allowed Cars
+        {{ __('ui.allowed_cars') }}
 
     </label>
 
@@ -111,11 +111,11 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Clase coche --}}
 <div>
-    <label class="text-[var(--text-soft)]">Discipline</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.discipline') }}</label>
     <select name="discipline"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-        <option value="">Seleccionar</option>
+        <option value="">{{ __('ui.select') }}</option>
         @foreach(['SPORTS CAR SERIES','FORMULA CAR SERIES','OVAL SERIES','DIRT','OVAL DIRT'] as $discipline)
             <option value="{{ $discipline }}">
                 {{ $discipline }}
@@ -124,11 +124,11 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
     </select>
 </div>
 <div>
-    <label class="text-[var(--text-soft)]">Category</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.category') }}</label>
     <select name="category"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-        <option value="">Seleccionar</option>
+        <option value="">{{ __('ui.select') }}</option>
         @foreach(['IMSA','GT','GT3','GT4','GTP','LMP2','LMP3','PROTOTYPE','TCR','F1','F2','F3','F4','FORMULA FORD','FORMULA 2000','FORMULA RENAULT','INDYCAR','NASCAR'] as $class)
             <option value="{{ $class }}" {{ old('class') == $class ? 'selected' : '' }}>
                 {{ $class }}
@@ -137,11 +137,11 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
     </select>
 </div>
 <div>
-    <label class="text-[var(--text-soft)]">Licencia</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.licence') }}</label>
     <select name="iracing_class"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-        <option value="">Seleccionar</option>
+        <option value="">{{ __('ui.select') }}</option>
         @foreach(['ROOKIE','D','C','B','A','PRO'] as $iracing_class)
             <option value="{{ $iracing_class }}" {{ old('iracing_class') == $iracing_class ? 'selected' : '' }}>
                 {{ $iracing_class }}
@@ -152,29 +152,29 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Tipo de carrera --}}
 <div>
-    <label class="text-[var(--text-soft)]">Tipo de carrera</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.race_type') }}</label>
     <select name="race_type" id="race_type"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-        <option value="laps">Por vueltas</option>
-        <option value="time">Por tiempo</option>
+        <option value="laps">{{ __('ui.by_laps') }}</option>
+        <option value="time">{{ __('ui.by_time') }}</option>
     </select>
 </div>
 
 {{-- Tipo de salida --}}
 <div>
-    <label class="text-[var(--text-soft)]">Salida</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.start_type') }}</label>
     <select name="start_type"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
 
-        <option value="standing">Parado</option>
-        <option value="rolling">Lanzada</option>
+        <option value="standing">{{ __('ui.standing') }}</option>
+        <option value="rolling">{{ __('ui.rolling') }}</option>
     </select>
 </div>
 
 {{-- Duración --}}
 <div id="race_length_wrapper">
-    <label class="text-[var(--text-soft)]">Duración</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.duration') }}</label>
     <input type="number"
         name="race_length"
         value="{{ old('race_length') }}"
@@ -182,11 +182,11 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 </div>
 
 <br>
-<h2 class="text-[var(--card-title)] font-semibold">Reglas de estrategia</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.strategy') }}</h2>
 <hr class="border-[var(--card-title)]">
 {{-- Fuel limit --}}
 <div>
-    <label class="text-[var(--text-soft)]">Límite de combustible (%)</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.fuel_limit') }}</label>
     <input type="number" step="1" name="fuel_limit"
         value="{{ old('fuel_limit') }}"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]"
@@ -195,7 +195,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 {{-- Override tanque --}}
 <div>
-    <label class="text-[var(--text-soft)]">Override depósito (L)</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.tank_override') }}</label>
     <input type="number" step="0.1" name="tank_capacity_override"
         value="{{ old('tank_capacity_override') }}"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
@@ -205,12 +205,12 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 <div class="flex gap-6 text-gray-300">
     <label>
         <input type="checkbox" name="mandatory_pit" value="1">
-        Parada obligatoria
+        {{ __('ui.mandatory_pit') }}
     </label>
 
     <label>
         <input type="checkbox" name="refuel_allowed" value="1" checked>
-        Repostaje permitido
+        {{ __('ui.refuel_allowed') }}
     </label>
 </div>
 
@@ -220,17 +220,17 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 {{-- CONFIGURACIÓN DE CARRERA --}}
 {{-- ============================= --}}
 <br>
-<h2 class="text-[var(--card-title)] font-semibold">Configuración de carrera</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.race_configuration') }}</h2>
 <hr class="border-[var(--card-title)]">
 <div class="grid grid-cols-2 gap-4">
 
     {{-- Setup --}}
     <div>
-        <label class="text-[var(--text-soft)]">Setup</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.setup') }}</label>
         <select name="setup_type"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
-            <option value="open">Open</option>
-            <option value="fixed">Fixed</option>
+            <option value="open">{{ __('ui.open') }}</option>
+            <option value="fixed">{{ __('ui.fixed') }}</option>
         </select>
     </div>
 
@@ -242,14 +242,14 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
     {{-- Drive Through --}}
     <div>
-        <label class="text-[var(--text-soft)]">Drive Through (x)</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.drive_through_limit') }}</label>
         <input type="number" name="drive_through_limit" value="17"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
     </div>
 
     {{-- DQ --}}
     <div>
-        <label class="text-[var(--text-soft)]">Disqualification (x)</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.disqualification_limit') }}</label>
         <input type="number" name="disqualification_limit" value="25"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
     </div>
@@ -262,32 +262,32 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 {{-- ============================= --}}
 
 <br>
-<h2 class="text-[var(--card-title)] font-semibold">Reglas avanzadas</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.advanced_rules') }}</h2>
 <hr class="border-[var(--card-title)]">
 <div class="grid grid-cols-2 gap-4 text-gray-300">
 
-    <label><input type="checkbox" name="has_additional_penalties" value="1"> Sanciones adicionales</label>
+    <label><input type="checkbox" name="has_additional_penalties" value="1"> {{ __('ui.additional_penalties') }}</label>
 
-    <label><input type="checkbox" name="network_quality_rule" value="1"> Regla calidad red</label>
+    <label><input type="checkbox" name="network_quality_rule" value="1"> {{ __('ui.network_quality_rule') }}</label>
 
-    <label><input type="checkbox" name="grid_by_class" value="1"> Parrilla por clase</label>
+    <label><input type="checkbox" name="grid_by_class" value="1"> {{ __('ui.grid_by_class') }}</label>
 
-    <label><input type="checkbox" name="tire_rules" value="1"> Reglas neumáticos</label>
+    <label><input type="checkbox" name="tire_rules" value="1"> {{ __('ui.tyre_rules') }}</label>
 
-    <label><input type="checkbox" name="quali_tires" value="1"> Neumáticos clasificación</label>
+    <label><input type="checkbox" name="quali_tires" value="1"> {{ __('ui.qualifying_tyres') }}</label>
 
-    <label><input type="checkbox" name="joker_laps" value="1"> Joker laps</label>
+    <label><input type="checkbox" name="joker_laps" value="1"> {{ __('ui.joker_laps') }}</label>
 
-    <label><input type="checkbox" name="team_rules" value="1"> Team rules</label>
+    <label><input type="checkbox" name="team_rules" value="1"> {{ __('ui.team_rules') }}</label>
 </div>
 {{-- Escrutinio --}}
 <div>
-    <label class="text-[var(--text-soft)]">Scrutineering clasificación</label>
+    <label class="text-[var(--text-soft)]">{{ __('ui.qualifying_scrutineering') }}</label>
     <select name="quali_scrutiny"
         class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
-        <option value="none">None</option>
-        <option value="lenient">Lenient</option>
-        <option value="strict">Strict</option>
+        <option value="none">{{ __('ui.none') }}</option>
+        <option value="lenient">{{ __('ui.lenient') }}</option>
+        <option value="strict">{{ __('ui.strict') }}</option>
     </select>
 </div>
 
@@ -299,17 +299,17 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 {{-- ============================= --}}
 
 <br>
-<h2 class="text-[var(--card-title)] font-semibold">Calendario</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.calendar') }}</h2>
 <hr class="border-[var(--card-title)]">
 <div class="grid grid-cols-2 gap-4">
 
     {{-- Día --}}
     <div>
-        <label class="text-[var(--text-soft)]">Día inicio semana</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.week_start_day') }}</label>
         <select name="week_start_day"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
             @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                <option value="{{ $day }}" {{ $day == 'Tuesday' ? 'selected' : '' }}>
+                <option value="{{ __('ui.' . strtolower($day)) }}" {{ $day == 'Tuesday' ? 'selected' : '' }}>
                     {{ $day }}
                 </option>
             @endforeach
@@ -318,21 +318,21 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
     {{-- Hora --}}
     <div>
-        <label class="text-[var(--text-soft)]">Hora inicio</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.start_time') }}</label>
         <input type="time" name="week_start_time" value="02:00"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
     </div>
 
     {{-- Intervalo --}}
     <div>
-        <label class="text-[var(--text-soft)]">Intervalo carrera (min)</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.race_interval_minutes') }}</label>
         <input type="number" name="race_interval_minutes" value="120"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
     </div>
 
     {{-- Registro --}}
     <div>
-        <label class="text-[var(--text-soft)]">Apertura registro (min)</label>
+        <label class="text-[var(--text-soft)]">{{ __('ui.registration_open_minutes') }}</label>
         <input type="number" name="registration_open_minutes" value="30"
             class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2 rounded text-[var(--text)]">
     </div>
@@ -343,7 +343,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 
 
 <br>
-<h2 class="text-[var(--card-title)] font-semibold">Logo y registro</h2>
+<h2 class="text-[var(--card-title)] font-semibold">{{ __('ui.logo_and_registration') }}</h2>
 <hr class="border-[var(--card-title)]">
 
 {{-- Logo --}}
@@ -356,7 +356,7 @@ class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-2
 <hr class="border-[var(--card-title)]">
 
 <button class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded text-white">
-Crear serie
+{{ __('ui.create_series') }}
 </button>
 
 </form>

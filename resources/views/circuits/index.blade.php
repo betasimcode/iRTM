@@ -42,14 +42,14 @@
 
             <thead class="bg-[var(--card)] border-[var(--border)] text-[var(--text-title)]  uppercase text-xs tracking-wider">
                 <tr>
-                    <th class="px-6 py-3 text-left">ID</th>
-                    <th class="px-6 py-3 text-left">iR-ID</th>
-                    <th class="px-2 py-3 text-left">Logo</th>
-                    <th class="px-6 py-2 text-left">Nombre</th>
-                    <th class="px-6 py-3 text-left">Variante</th>
-                    <th class="px-6 py-3 text-left">Code</th>
-                    <th class="px-6 py-3 text-left">Tipo</th>
-                    <th class="px-6 py-3 text-right">Acciones</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.id') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.iracing_id') }}</th>
+                    <th class="px-2 py-3 text-left">{{ __('ui.logo') }}</th>
+                    <th class="px-6 py-2 text-left">{{ __('ui.name') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.variant') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.code') }}</th>
+                    <th class="px-6 py-3 text-left">{{ __('ui.circuit_type') }}</th>
+                    <th class="px-6 py-3 text-right">{{ __('ui.actions') }}</th>
                 </tr>
             </thead>
 

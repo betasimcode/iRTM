@@ -38,15 +38,15 @@
             </option>
 
         @empty
-            <option value="">Sin vueltas disponibles</option>
+            <option value="">{{ __('ui.no_laps_available') }}</option>
         @endforelse
     </select>
 
     <button
         type="button"
         id="lap-color-trigger"
-        aria-label="Cambiar color de la trazada"
-        title="Color de la trazada"
+        aria-label="{{ __('ui.change_track_color') }}"
+        title="{{ __('ui.track_color') }}"
         class="flex h-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)]"
     >
         <span

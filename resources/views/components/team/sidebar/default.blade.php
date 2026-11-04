@@ -5,42 +5,42 @@
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Dashboard
+            {{ __('ui.dashboard') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Competitions
+            {{ __('ui.competitions') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Drivers
+            {{ __('ui.drivers') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Cars
+            {{ __('ui.cars') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Sessions
+            {{ __('ui.sessions') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Stints
+            {{ __('ui.stints') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Strategy
+            {{ __('ui.strategy') }}
         </a>
 
         <a href="#"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Reports
+            {{ __('ui.reports') }}
         </a>
 
     </nav>
@@ -50,7 +50,7 @@
 
         <a href="{{ route('competitions.index') }}"
            class="block px-3 py-2 rounded-lg hover:bg-[var(--hover)]">
-            Driver Workspace
+            {{ __('ui.driver_workspace') }}
         </a>
 
     </div>

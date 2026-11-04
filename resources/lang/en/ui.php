@@ -551,5 +551,7 @@ return [
     "place" => "Place",
     "division_standings" => "Division standings",
     "overall_standings" => "Overall standings",
+    "drivers" => "Drivers",
+    "overall_drivers_count" => ":count drivers",
 
 ];

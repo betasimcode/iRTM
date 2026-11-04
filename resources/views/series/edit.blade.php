@@ -5,7 +5,7 @@
 <div class="max-w-3xl mx-auto py-10">
 
     <h1 class="text-2xl font-bold text-white mb-6">
-        Editar {{ $series->name }}
+        {{ __('ui.edit_series') }} · {{ $series->name }}
     </h1>
 
     <form action="{{ route('series.update', $series) }}"
@@ -17,7 +17,7 @@
 
         <div>
             <label class="block text-lg text-gray-400 mb-2">
-                Año
+                {{ __('ui.year') }}
             </label>
 
             <input type="number"
@@ -29,7 +29,7 @@
 
         <div>
             <label class="block text-lg text-gray-400 mb-2">
-                Temporada
+                {{ __('ui.season') }}
             </label>
 
             <select name="season_number " disabled
@@ -43,7 +43,7 @@
 
         <div>
             <label class="block text-sm text-gray-400 mb-2">
-                Estado
+                {{ __('ui.status') }}
             </label>
 
             <select name="status"
@@ -51,15 +51,15 @@
                         rounded-lg px-4 py-2 text-white">
 
                 <option value="draft" {{ $series->status == 'draft' ? 'selected' : '' }}>
-                    Borrador
+                    {{ __('ui.draft') }}
                 </option>
 
                 <option value="active" {{ $series->status == 'active' ? 'selected' : '' }}>
-                    Activa
+                    {{ __('ui.active') }}
                 </option>
 
                 <option value="archived" {{ $series->status == 'archived' ? 'selected' : '' }}>
-                    Finalizada
+                    {{ __('ui.archived') }}
                 </option>
 
             </select>
@@ -76,7 +76,7 @@
 
                 <button type="submit"
                         class="bg-indigo-600 px-4 py-2 rounded">
-                    Actualizar
+                    {{ __('ui.update') }}
                 </button>
             </form>
 
@@ -85,7 +85,7 @@
                 <a href="{{ route('series.show', $series) }}"
                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600
                           text-white rounded-lg">
-                    Cancelar
+                    {{ __('ui.cancel') }}
                 </a>
             </div>
             {{-- ELIMINAR --}}
@@ -94,7 +94,7 @@
                 <button @click="open = true"
                         type="button"
                         class="text-red-500 hover:text-red-400">
-                    Eliminar
+                    {{ __('ui.delete') }}
                 </button>
 
                 {{-- MODAL --}}
@@ -107,11 +107,11 @@
                                 rounded-2xl p-8 w-96 space-y-6">
 
                         <h3 class="text-lg font-semibold text-white">
-                            Confirmar eliminación
+                            {{ __('ui.confirm_deletion') }}
                         </h3>
 
                         <p class="text-sm text-gray-400">
-                            Esta acción no se puede deshacer.
+                            {{ __('ui.irreversible_action') }}
                         </p>
 
                         <div class="flex justify-end space-x-4">

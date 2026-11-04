@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Series')
+@section('title', __('ui.series'))
 @section('page-title', __('ui.registered_iracing_series'))
 @section('content')
 
@@ -69,7 +69,7 @@
                         {{ $s->category ?? '—' }}
                     </td>
                     <td class="px-6 py-4 text[var(--text)] text-xs w-32">
-                        {{ $s->start_type ?? '—' }}
+                        {{ $s->start_type ? __('ui.' . $s->start_type) : '—' }}
                     </td>
                     <td class="px-6 py-4 text[var(--text)] text-xs w-72">
                         @if ($s->race_type == 'Time')

@@ -200,7 +200,7 @@ return [
     "view_weather_conditions" => "Consultar condiciones meteorológicas",
     "close_weather_conditions" => "Cerrar condiciones meteorológicas",
     "reprocess_ibt_telemetry" => "Reprocesar telemetría IBT",
-    "confirm_reprocess_ibt" => "¿Quieres reprocesar el IBT de esta tanda?",
+    "confirm_reprocess_ibt" => "¿Reprocesar el IBT de esta tanda?",
     "print_stint_data" => "Imprimir datos de la tanda",
     "precipitation" => "Precipitación: :value%",
     "precipitation_unavailable" => "Precipitación no disponible",

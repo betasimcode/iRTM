@@ -332,5 +332,9 @@ return [
     "no_sectors_available" => "No hay sectores disponibles para esta vuelta.",
     "select_tools_to_show" => "Selecciona las herramientas que quieras mostrar durante el análisis de la vuelta.",
     "instruments_drag_instruction" => "Arrastra los instrumentos para mover el panel flotante.",
+    "close_catalogue" => "Cerrar catálogo",
+    "no_laps_available" => "No hay vueltas disponibles",
+    "suspension" => "Suspensión",
+    "no_stints_available" => "No hay stints disponibles",
 
 ];

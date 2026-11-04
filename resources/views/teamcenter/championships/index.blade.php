@@ -1,6 +1,6 @@
 @extends('teamcenter.layouts.a')
 
-@section('title', 'Championships')
+@section('title', __('ui.teamcenter_championships'))
 
 @section('teamcenter-main')
 
@@ -14,14 +14,14 @@
             class="text-2xl font-semibold tracking-tight
                    text-[var(--text)]"
         >
-            Championships
+            {{ __('ui.teamcenter_championships') }}
         </h1>
 
         <p
             class="mt-2 text-sm
                    text-[var(--text-muted)]"
         >
-            Competiciones disponibles para consultar desde TeamCenter.
+            {{ __('ui.championships_available_teamcenter') }}
         </p>
 
     </div>
@@ -42,7 +42,7 @@
                 class="text-sm
                        text-[var(--text-muted)]"
             >
-                No hay championships disponibles.
+                {{ __('ui.no_championships_available') }}
             </p>
 
         </div>
@@ -112,7 +112,7 @@
                                        font-medium
                                        text-[var(--value-data)]"
                             >
-                                Participa el equipo
+                                {{ __('ui.team_participating') }}
                             </span>
 
                         @else
@@ -129,7 +129,7 @@
                                        font-medium
                                        text-[var(--text-muted)]"
                             >
-                                No inscrito
+                                {{ __('ui.not_registered') }}
                             </span>
 
                         @endif
@@ -160,7 +160,7 @@
                                 transition
                                 hover:bg-[var(--bg)]"
                         >
-                            Ver Championship
+                            {{ __('ui.view_championship') }}
                         </a>
 
                     </div>

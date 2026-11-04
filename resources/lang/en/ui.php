@@ -337,5 +337,6 @@ return [
     "suspension" => "Suspension",
     "no_stints_available" => "No stints available",
     "clutch" => "Clutch",
+    "telemetry" => "Telemetry",
 
 ];

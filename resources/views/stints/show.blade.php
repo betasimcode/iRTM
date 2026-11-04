@@ -382,9 +382,7 @@
             <form
                 action="{{ route('stints.repair-ibt', $stint) }}"
                 method="POST"
-                onsubmit="return confirm(
-                    @js(__('ui.confirm_reprocess_ibt'))
-                )"
+                onsubmit="return confirm('{{ __('ui.confirm_reprocess_ibt') }}')"
             >
                 @csrf
 

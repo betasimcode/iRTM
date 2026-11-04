@@ -332,5 +332,9 @@ return [
     "no_sectors_available" => "No sectors are available for this lap.",
     "select_tools_to_show" => "Select the tools to display while analysing the lap.",
     "instruments_drag_instruction" => "Drag the instruments to move the floating panel.",
+    "close_catalogue" => "Close catalogue",
+    "no_laps_available" => "No laps available",
+    "suspension" => "Suspension",
+    "no_stints_available" => "No stints available",
 
 ];

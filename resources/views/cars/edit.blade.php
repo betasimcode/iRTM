@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Coche')
-@section('page-title', 'Editar Coche')
+@section('title', __('ui.edit').' '. __('ui.car'))
+@section('page-title', __('ui.edit').' '. __('ui.car'))
 
 @section('content')
 
@@ -19,7 +19,7 @@
             {{-- Nombre --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Nombre
+                    {{ __('ui.name') }}
                 </label>
                 <input type="text"
                        name="name"
@@ -29,7 +29,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Short name
+                    {{ __('ui.short_name') }}
                 </label>
                 <input type="text"
                        name="short_name"
@@ -39,7 +39,7 @@
             </div>
             <div>
                 <label class="block text-sm text-[var(--title)] mb-2">
-                    Marca
+                    {{ __('ui.brand') }}
                 </label>
 
                 <input
@@ -49,7 +49,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Setup folder
+                    {{ __('ui.setup_folder') }}
                 </label>
                 <input type="text"
                        name="iracing_setup_folder"
@@ -58,7 +58,7 @@
             </div>
             <div>
                 <label class="block text-sm text-[var(--title)] mb-2">
-                    Imagen
+                    {{ __('ui.image') }}
                 </label>
 
                 <input
@@ -69,7 +69,7 @@
             {{-- Categoría --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Categoría
+                    {{ __('ui.category') }}
                 </label>
                 <select name="category"
                 class="w-full bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2 rounded text-[var(--text)]">
@@ -85,7 +85,7 @@
             {{-- Capacidad --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Capacidad de combustible (L)
+                    {{ __('ui.tank_capacity_label') }} (L)
                 </label>
                 <input type="number"
                        step="0.1"
@@ -97,7 +97,7 @@
             {{-- Potencia --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Potencia hp
+                    {{ __('ui.power_hp') }}
                 </label>
                 <input type="number"
                        name="power_hp"
@@ -108,7 +108,7 @@
              {{-- DRIVE --}}
              <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Drive type
+                    {{ __('ui.drive_type') }}
                 </label>
                 <select name="drive_type"
                 class="w-full bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2 rounded text-[var(--text)]">
@@ -124,14 +124,14 @@
             {{-- ENGINE POS --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Engine position
+                    {{ __('ui.engine_position') }}
                 </label>
                 <select name="engine_position"
                 class="w-full bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2 rounded text-[var(--text)]">
                 @foreach(['','FRONT','REAR','MID','MIX'] as $car_engpos)
                 <option value="{{ $car_engpos }}"
                 {{ old('engine_position', $car->engine_position) == $car_engpos ? 'selected' : '' }}>
-                {{ $car_engpos }}
+                {{ $car_engpos === '' ? '' : __('ui.' . strtolower($car_engpos)) }}
                 </option>
                 @endforeach
                 </select>
@@ -140,7 +140,7 @@
             {{-- Peso --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Weight kg
+                    {{ __('ui.weight_kg') }}
                 </label>
                 <input type="number"
                        name="weight_kg"
@@ -151,7 +151,7 @@
             {{-- wheelbase --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Wheel Base (mm)
+                    {{ __('ui.wheelbase_mm') }}
                 </label>
                 <input type="number"
                        name="wheelbase_mm"
@@ -162,7 +162,7 @@
             {{-- front track --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Front Track (mm)
+                    {{ __('ui.front_track_mm') }}
                 </label>
                 <input type="number"
                        name="front_track_mm"
@@ -173,7 +173,7 @@
             {{-- rear track --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Rear track (mm)
+                    {{ __('ui.rear_track_mm') }}
                 </label>
                 <input type="number"
                        name="rear_track_mm"
@@ -184,7 +184,7 @@
             {{-- Neumático --}}
             <div>
                 <label class="block text-sm font-medium text-[var(--title)] mb-2">
-                    Tipo de neumático
+                    {{ __('ui.tyre_type') }}
                 </label>
                 <input type="text"
                        name="tyre_type"
@@ -209,14 +209,14 @@
                 <a href="{{ route('cars.index') }}"
                    class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600
                           text-gray-200 rounded-lg text-sm transition">
-                    Cancelar
+                    {{ __('ui.cancel') }}
                 </a>
 
                 <button type="submit"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700
                                text-white rounded-lg text-sm font-medium
                                transition shadow">
-                    Actualizar coche
+                    {{ __('ui.update_car') }}
                 </button>
 
             </div>

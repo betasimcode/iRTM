@@ -219,5 +219,6 @@ return [
     "division" => "División",
     "team_owner" => "Propietario del equipo",
     "driver_role" => "Piloto",
+    "open_lap_telemetry" => "Abrir telemetría de la vuelta :lap",
 
 ];

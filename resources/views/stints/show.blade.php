@@ -131,7 +131,7 @@
             {{-- <div> {!! $stint->track->map_svg !!}      </div> --}}
             </div>
             @else
-            <div class="p-8 m-auto text-center">No track image</div>
+            <div class="p-8 m-auto text-center">{{ __('ui.no_track_image') }}</div>
             @endif
 
             </div>
@@ -144,7 +144,7 @@
                 <button
                     @click="open = false"
                     class="px-4 w-28 py-2 text-sm font-medium text-[var(--text)] bg-[var(--btn-cancel)] hover:bg-[var(--btn-cancel-h)] rounded-lg transition">
-                    Back
+                    {{ __('ui.back') }}
                 </button>
                 {{-- <button
                     @click="open = false"
@@ -166,7 +166,7 @@
                                            bg-[var(--bg)]
                                            text-[var(--text-muted)]"
                                 >
-                                    TRACK
+                                    {{ strtoupper(__('ui.track')) }}
                                 </span>
 
                             @endif
@@ -263,8 +263,8 @@
                         <button
                             type="button"
                             :aria-expanded="weatherOpen.toString()"
-                            aria-label="Consultar condiciones meteorológicas"
-                            title="Condiciones meteorológicas"
+                            aria-label="{{ __('ui.view_weather_conditions') }}"
+                            title="{{ __('ui.weather_conditions') }}"
                             class="items-center justify-center rounded-lg p-2 text-[var(--text)]">
                             {{-- Conserva aquí el SVG del icono meteorológico --}}
                             <svg
@@ -304,13 +304,13 @@
                         >
                             <div class="mb-3 flex items-center justify-between gap-3">
                                 <h3 class="font-semibold text-[var(--text)]">
-                                    Condiciones meteorológicas
+                                    {{ __('ui.weather_conditions') }}
                                 </h3>
 
                                 <button
                                     type="button"
                                     @click="weatherOpen = false"
-                                    aria-label="Cerrar condiciones meteorológicas"
+                                    aria-label="{{ __('ui.close_weather_conditions') }}"
                                     class="rounded-md p-1 text-[var(--text)]
                                         hover:bg-[var(--border)]"
                                 >
@@ -382,9 +382,7 @@
             <form
                 action="{{ route('stints.repair-ibt', $stint) }}"
                 method="POST"
-                onsubmit="return confirm(
-                    '¿Quieres reprocesar el IBT de este stint?'
-                )"
+                onsubmit="return confirm('{{ __('ui.confirm_reprocess_ibt') }}')"
             >
                 @csrf
 
@@ -392,8 +390,8 @@
                     type="submit"
                     variant="option"
                     size="xs"
-                    title="Reprocesar telemetría IBT"
-                    aria-label="Reprocesar telemetría IBT"
+                    title="{{ __('ui.reprocess_ibt_telemetry') }}"
+                    aria-label="{{ __('ui.reprocess_ibt_telemetry') }}"
                     class="ui-icon-button"
                 >
                     <x-ui-icon name="refresh-cw" />
@@ -419,13 +417,13 @@
             <x-ui.button type="button" variant="option" size="xs" title="{{ __('ui.print_options') }}" aria-label="{{ __('ui.print_options') }}" @click="open=true" class="ui-icon-button">
                 <x-ui-icon name="printer" />
             </x-ui.button>
-            <x-action-modal title="Print Options">
+            <x-action-modal title="{{ __('ui.print_options') }}">
 
                 <div class="space-y-2 bg-[var(--card)]">
 
                     <button class="w-full text-left px-3 py-2 rounded-lg text-[var(--btn-text)] bg-[var(--btn-bg)] hover:bg-[var(--btn-hover)]">
 
-                    Print Stint Data
+                    {{ __('ui.print_stint_data') }}
 
                     </button>
 
@@ -559,7 +557,7 @@
                         onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href='{{ $telemetryUrl }}'; }"
                         tabindex="0"
                         role="link"
-                        title="Abrir telemetría de la vuelta {{ (int) $displayLap }}"
+                        title="{{ __('ui.open_lap_telemetry', ['lap' => (int) $displayLap]) }}"
                         class="cursor-pointer hover:bg-[var(--card-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] transition"
                     @else
                         class="transition"
@@ -740,8 +738,8 @@
                         <span
                             class="inline-flex items-center gap-0.5 text-sm"
                             title="{{ $precipitationPct !== null
-                                ? 'Precipitación: ' . number_format($precipitationPct, 1) . '%'
-                                : 'Precipitación no disponible' }}"
+                                ? __('ui.precipitation', ['value' => number_format($precipitationPct, 1)])
+                                : __('ui.precipitation_unavailable') }}"
                         >
                             @foreach($rainIcons as $rainIcon)
                                 <span>{{ $rainIcon }}</span>
@@ -751,7 +749,7 @@
                         {{-- Estado del cielo --}}
                         <span
                             class="text-base"
-                            title="Estado del cielo (Skies: {{ $skies ?? 'N/D' }})"
+                            title="{{ __('ui.sky_condition', ['skies' => $skies ?? 'N/D']) }}"
                         >
                             {{ $skyIcon }}
                         </span>
@@ -760,7 +758,7 @@
                         @if($weatherDeclaredWet)
                             <span
                                 class="text-xs font-semibold text-sky-400"
-                                title="Condiciones declaradas húmedas"
+                                title="{{ __('ui.declared_wet_conditions') }}"
                             >
                                 [WET]
                             </span>
@@ -810,8 +808,8 @@
                                     height="25"
                                     viewBox="0 0 20 20"
                                     fill="none"
-                                    aria-label="Dirección del viento: {{ $windDirection }}"
-                                    title="Dirección del viento: {{ number_format($windDir, 1) }}°"
+                                    aria-label="{{ __('ui.wind_direction', ['direction' => $windDirection]) }}"
+                                    title="{{ __('ui.wind_degrees', ['degrees' => number_format($windDir, 1)]) }}"
                                     style="transform: rotate({{ $windDir }}deg)"
                                 >
                                     <path
@@ -1020,7 +1018,7 @@
                     @click="close()"
                     class="rounded-lg p-2 text-[var(--text-muted)]
                            hover:bg-[var(--bg)] hover:text-[var(--text-title)]"
-                    aria-label="Cerrar análisis"
+                    aria-label="{{ __('ui.close_analysis') }}"
                 >
                     <span aria-hidden="true">✕</span>
                 </button>

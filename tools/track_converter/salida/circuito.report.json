@@ -2,48 +2,48 @@
   "converter_version": "0.3.0",
   "filled_surface": "polygon between aligned traces, closed cyclically",
   "inputs": [
-    "B:\\laragon\\www\\iracing-manager-mrt\\storage\\app\\private\\telemetry\\2026\\10\\user_1\\stint_1091\\laps\\lap_001.json",
-    "B:\\laragon\\www\\iracing-manager-mrt\\storage\\app\\private\\telemetry\\2026\\10\\user_1\\stint_1092\\laps\\lap_003.json"
+    "B:\\laragon\\www\\iracing-manager-mrt\\tools\\track_converter\\lap_001.json",
+    "B:\\laragon\\www\\iracing-manager-mrt\\tools\\track_converter\\lap_003.json"
   ],
   "lap_metadata": [
     {
       "lap": 1,
       "candidate_lap": 1,
-      "lap_time_s": 321.4129943847656,
-      "valid_gps_points": 19284,
+      "lap_time_s": 304.5299987792969,
+      "valid_gps_points": 18273,
       "skipped_samples": 0
     },
     {
       "lap": 2,
       "candidate_lap": 3,
-      "lap_time_s": 249.08380126953125,
-      "valid_gps_points": 14946,
+      "lap_time_s": 263.90411376953125,
+      "valid_gps_points": 15834,
       "skipped_samples": 0
     }
   ],
   "projection": "local equirectangular (meters)",
   "sample_count": 3000,
-  "smoothing_window": 5,
+  "smoothing_window": 1,
   "separation_m": {
-    "min": 8.760064960474036,
-    "p10": 9.49834243856378,
-    "median": 10.157641694532089,
-    "p90": 13.254147692813053,
-    "max": 21.376627822252903
+    "min": 8.554133517523582,
+    "p10": 9.343057369547521,
+    "median": 10.299015031795932,
+    "p90": 13.130790691183655,
+    "max": 26.488467693908785
   },
   "raw_progress_range": [
     {
-      "min": 7.88937250035815e-05,
-      "max": 0.9999411106109619
+      "min": 1.4824030586169101e-05,
+      "max": 0.9999589323997498
     },
     {
-      "min": 1.6157735444721766e-05,
-      "max": 0.9999515414237976
+      "min": 7.712280057603493e-05,
+      "max": 0.9999242424964905
     }
   ],
   "seam_chord_m": {
-    "lap1_sorted_end_to_start": 0.5807344408421584,
-    "lap2_sorted_end_to_start": 0.2845049488433539
+    "lap1_sorted_end_to_start": 0.39406221199612357,
+    "lap2_sorted_end_to_start": 1.0605972504168804
   },
   "warnings": [
     "No se genera ni se dibuja línea central: la superficie se define solo por los dos bordes.",

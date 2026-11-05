@@ -3,35 +3,35 @@
     $weather = is_array($weather ?? null) ? $weather : [];
 
     $weatherItems = [
-        'Temperatura de pista' => [
+        'weather_track_temperature' => [
             'track_surface_temp_c',
             '°C',
         ],
-        'Temperatura ambiente' => [
+        'weather_air_temperature' => [
             'track_air_temp_c',
             '°C',
         ],
-        'Presión atmosférica' => [
+        'weather_atmospheric_pressure' => [
             'track_air_pressure_hg',
             'inHg',
         ],
-        'Densidad del aire' => [
+        'weather_air_density' => [
             'track_air_density_kg_m3',
             'kg/m³',
         ],
-        'Viento' => [
+        'weather_wind_speed' => [
             'track_wind_speed_m_s',
             'm/s',
         ],
-        'Humedad relativa' => [
+        'weather_relative_humidity' => [
             'track_relative_humidity_pct',
             '%',
         ],
-        'Niebla' => [
+        'weather_fog' => [
             'track_fog_pct',
             '%',
         ],
-        'Precipitación' => [
+        'weather_precipitation' => [
             'track_precipitation_pct',
             '%',
         ],
@@ -48,7 +48,7 @@
     @foreach ($weatherItems as $label => [$key, $unit])
         <div class="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
             <div class="text-xs text-[var(--muted)]">
-                {{ $label }}
+                {{ __('ui.' . $label) }}
             </div>
 
             <div class="mt-1 font-mono-timing font-semibold text-[var(--text)]">

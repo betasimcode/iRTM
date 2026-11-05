@@ -1,0 +1,52 @@
+{
+  "converter_version": "0.1.0",
+  "inputs": [
+    "B:\\laragon\\www\\iracing-manager-mrt\\tools\\track_converter\\lap_001.json",
+    "B:\\laragon\\www\\iracing-manager-mrt\\tools\\track_converter\\lap_003.json"
+  ],
+  "lap_metadata": [
+    {
+      "lap": 3,
+      "candidate_lap": 3,
+      "lap_time_s": 214.6945037841797,
+      "valid_gps_points": 12882,
+      "skipped_samples": 0
+    },
+    {
+      "lap": 6,
+      "candidate_lap": 7,
+      "lap_time_s": 209.6667022705078,
+      "valid_gps_points": 12581,
+      "skipped_samples": 0
+    }
+  ],
+  "projection": "local equirectangular (meters)",
+  "sample_count": 3000,
+  "smoothing_window": 1,
+  "separation_m": {
+    "min": 11.736551000377245,
+    "p10": 12.041491459104913,
+    "median": 12.76259216091557,
+    "p90": 15.117595481972579,
+    "max": 20.70294836393001
+  },
+  "raw_progress_range": [
+    {
+      "min": 1.6400963431806304e-05,
+      "max": 0.9999437928199768
+    },
+    {
+      "min": 5.3899922932032496e-05,
+      "max": 0.9999514818191528
+    }
+  ],
+  "seam_chord_m": {
+    "lap1_sorted_end_to_start": 0.3037148423823702,
+    "lap2_sorted_end_to_start": 0.4336135175327302
+  },
+  "warnings": [
+    "El punto medio de dos trazadas no equivale necesariamente al centro físico de la pista.",
+    "La interpolación cíclica puede atravesar un hueco de GPS en la línea de meta; revisar visualmente el cierre.",
+    "No se ha inferido el borde real ni el ancho reglamentario de la pista."
+  ]
+}

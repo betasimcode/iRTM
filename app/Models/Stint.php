@@ -4,6 +4,7 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\IrSession;
 use App\Models\IrLap;
+use App\Models\Car;
 use App\Models\Setup;
 use App\Models\IrTelemetryTyre;
 use Illuminate\Database\Eloquent\Model;
@@ -146,7 +147,7 @@ class Stint extends Model {
 
     public function car()
     {
-        return $this->belongsTo(Car::class);
+        return $this->belongsTo(Car::class, 'car_id', 'iracing_car_id');
     }
 
     public function tyreTelemetry()

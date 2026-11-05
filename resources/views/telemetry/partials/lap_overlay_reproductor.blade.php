@@ -1860,13 +1860,41 @@
         };
 
 //car reference svg
-@if($stint->car_id == 25)
-@include('telemetry.partials.car.fclass')
-@elseif($stint->car_id == 128)
-@include('telemetry.partials.car.proto')
-@elseif($stint->car_id == 184)
-@include('telemetry.partials.car.gt3')
-@endif
+@php
+    $carCategory = strtoupper(trim($stint->car?->category ?? ''));
+@endphp
+
+@switch($carCategory)
+
+    @case('GTP')
+    @case('LMP2')
+    @case('LMP3')
+        @include('telemetry.partials.car.proto')
+        @break
+
+    @case('GT3')
+    @case('PORSCHE CUP')
+    @case('FERRARI CHALLENGUE')
+    @case('GT4')
+    @case('GT')
+    @case('TCR')
+        @include('telemetry.partials.car.gt3')
+        @break
+
+    @case('F1')
+    @case('F2')
+    @case('SF23')
+    @case('SFL')
+    @case('F3')
+    @case('F4')
+    @case('RF1600')
+    @case('RT2000')
+    @case('FORMULA VEE')
+    @case('LOTUS79')
+        @include('telemetry.partials.car.fclass')
+        @break
+
+@endswitch
 
         // vehicleSvg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
         //     <svg xmlns="http://www.w3.org/2000/svg"

@@ -31,7 +31,7 @@ class StintController extends Controller
                     'session',
                 ])
                 ->where(function ($query) {
-                    $query->where('laps_completed', '>', 0)
+                    $query->where('laps_completed', '>', 1)
                         ->orWhereHas('laps');
                 })
                 ->orderBy('created_at', 'desc')

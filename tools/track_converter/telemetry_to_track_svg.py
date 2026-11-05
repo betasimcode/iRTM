@@ -181,14 +181,27 @@ def main():
     def project(x,y):
         return offx+(x-minx)*scale, height-(offy+(y-miny)*scale)
 
-    svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{args.width}" height="{height}" viewBox="0 0 {args.width} {height}">',
-           '<rect width="100%" height="100%" fill="#757575"/>',
+    geometry = {
+        'version': 1,
+        'coordinate_system': 'irtm_local_equirectangular_meters',
+        'projection': 'equirectangular',
+        'earth_radius_m': EARTH_RADIUS_M,
+        'origin_lat': lat0,
+        'origin_lon': lon0,
+        'cos_lat': cos_lat,
+        'bounds': {'min_x': minx, 'max_x': maxx, 'min_y': miny, 'max_y': maxy},
+        'transform': {'scale': scale, 'offset_x': offx, 'offset_y': offy, 'invert_y': True},
+        'svg': {'width': args.width, 'height': height, 'viewBox': f'0 0 {args.width} {height}'},
+    }
+    geometry_json = json.dumps(geometry, separators=(',', ':'), ensure_ascii=True)
+    svg = [f"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{args.width}\" height=\"{height}\" viewBox=\"0 0 {args.width} {height}\" data-irtm-geometry='{geometry_json}'>",
+           '<rect width="100%" height="100%" fill="var(--back)"/>',
            '<g stroke-linecap="round" stroke-linejoin="round">',
            # Fill the area between the two aligned boundary traces.
-           f'<path d="{path_d(a + list(reversed(b)), project, close=True)}" fill="#505050" fill-opacity="0.78" stroke="none"/>',
+           f'<path d="{path_d(a + list(reversed(b)), project, close=True)}" fill="var(--road)" fill-opacity="0.78" stroke="none"/>',
            '<g fill="none">',
-           f'<path d="{path_d(source1, project)}" stroke="#959595" stroke-width="0.5" opacity="0.95"/>',
-           f'<path d="{path_d(source2, project)}" stroke="#959595" stroke-width="0.5" opacity="0.95"/>',
+           f'<path d="{path_d(source1, project)}" stroke="var(--border)" stroke-width="0.5" opacity="0.95"/>',
+           f'<path d="{path_d(source2, project)}" stroke="var(--border)" stroke-width="0.5" opacity="0.95"/>',
            '</g>',
            '</g>',
            '<g font-family="Arial,sans-serif" fill="#e8edf4">',
@@ -201,7 +214,7 @@ def main():
     svg_path.parent.mkdir(parents=True, exist_ok=True)
     svg_path.write_text('\n'.join(svg), encoding='utf-8')
     report = {
-        'converter_version': '0.3.0',
+        'converter_version': '0.4.0',
         'filled_surface': 'polygon between aligned traces, closed cyclically',
         'inputs': [str(args.lap1), str(args.lap2)],
         'lap_metadata': [
@@ -209,6 +222,7 @@ def main():
             {'lap': d2.get('lap'), 'candidate_lap': d2.get('candidate_lap'), 'lap_time_s': d2.get('lap_time'), 'valid_gps_points': len(p2), 'skipped_samples': skip2},
         ],
         'projection': 'local equirectangular (meters)',
+        'geometry': geometry,
         'sample_count': n,
         'smoothing_window': args.smooth,
         'separation_m': {'min': min(sep), 'p10': percentile(sep,.1), 'median': statistics.median(sep), 'p90': percentile(sep,.9), 'max': max(sep)},

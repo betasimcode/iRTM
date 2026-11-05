@@ -380,19 +380,8 @@
             });
         }
 
-        const defaultCalibration = {
-            scale: 1,
-            rotation_deg: 0,
-            offset_x_pct: 0,
-            offset_y_pct: 0,
-        };
-
-        @include('telemetry.partials.track_calibrations')
-
-        const calibration = {
-            ...defaultCalibration,
-            ...(calibrations[trackId] ?? {}),
-        };
+        // La geometría del SVG es la única referencia espacial del circuito.
+        let trackGeometry = null;
 
         // Conservamos cada muestra completa para sincronizar posición y tiempo.
         const validSamples = samples.filter(sample =>
@@ -1860,6 +1849,7 @@
         };
 
 //car reference svg
+//car reference svg
 @php
     $carCategory = strtoupper(trim($stint->car?->category ?? ''));
 @endphp
@@ -2121,51 +2111,54 @@
             updateView();
         });
 
-        // Proyección local del GPS a metros.
-        const radians = Math.PI / 180;
-        const originLat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
-        const originLon = points.reduce((sum, p) => sum + p.lon, 0) / points.length;
-        const cosLat = Math.cos(originLat * radians);
+        // Las coordenadas GPS se proyectan con el origen y la transformación
+        // exportados por el conversor dentro del SVG.
+        const readTrackGeometry = () => {
+            try {
+                const svgRoot = mapObject.contentDocument?.documentElement;
+                const raw = svgRoot?.getAttribute('data-irtm-geometry');
+                if (!raw) return null;
 
-        const referenceProjected = referenceSamples
-            .filter(sample =>
-                sample?.position?.lat != null &&
-                sample?.position?.lon != null &&
-                Number.isFinite(Number(sample.position.lat)) &&
-                Number.isFinite(Number(sample.position.lon))
-            )
-            .map(sample => ({
-                x: (Number(sample.position.lon) - originLon)
-                    * radians * 6371000 * cosLat,
-                y: (Number(sample.position.lat) - originLat)
-                    * radians * 6371000,
-                lapDistPct: sample.lap_dist_pct != null && Number.isFinite(Number(sample.lap_dist_pct))
-                    ? Number(sample.lap_dist_pct)
-                    : null,
-                sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
-                    ? Number(sample.session_time)
-                    : null,
-            }));
+                const geometry = JSON.parse(raw);
+                const viewBox = svgRoot.viewBox?.baseVal;
+                const values = [
+                    geometry?.origin_lat, geometry?.origin_lon, geometry?.cos_lat,
+                    geometry?.earth_radius_m, geometry?.bounds?.min_x,
+                    geometry?.bounds?.max_x, geometry?.bounds?.min_y,
+                    geometry?.bounds?.max_y, geometry?.transform?.scale,
+                    geometry?.transform?.offset_x, geometry?.transform?.offset_y,
+                    geometry?.svg?.height, viewBox?.x, viewBox?.y,
+                    viewBox?.width, viewBox?.height,
+                ];
 
-        const projected = points.map(point => ({
-            x: (point.lon - originLon) * radians * 6371000 * cosLat,
-            y: (point.lat - originLat) * radians * 6371000,
-        }));
+                if (geometry.version !== 1 || values.some(value => !Number.isFinite(Number(value))) ||
+                    Number(geometry.transform.scale) <= 0 || viewBox.width <= 0 || viewBox.height <= 0) {
+                    return null;
+                }
 
-        // Mantener la calibración del mapa basada en la vuelta principal.
-        // La referencia utiliza la misma transformación, sin desplazar el mapa.
-        const minX = Math.min(...projected.map(p => p.x));
-        const maxX = Math.max(...projected.map(p => p.x));
-        const minY = Math.min(...projected.map(p => p.y));
-        const maxY = Math.max(...projected.map(p => p.y));
+                return { ...geometry, viewBox: {
+                    x: viewBox.x, y: viewBox.y, width: viewBox.width, height: viewBox.height,
+                } };
+            } catch (error) {
+                console.error('[GPS overlay] No se pudieron leer los metadatos geométricos del SVG.', error);
+                return null;
+            }
+        };
 
-        const rangeX = maxX - minX;
-        const rangeY = maxY - minY;
+        const projectGpsToSvg = (lat, lon, geometry) => {
+            const radians = Math.PI / 180;
+            const x = geometry.earth_radius_m
+                * (Number(lon) - geometry.origin_lon) * radians * geometry.cos_lat;
+            const y = geometry.earth_radius_m
+                * (Number(lat) - geometry.origin_lat) * radians;
 
-        if (rangeX <= 0 || rangeY <= 0) {
-            console.warn('[GPS overlay] Extensión GPS no válida.', trackId);
-            return;
-        }
+            return {
+                x: geometry.transform.offset_x
+                    + (x - geometry.bounds.min_x) * geometry.transform.scale,
+                y: geometry.svg.height - (geometry.transform.offset_y
+                    + (y - geometry.bounds.min_y) * geometry.transform.scale),
+            };
+        };
 
         const updateSpatialPositionFromMap = event => {
             if (referenceMode !== 'spatial') return;
@@ -2224,36 +2217,34 @@
             context.clearRect(0, 0, width, height);
 
 
-            const padding = Math.min(width, height) * 0.08;
-            const fitScale = Math.min(
-                Math.max(1, width - padding * 2) / rangeX,
-                Math.max(1, height - padding * 2) / rangeY
+            if (!mapObject.contentDocument?.documentElement) return;
+
+            trackGeometry = readTrackGeometry();
+            if (!trackGeometry) {
+                console.warn('[GPS overlay] El SVG no contiene metadatos geométricos compatibles. Regenera el mapa con telemetry_to_track_svg.py v0.4.0.', trackId);
+                return;
+            }
+
+            // El SVG usa preserveAspectRatio="xMidYMid meet" por defecto.
+            // Reproducimos exactamente ese encaje en el canvas superpuesto.
+            const viewBox = trackGeometry.viewBox;
+            const mapScale = Math.min(width / viewBox.width, height / viewBox.height);
+            const mapOffsetX = (width - viewBox.width * mapScale) / 2;
+            const mapOffsetY = (height - viewBox.height * mapScale) / 2;
+            const toViewport = point => ({
+                x: mapOffsetX + (point.x - viewBox.x) * mapScale,
+                y: mapOffsetY + (point.y - viewBox.y) * mapScale,
+            });
+
+            const projected = points.map(point =>
+                projectGpsToSvg(point.lat, point.lon, trackGeometry)
             );
 
-            const centerX = (minX + maxX) / 2;
-            const centerY = (minY + maxY) / 2;
-            const angle = calibration.rotation_deg * radians;
-            const cosAngle = Math.cos(angle);
-            const sinAngle = Math.sin(angle);
-
-            const drawPoints = projected.map((point, index) => {
-                const x = (point.x - centerX) * fitScale;
-                const y = -(point.y - centerY) * fitScale;
-
-                const rotatedX = x * cosAngle - y * sinAngle;
-                const rotatedY = x * sinAngle + y * cosAngle;
-
-                return {
-                    x: width / 2
-                        + rotatedX * calibration.scale
-                        + width * calibration.offset_x_pct / 100,
-                    y: height / 2
-                        + rotatedY * calibration.scale
-                        + height * calibration.offset_y_pct / 100,
-                    lapDistPct: normalizeLapPct(points[index]?.lapDistPct)
-                        ?? index / Math.max(1, projected.length - 1),
-                };
-            });
+            const drawPoints = projected.map((point, index) => ({
+                ...toViewport(point),
+                lapDistPct: normalizeLapPct(points[index]?.lapDistPct)
+                    ?? index / Math.max(1, projected.length - 1),
+            }));
 
             mainMapDrawPoints = drawPoints;
 
@@ -2265,25 +2256,25 @@
 
 
 
-            const referenceDrawPoints = referenceProjected.map((point, index) => {
-                const x = (point.x - centerX) * fitScale;
-                const y = -(point.y - centerY) * fitScale;
-
-                const rotatedX = x * cosAngle - y * sinAngle;
-                const rotatedY = x * sinAngle + y * cosAngle;
-
-                return {
-                    x: width / 2
-                        + rotatedX * calibration.scale
-                        + width * calibration.offset_x_pct / 100,
-                    y: height / 2
-                        + rotatedY * calibration.scale
-                        + height * calibration.offset_y_pct / 100,
-                    lapDistPct: normalizeLapPct(point.lapDistPct)
-                        ?? index / Math.max(1, referenceProjected.length - 1),
-                    sessionTime: point.sessionTime,
-                };
-            });
+            const referenceDrawPoints = referenceSamples
+                .filter(sample =>
+                    sample?.position?.lat != null &&
+                    sample?.position?.lon != null &&
+                    Number.isFinite(Number(sample.position.lat)) &&
+                    Number.isFinite(Number(sample.position.lon))
+                )
+                .map((sample, index, validReferenceSamples) => ({
+                    ...toViewport(projectGpsToSvg(
+                        Number(sample.position.lat),
+                        Number(sample.position.lon),
+                        trackGeometry
+                    )),
+                    lapDistPct: normalizeLapPct(sample.lap_dist_pct)
+                        ?? index / Math.max(1, validReferenceSamples.length - 1),
+                    sessionTime: sample.session_time != null && Number.isFinite(Number(sample.session_time))
+                        ? Number(sample.session_time)
+                        : null,
+                }));
 
             referenceMapDrawPoints = referenceDrawPoints;
 
@@ -3751,7 +3742,7 @@ if (Array.isArray(sectorSegments) && sectorSegments.length > 0) {
         console.info('[GPS overlay]', {
             trackId,
             validPoints: points.length,
-            calibration,
+            geometryVersion: trackGeometry?.version ?? null,
         });
     };
 

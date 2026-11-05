@@ -23,22 +23,4 @@
                 offset_x_pct: -0.3,
                 offset_y_pct: -0.32,
             },
-            "218": {
-                scale: 1.16,
-                rotation_deg: 0,
-                offset_x_pct: -0.04,
-                offset_y_pct: 0.3,
-            },
-            "572": {
-                scale: 1.085,
-                rotation_deg: 0,
-                offset_x_pct: 0.1,
-                offset_y_pct: 0.25,
-            },
-            "523": {
-                scale: 1.14,
-                rotation_deg: 0,
-                offset_x_pct: 0,
-                offset_y_pct: 0.25,
-            },
         };

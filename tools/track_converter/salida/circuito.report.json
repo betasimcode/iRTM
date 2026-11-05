@@ -1,5 +1,5 @@
 {
-  "converter_version": "0.3.0",
+  "converter_version": "0.4.0",
   "filled_surface": "polygon between aligned traces, closed cyclically",
   "inputs": [
     "B:\\laragon\\www\\iracing-manager-mrt\\tools\\track_converter\\lap_001.json",
@@ -9,41 +9,67 @@
     {
       "lap": 1,
       "candidate_lap": 1,
-      "lap_time_s": 304.5299987792969,
-      "valid_gps_points": 18273,
+      "lap_time_s": 338.2532043457031,
+      "valid_gps_points": 20291,
       "skipped_samples": 0
     },
     {
       "lap": 2,
       "candidate_lap": 3,
-      "lap_time_s": 263.90411376953125,
-      "valid_gps_points": 15834,
+      "lap_time_s": 331.97100830078125,
+      "valid_gps_points": 19918,
       "skipped_samples": 0
     }
   ],
   "projection": "local equirectangular (meters)",
+  "geometry": {
+    "version": 1,
+    "coordinate_system": "irtm_local_equirectangular_meters",
+    "projection": "equirectangular",
+    "earth_radius_m": 6371000.0,
+    "origin_lat": 25.95806592137504,
+    "origin_lon": -80.23726904130933,
+    "cos_lat": 0.8991146440149289,
+    "bounds": {
+      "min_x": -766.6617853806646,
+      "max_x": 746.5479070497207,
+      "min_y": -327.44337235540246,
+      "max_y": 282.9296873779496
+    },
+    "transform": {
+      "scale": 1.004303827347484,
+      "offset_x": 40.138857156427434,
+      "offset_y": 40.0,
+      "invert_y": true
+    },
+    "svg": {
+      "width": 1600,
+      "height": 693,
+      "viewBox": "0 0 1600 693"
+    }
+  },
   "sample_count": 3000,
   "smoothing_window": 1,
   "separation_m": {
-    "min": 8.554133517523582,
-    "p10": 9.343057369547521,
-    "median": 10.299015031795932,
-    "p90": 13.130790691183655,
-    "max": 26.488467693908785
+    "min": 7.966484195227648,
+    "p10": 10.310762231655795,
+    "median": 12.279910635363237,
+    "p90": 16.35925543563773,
+    "max": 20.691575470159837
   },
   "raw_progress_range": [
     {
-      "min": 1.4824030586169101e-05,
-      "max": 0.9999589323997498
+      "min": 6.634959572693333e-05,
+      "max": 0.9997194409370422
     },
     {
-      "min": 7.712280057603493e-05,
-      "max": 0.9999242424964905
+      "min": 8.867117139743641e-05,
+      "max": 0.9999715685844421
     }
   ],
   "seam_chord_m": {
-    "lap1_sorted_end_to_start": 0.39406221199612357,
-    "lap2_sorted_end_to_start": 1.0605972504168804
+    "lap1_sorted_end_to_start": 1.8056305463079412,
+    "lap2_sorted_end_to_start": 0.6326804387338049
   },
   "warnings": [
     "No se genera ni se dibuja línea central: la superficie se define solo por los dos bordes.",
